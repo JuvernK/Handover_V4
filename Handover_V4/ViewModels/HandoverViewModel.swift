@@ -29,7 +29,7 @@ final class HandoverViewModel {
     var patient: Patient?
     
     /// The order in which dashboard sections appear in the grid.
-    /// Step 6 will allow drag-and-drop to reorder this array.
+    /// Drag-and-drop in DashboardView mutates this through `moveSection(_:before:)`.
     var sectionOrder: [SectionID] = SectionID.defaultOrder
     
     // MARK: - Init
@@ -70,10 +70,9 @@ final class HandoverViewModel {
         }
     }
     
-    // MARK: - Section ordering (Step 6 will use these)
+    // MARK: - Section ordering
     
     /// Moves a section from one index to another within the section order.
-    /// Used by drag-and-drop in Step 6.
     func moveSection(from source: Int, to destination: Int) {
         guard source >= 0, source < sectionOrder.count else { return }
         guard destination >= 0, destination <= sectionOrder.count else { return }
@@ -81,6 +80,24 @@ final class HandoverViewModel {
         let item = sectionOrder.remove(at: source)
         let insertionIndex = destination > source ? destination - 1 : destination
         sectionOrder.insert(item, at: insertionIndex)
+    }
+    
+    /// Moves the dragged section so it sits just before the destination section.
+    /// Used by .dropDestination handlers in DashboardView.
+    ///
+    /// Example: dragging Plan onto Vitals → Plan ends up immediately before Vitals.
+    /// Dragging a section onto itself is a no-op.
+    func moveSection(_ dragged: SectionID, before destination: SectionID) {
+        guard dragged != destination else { return }
+        guard let fromIndex = sectionOrder.firstIndex(of: dragged) else { return }
+        guard sectionOrder.firstIndex(of: destination) != nil else { return }
+        
+        // Remove the dragged item first; this may shift the destination index.
+        sectionOrder.remove(at: fromIndex)
+        
+        // Recompute target index after removal.
+        let adjustedTarget = sectionOrder.firstIndex(of: destination) ?? sectionOrder.count
+        sectionOrder.insert(dragged, at: adjustedTarget)
     }
     
     /// Resets the section order to the default. Useful for a "reset layout" button.

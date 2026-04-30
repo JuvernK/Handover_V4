@@ -12,6 +12,8 @@
 //
 
 import SwiftUI
+import CoreTransferable
+internal import UniformTypeIdentifiers
 
 enum SectionID: String, CaseIterable, Identifiable, Codable, Hashable {
     case vitals
@@ -55,5 +57,16 @@ enum SectionID: String, CaseIterable, Identifiable, Codable, Hashable {
         case .plan:       return "Treatment Plan"
         case .escalation: return "Escalation"
         }
+    }
+}
+
+// MARK: - Transferable conformance
+//
+// Allows SectionID to be used with SwiftUI's modern .draggable / .dropDestination
+// APIs. The transfer payload is just the rawValue String — small, type-safe.
+
+extension SectionID: Transferable {
+    static var transferRepresentation: some TransferRepresentation {
+        CodableRepresentation(contentType: .data)
     }
 }

@@ -7,10 +7,14 @@
 //
 //  Top-level dashboard view. Composed of:
 //    - Pinned PatientHeaderView at the top (not draggable)
-//    - LazyVGrid of 7 cards below, ordered by viewModel.sectionOrder
+//    - LazyVGrid of 6 reorderable cards (Systems is rendered separately below)
+//    - Full-width SystemsAssessmentCard at the bottom (not draggable)
 //
-//  Step 5 wires up the static layout. Step 6 will add drag-and-drop on
-//  the grip icons.
+//  Drag-and-drop:
+//    - Each card in the grid is both a drag source and a drop target
+//    - The whole card is draggable (visionOS gesture model handles tap vs drag)
+//    - Dropping card A onto card B moves A so it appears immediately before B
+//    - The Systems card is excluded from the grid and not reorderable
 //
 
 import SwiftUI
@@ -20,8 +24,14 @@ struct DashboardView: View {
     
     /// Adaptive grid: cards reflow into 1, 2, or 3 columns based on window width.
     private let gridColumns = [
-        GridItem(.adaptive(minimum: 320), spacing: 16, alignment: .top)
+        GridItem(.adaptive(minimum: 280), spacing: 12, alignment: .top)
     ]
+    
+    /// Sections that flow in the adaptive grid (everything except Systems,
+    /// which is rendered full-width below the grid).
+    private var reorderableSections: [SectionID] {
+        viewModel.sectionOrder.filter { $0 != .systems }
+    }
     
     var body: some View {
         ScrollView {
@@ -31,18 +41,60 @@ struct DashboardView: View {
                     PatientHeaderView(patient: patient)
                         .glassBackgroundEffect(in: .rect(cornerRadius: 16))
                     
-                    // Reorderable grid of cards
-                    LazyVGrid(columns: gridColumns, spacing: 16) {
-                        ForEach(viewModel.sectionOrder) { sectionID in
-                            sectionID.view(for: patient)
+                    // Reorderable cards
+                    LazyVGrid(columns: gridColumns, spacing: 12) {
+                        ForEach(reorderableSections) { sectionID in
+                            DraggableCard(
+                                sectionID: sectionID,
+                                patient: patient,
+                                viewModel: viewModel
+                            )
                         }
                     }
+                    .animation(.smooth(duration: 0.25), value: viewModel.sectionOrder)
+                    
+                    // Systems Assessment — full-width, not reorderable
+                    if viewModel.sectionOrder.contains(.systems) {
+                        SystemsAssessmentCard(patient: patient)
+                    }
                 }
-                .padding(20)
+                .padding(14)
             } else {
                 EmptyDashboardState()
             }
         }
+        .dynamicTypeSize(.small)
+    }
+}
+
+// MARK: - Draggable card wrapper
+
+/// Wraps a section's card view with drag source + drop destination behaviour.
+private struct DraggableCard: View {
+    let sectionID: SectionID
+    let patient: Patient
+    let viewModel: HandoverViewModel
+    
+    @State private var isTargeted: Bool = false
+    
+    var body: some View {
+        sectionID.view(for: patient)
+            .opacity(isTargeted ? 0.6 : 1.0)
+            .scaleEffect(isTargeted ? 0.98 : 1.0)
+            .animation(.snappy(duration: 0.15), value: isTargeted)
+            .draggable(sectionID) {
+                // Drag preview — a slightly transparent copy of the card
+                sectionID.view(for: patient)
+                    .opacity(0.85)
+                    .frame(maxWidth: 300)
+            }
+            .dropDestination(for: SectionID.self) { droppedItems, _ in
+                guard let dragged = droppedItems.first else { return false }
+                viewModel.moveSection(dragged, before: sectionID)
+                return true
+            } isTargeted: { targeted in
+                isTargeted = targeted
+            }
     }
 }
 
