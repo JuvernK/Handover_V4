@@ -12,14 +12,16 @@ struct Handover_V4App: App {
     
     @State private var appModel = AppModel()
     @State private var avPlayerViewModel = AVPlayerViewModel()
+    @State private var handoverViewModel = HandoverViewModel(initialBedNumber: "BED-01")
     
     var body: some Scene {
         WindowGroup {
             if avPlayerViewModel.isPlaying {
                 AVPlayerView(viewModel: avPlayerViewModel)
             } else {
-                ContentView()
-                    .environment(appModel)
+                DashboardView(viewModel: handoverViewModel)
+            .environment(appModel)
+
             }
         }
         

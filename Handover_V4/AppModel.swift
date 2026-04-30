@@ -18,4 +18,15 @@ class AppModel {
         case open
     }
     var immersiveSpaceState = ImmersiveSpaceState.closed
+    
+    let patients = PatientDataLoader.loadOrEmpty()
+    
+    init() {
+        // Temporary debug code to test decoding
+        print("Loaded \(patients.count) patients")
+        for p in patients {
+            print("• \(p.bedNumber): \(p.name) — \(p.initials)")
+        }
+    }
+
 }

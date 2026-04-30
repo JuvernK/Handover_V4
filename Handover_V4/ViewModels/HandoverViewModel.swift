@@ -4,5 +4,87 @@
 //
 //  Created by Juvern Khor on 30/4/2026.
 //
+//  Source of truth for what the dashboard is showing.
+//
+//  Responsibilities:
+//    - Load patients from PatientData.json
+//    - Track which patient is currently displayed
+//    - Track the order of dashboard sections (for drag-and-drop in Step 6)
+//    - Provide a hook for SharePlay to update state remotely (future)
+//
+//  Marked @Observable (Swift 5.9+) so SwiftUI views automatically track
+//  changes to its properties without requiring @Published.
+//
 
 import Foundation
+import Observation
+
+@Observable
+final class HandoverViewModel {
+    
+    /// All patients loaded from the bundle.
+    private(set) var patients: [Patient] = []
+    
+    /// The patient currently displayed on the dashboard.
+    var patient: Patient?
+    
+    /// The order in which dashboard sections appear in the grid.
+    /// Step 6 will allow drag-and-drop to reorder this array.
+    var sectionOrder: [SectionID] = SectionID.defaultOrder
+    
+    // MARK: - Init
+    
+    /// Loads all patients from JSON and selects an initial patient by bed number.
+    /// If the bed number is not found, falls back to the first patient.
+    init(initialBedNumber: String = "BED-01") {
+        loadPatients()
+        selectPatient(byBed: initialBedNumber)
+    }
+    
+    // MARK: - Patient management
+    
+    /// Loads patients from PatientData.json. Called automatically on init.
+    func loadPatients() {
+        do {
+            self.patients = try PatientDataLoader.load()
+        } catch {
+            print("⚠️ Failed to load patients: \(error)")
+            self.patients = []
+        }
+    }
+    
+    /// Sets the displayed patient by bed number.
+    /// Falls back to the first patient if the bed number isn't found.
+    func selectPatient(byBed bedNumber: String) {
+        if let match = patients.first(where: { $0.bedNumber == bedNumber }) {
+            self.patient = match
+        } else {
+            self.patient = patients.first
+        }
+    }
+    
+    /// Sets the displayed patient by ID. Used internally by tests/previews.
+    func selectPatient(byID id: String) {
+        if let match = patients.first(where: { $0.id == id }) {
+            self.patient = match
+        }
+    }
+    
+    // MARK: - Section ordering (Step 6 will use these)
+    
+    /// Moves a section from one index to another within the section order.
+    /// Used by drag-and-drop in Step 6.
+    func moveSection(from source: Int, to destination: Int) {
+        guard source >= 0, source < sectionOrder.count else { return }
+        guard destination >= 0, destination <= sectionOrder.count else { return }
+        
+        let item = sectionOrder.remove(at: source)
+        let insertionIndex = destination > source ? destination - 1 : destination
+        sectionOrder.insert(item, at: insertionIndex)
+    }
+    
+    /// Resets the section order to the default. Useful for a "reset layout" button.
+    func resetSectionOrder() {
+        sectionOrder = SectionID.defaultOrder
+    }
+}
