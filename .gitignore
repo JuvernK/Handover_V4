@@ -1,0 +1,42 @@
+# =========================
+# Xcode
+# =========================
+
+# Build files
+build/
+DerivedData/
+
+# Xcode user data (personal settings)
+xcuserdata/
+*.xcuserdatad/
+*.xcuserstate
+
+# Workspace user data
+*.xcworkspace/xcuserdata/
+
+# =========================
+# Swift Package Manager
+# =========================
+
+.build/
+.swiftpm/*
+!.swiftpm/package.resolved
+
+# =========================
+# Debugger / local config
+# =========================
+
+xcdebugger/
+
+# =========================
+# macOS
+# =========================
+
+.DS_Store
+
+# =========================
+# Logs & temp files
+# =========================
+
+*.log
+*.tmp
