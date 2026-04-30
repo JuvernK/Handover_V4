@@ -1,0 +1,1816 @@
+{
+  "patients": [
+    {
+      "id": "p1",
+      "bedNumber": "BED-01",
+      "mrn": "MRN-202400341",
+      "name": "Ahmad bin Razali",
+      "age": 62,
+      "gender": "male",
+      "acuity": "stable",
+      "codeStatus": {
+        "type": "fullCode"
+      },
+      "allergies": [
+        {
+          "substance": "Penicillin",
+          "reaction": "Rash"
+        }
+      ],
+      "clinicalSummary": "Post-CABG x3 Day 1, weaning noradrenaline. Haemodynamically stable post-extubation; watching for post-op AF and chest drain output.",
+      "handoverNotes": null,
+      "vitals": [
+        {
+          "id": "p1-vital-1",
+          "label": "HR",
+          "value": "88",
+          "unit": "bpm",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p1-vital-2",
+          "label": "BP",
+          "value": "118/72",
+          "unit": "mmHg",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p1-vital-3",
+          "label": "SpO2",
+          "value": "97",
+          "unit": "%",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p1-vital-4",
+          "label": "Temp",
+          "value": "37.1",
+          "unit": "°C",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p1-vital-5",
+          "label": "RR",
+          "value": "16",
+          "unit": "/min",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p1-vital-6",
+          "label": "MAP",
+          "value": "87",
+          "unit": "mmHg",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00Z"
+        }
+      ],
+      "infusions": [
+        {
+          "id": "p1-inf-1",
+          "drugName": "Noradrenaline",
+          "dose": "0.05 mcg/kg/min",
+          "route": "IV (CVC)",
+          "purpose": "Weaning — BP support",
+          "isHighAlert": true
+        },
+        {
+          "id": "p1-inf-2",
+          "drugName": "Morphine PCA",
+          "dose": "1 mg/hr basal",
+          "route": "IV",
+          "purpose": "Post-op analgesia",
+          "isHighAlert": true
+        },
+        {
+          "id": "p1-inf-3",
+          "drugName": "Insulin",
+          "dose": "2 U/hr",
+          "route": "IV",
+          "purpose": "BSL target 6-10",
+          "isHighAlert": true
+        }
+      ],
+      "lines": [
+        {
+          "id": "p1-line-1",
+          "type": "Radial Arterial Line",
+          "location": "Right"
+        },
+        {
+          "id": "p1-line-2",
+          "type": "Triple-Lumen CVC",
+          "location": "Right IJV"
+        },
+        {
+          "id": "p1-line-3",
+          "type": "Urinary Catheter",
+          "location": "Urethral"
+        },
+        {
+          "id": "p1-line-4",
+          "type": "Chest Drain",
+          "location": "Right pleural"
+        },
+        {
+          "id": "p1-line-5",
+          "type": "Chest Drain",
+          "location": "Left pleural"
+        }
+      ],
+      "labs": [
+        {
+          "id": "p1-lab-1",
+          "name": "Hb",
+          "value": "9.8",
+          "unit": "g/dL",
+          "status": "warning",
+          "trend": "down"
+        },
+        {
+          "id": "p1-lab-2",
+          "name": "K+",
+          "value": "3.5",
+          "unit": "mmol/L",
+          "status": "warning",
+          "trend": "stable"
+        },
+        {
+          "id": "p1-lab-3",
+          "name": "Creatinine",
+          "value": "112",
+          "unit": "µmol/L",
+          "status": "warning",
+          "trend": "up"
+        },
+        {
+          "id": "p1-lab-4",
+          "name": "Lactate",
+          "value": "1.4",
+          "unit": "mmol/L",
+          "status": "normal",
+          "trend": "stable"
+        },
+        {
+          "id": "p1-lab-5",
+          "name": "INR",
+          "value": "1.6",
+          "unit": "",
+          "status": "warning",
+          "trend": "stable"
+        }
+      ],
+      "systems": [
+        {
+          "id": "p1-sys-1",
+          "system": "neuro",
+          "summary": "Alert and oriented x3. Pain score 4/10. Morphine PCA initiated.",
+          "concerns": []
+        },
+        {
+          "id": "p1-sys-2",
+          "system": "respiratory",
+          "summary": "Extubated, on face mask O2 6L/min. Chest physio started. Bilateral chest drains — serosanguinous fluid.",
+          "concerns": [
+            "Monitor chest drain output for haemothorax"
+          ]
+        },
+        {
+          "id": "p1-sys-3",
+          "system": "cardiovascular",
+          "summary": "NSR on telemetry. Weaning noradrenaline. Chest drains: R=50 mL, L=60 mL since op.",
+          "concerns": [
+            "Watch for post-op AF"
+          ]
+        },
+        {
+          "id": "p1-sys-4",
+          "system": "renal",
+          "summary": "UO 0.8 mL/kg/hr. IDC in situ. Cr baseline 98 — mild AKI watch.",
+          "concerns": [
+            "Mild post-op AKI"
+          ]
+        },
+        {
+          "id": "p1-sys-5",
+          "system": "gastrointestinal",
+          "summary": "NBM. Sips of water tolerated. NGT removed. Bowel sounds present.",
+          "concerns": []
+        },
+        {
+          "id": "p1-sys-6",
+          "system": "skin",
+          "summary": "Sternal wound dry, intact. Leg harvest site clean, no ooze.",
+          "concerns": []
+        }
+      ],
+      "plan": [
+        {
+          "id": "p1-plan-1",
+          "task": "Wean noradrenaline — target OFF if MAP stable",
+          "dueTime": "2026-04-28T10:00:00Z",
+          "priority": "urgent"
+        },
+        {
+          "id": "p1-plan-2",
+          "task": "Remove chest drains if drainage <100 mL/24hr",
+          "dueTime": null,
+          "priority": "routine"
+        },
+        {
+          "id": "p1-plan-3",
+          "task": "Continue insulin infusion, 2-hourly BSL monitoring",
+          "dueTime": null,
+          "priority": "routine"
+        },
+        {
+          "id": "p1-plan-4",
+          "task": "K+ replacement per sliding scale (target >4.0)",
+          "dueTime": null,
+          "priority": "urgent"
+        },
+        {
+          "id": "p1-plan-5",
+          "task": "Chest X-ray",
+          "dueTime": "2026-04-28T06:00:00Z",
+          "priority": "routine"
+        },
+        {
+          "id": "p1-plan-6",
+          "task": "Cardiology review",
+          "dueTime": "2026-04-28T08:00:00Z",
+          "priority": "routine"
+        },
+        {
+          "id": "p1-plan-7",
+          "task": "Mobilise with physio if haemodynamically stable",
+          "dueTime": null,
+          "priority": "routine"
+        }
+      ],
+      "family": {
+        "primaryContact": "Wife (Puan Rohani)",
+        "presentAtBedside": true,
+        "notes": "Wife present overnight, aware of surgery outcome, very supportive. Family updated."
+      },
+      "escalation": {
+        "mainConcerns": [
+          "Monitor for post-op AF",
+          "Watch chest drain output for haemothorax"
+        ],
+        "triggers": [
+          "Sudden increase in chest drain output",
+          "New-onset AF",
+          "Any haemodynamic deterioration"
+        ],
+        "escalateTo": "ICU Registrar"
+      }
+    },
+    {
+      "id": "p2",
+      "bedNumber": "BED-02",
+      "mrn": "MRN-202401187",
+      "name": "Siti Norzahra bt Hamdan",
+      "age": 47,
+      "gender": "female",
+      "acuity": "critical",
+      "codeStatus": {
+        "type": "fullCode"
+      },
+      "allergies": [
+        {
+          "substance": "Sulphonamides",
+          "reaction": "Anaphylaxis"
+        },
+        {
+          "substance": "NSAIDs",
+          "reaction": "GI bleed"
+        }
+      ],
+      "clinicalSummary": "Septic shock from RLL pneumonia, intubated on dual vasopressors. AKI worsening — CRRT being considered. Critically unwell.",
+      "handoverNotes": null,
+      "vitals": [
+        {
+          "id": "p2-vital-1",
+          "label": "HR",
+          "value": "112",
+          "unit": "bpm",
+          "status": "warning",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p2-vital-2",
+          "label": "BP",
+          "value": "95/58",
+          "unit": "mmHg",
+          "status": "critical",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p2-vital-3",
+          "label": "SpO2",
+          "value": "91",
+          "unit": "%",
+          "status": "critical",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p2-vital-4",
+          "label": "Temp",
+          "value": "38.9",
+          "unit": "°C",
+          "status": "warning",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p2-vital-5",
+          "label": "RR",
+          "value": "28",
+          "unit": "/min",
+          "status": "critical",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p2-vital-6",
+          "label": "MAP",
+          "value": "70",
+          "unit": "mmHg",
+          "status": "warning",
+          "timestamp": "2026-04-28T06:55:00Z"
+        }
+      ],
+      "infusions": [
+        {
+          "id": "p2-inf-1",
+          "drugName": "Noradrenaline",
+          "dose": "0.15 mcg/kg/min",
+          "route": "IV (CVC)",
+          "purpose": "Vasopressor support",
+          "isHighAlert": true
+        },
+        {
+          "id": "p2-inf-2",
+          "drugName": "Vasopressin",
+          "dose": "0.03 U/min",
+          "route": "IV (CVC)",
+          "purpose": "Vasopressor support",
+          "isHighAlert": true
+        },
+        {
+          "id": "p2-inf-3",
+          "drugName": "Meropenem",
+          "dose": "1g q8h",
+          "route": "IV",
+          "purpose": "Antibiotic — Day 2 of 5",
+          "isHighAlert": false
+        },
+        {
+          "id": "p2-inf-4",
+          "drugName": "Hydrocortisone",
+          "dose": "200 mg/24hr",
+          "route": "IV infusion",
+          "purpose": "Septic shock",
+          "isHighAlert": false
+        },
+        {
+          "id": "p2-inf-5",
+          "drugName": "Insulin",
+          "dose": "4 U/hr",
+          "route": "IV",
+          "purpose": "BSL control",
+          "isHighAlert": true
+        },
+        {
+          "id": "p2-inf-6",
+          "drugName": "Propofol",
+          "dose": "20 mL/hr",
+          "route": "IV",
+          "purpose": "Sedation",
+          "isHighAlert": true
+        },
+        {
+          "id": "p2-inf-7",
+          "drugName": "Fentanyl",
+          "dose": "25 mcg/hr",
+          "route": "IV",
+          "purpose": "Analgesia",
+          "isHighAlert": true
+        }
+      ],
+      "lines": [
+        {
+          "id": "p2-line-1",
+          "type": "Femoral Arterial Line",
+          "location": "Right"
+        },
+        {
+          "id": "p2-line-2",
+          "type": "Double-Lumen CVC",
+          "location": "Left Subclavian"
+        },
+        {
+          "id": "p2-line-3",
+          "type": "Peripheral IV (18G)",
+          "location": "Right ACF"
+        },
+        {
+          "id": "p2-line-4",
+          "type": "Peripheral IV (18G)",
+          "location": "Left forearm"
+        },
+        {
+          "id": "p2-line-5",
+          "type": "Urinary Catheter",
+          "location": "Urethral"
+        },
+        {
+          "id": "p2-line-6",
+          "type": "Endotracheal Tube (7.5)",
+          "location": "22 cm at lip"
+        }
+      ],
+      "labs": [
+        {
+          "id": "p2-lab-1",
+          "name": "WBC",
+          "value": "22.1",
+          "unit": "x10^9/L",
+          "status": "critical",
+          "trend": "up"
+        },
+        {
+          "id": "p2-lab-2",
+          "name": "CRP",
+          "value": "310",
+          "unit": "mg/L",
+          "status": "critical",
+          "trend": "up"
+        },
+        {
+          "id": "p2-lab-3",
+          "name": "Lactate",
+          "value": "3.8",
+          "unit": "mmol/L",
+          "status": "critical",
+          "trend": "up"
+        },
+        {
+          "id": "p2-lab-4",
+          "name": "Procalcitonin",
+          "value": "45",
+          "unit": "ng/mL",
+          "status": "critical",
+          "trend": "up"
+        },
+        {
+          "id": "p2-lab-5",
+          "name": "Creatinine",
+          "value": "198",
+          "unit": "µmol/L",
+          "status": "critical",
+          "trend": "up"
+        },
+        {
+          "id": "p2-lab-6",
+          "name": "Platelets",
+          "value": "88",
+          "unit": "x10^9/L",
+          "status": "warning",
+          "trend": "down"
+        }
+      ],
+      "systems": [
+        {
+          "id": "p2-sys-1",
+          "system": "neuro",
+          "summary": "Sedated — Propofol 20 mL/hr + Fentanyl 25 mcg/hr. RASS -2. Daily wake-up trial planned at 0600.",
+          "concerns": []
+        },
+        {
+          "id": "p2-sys-2",
+          "system": "respiratory",
+          "summary": "Mechanically ventilated. Thick yellow-green secretions, q2h suction. CXR: RLL consolidation. Prone considered if P/F <150.",
+          "concerns": [
+            "Severe pneumonia",
+            "Prone positioning may be required"
+          ]
+        },
+        {
+          "id": "p2-sys-3",
+          "system": "cardiovascular",
+          "summary": "Tachycardic. On dual vasopressors. Echo yesterday: LVEF 50%, no effusion. Septic source = lungs.",
+          "concerns": [
+            "High vasopressor requirements"
+          ]
+        },
+        {
+          "id": "p2-sys-4",
+          "system": "renal",
+          "summary": "UO 20 mL/hr (declining). AKI Stage 2. Cr trending up. Nephrology aware — may need CRRT.",
+          "concerns": [
+            "Worsening AKI",
+            "CRRT pending"
+          ]
+        },
+        {
+          "id": "p2-sys-5",
+          "system": "gastrointestinal",
+          "summary": "NGT in situ. EN at 20 mL/hr (target 60 mL/hr). Omeprazole 40 mg IV OD.",
+          "concerns": []
+        },
+        {
+          "id": "p2-sys-6",
+          "system": "skin",
+          "summary": "No pressure injuries. Flowtron boots on. Turn q2h protocol.",
+          "concerns": []
+        },
+        {
+          "id": "p2-sys-7",
+          "system": "infection",
+          "summary": "Septic shock — RLL pneumonia. Day 2 Meropenem. Sputum C&S pending.",
+          "concerns": [
+            "Source control critical"
+          ]
+        }
+      ],
+      "plan": [
+        {
+          "id": "p2-plan-1",
+          "task": "Daily wake-up trial — assess extubation readiness",
+          "dueTime": "2026-04-28T06:00:00Z",
+          "priority": "urgent"
+        },
+        {
+          "id": "p2-plan-2",
+          "task": "Repeat lactate — if >3.5 consider CRRT discussion",
+          "dueTime": "2026-04-28T08:00:00Z",
+          "priority": "urgent"
+        },
+        {
+          "id": "p2-plan-3",
+          "task": "Chase sputum C&S results — ID review today",
+          "dueTime": null,
+          "priority": "urgent"
+        },
+        {
+          "id": "p2-plan-4",
+          "task": "Repeat echo if haemodynamics worsen",
+          "dueTime": null,
+          "priority": "routine"
+        },
+        {
+          "id": "p2-plan-5",
+          "task": "Target fluid balance: EVEN to -500 mL",
+          "dueTime": null,
+          "priority": "routine"
+        },
+        {
+          "id": "p2-plan-6",
+          "task": "Family meeting — prognosis discussion",
+          "dueTime": "2026-04-28T14:00:00Z",
+          "priority": "routine"
+        }
+      ],
+      "family": {
+        "primaryContact": "Husband (Encik Fadzli)",
+        "presentAtBedside": true,
+        "notes": "Husband at bedside. Parents informed by phone. ICU limitations explained. Family meeting 1400 — poor prognosis discussion."
+      },
+      "escalation": {
+        "mainConcerns": [
+          "Worsening renal function",
+          "High vasopressor requirements",
+          "Risk of MODS"
+        ],
+        "triggers": [
+          "Vasopressor requirements increase",
+          "UO drops below 15 mL/hr",
+          "New arrhythmia develops",
+          "SpO2 deteriorates below 88%"
+        ],
+        "escalateTo": "ICU Registrar / Consultant"
+      }
+    },
+    {
+      "id": "p3",
+      "bedNumber": "BED-03",
+      "mrn": "MRN-202402056",
+      "name": "Rajendran a/l Krishnan",
+      "age": 38,
+      "gender": "male",
+      "acuity": "critical",
+      "codeStatus": {
+        "type": "fullCode"
+      },
+      "allergies": [],
+      "clinicalSummary": "Day 2 post-craniotomy for SDH evacuation. Sedated and ventilated; ICP 18 mmHg trending up — close neuro monitoring required.",
+      "handoverNotes": null,
+      "vitals": [
+        {
+          "id": "p3-vital-1",
+          "label": "HR",
+          "value": "64",
+          "unit": "bpm",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p3-vital-2",
+          "label": "BP",
+          "value": "138/82",
+          "unit": "mmHg",
+          "status": "warning",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p3-vital-3",
+          "label": "SpO2",
+          "value": "99",
+          "unit": "%",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p3-vital-4",
+          "label": "Temp",
+          "value": "37.6",
+          "unit": "°C",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p3-vital-5",
+          "label": "ICP",
+          "value": "18",
+          "unit": "mmHg",
+          "status": "warning",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p3-vital-6",
+          "label": "CPP",
+          "value": "84",
+          "unit": "mmHg",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00Z"
+        }
+      ],
+      "infusions": [
+        {
+          "id": "p3-inf-1",
+          "drugName": "Propofol",
+          "dose": "15 mL/hr",
+          "route": "IV",
+          "purpose": "Sedation",
+          "isHighAlert": true
+        },
+        {
+          "id": "p3-inf-2",
+          "drugName": "Fentanyl",
+          "dose": "25 mcg/hr",
+          "route": "IV",
+          "purpose": "Analgesia",
+          "isHighAlert": true
+        },
+        {
+          "id": "p3-inf-3",
+          "drugName": "3% NaCl (Hypertonic Saline)",
+          "dose": "30 mL/hr",
+          "route": "IV (CVC)",
+          "purpose": "Target Na 145-150",
+          "isHighAlert": true
+        },
+        {
+          "id": "p3-inf-4",
+          "drugName": "Levetiracetam",
+          "dose": "1g BD",
+          "route": "IV",
+          "purpose": "Seizure prophylaxis",
+          "isHighAlert": false
+        },
+        {
+          "id": "p3-inf-5",
+          "drugName": "Noradrenaline",
+          "dose": "0.08 mcg/kg/min",
+          "route": "IV (CVC)",
+          "purpose": "Maintain CPP >70",
+          "isHighAlert": true
+        }
+      ],
+      "lines": [
+        {
+          "id": "p3-line-1",
+          "type": "ICP Monitor (Bolt)",
+          "location": "Right Frontal"
+        },
+        {
+          "id": "p3-line-2",
+          "type": "Radial Arterial Line",
+          "location": "Right"
+        },
+        {
+          "id": "p3-line-3",
+          "type": "Triple-Lumen CVC",
+          "location": "Right IJV"
+        },
+        {
+          "id": "p3-line-4",
+          "type": "Urinary Catheter",
+          "location": "Urethral"
+        },
+        {
+          "id": "p3-line-5",
+          "type": "Endotracheal Tube",
+          "location": "Oral"
+        }
+      ],
+      "labs": [
+        {
+          "id": "p3-lab-1",
+          "name": "Na",
+          "value": "148",
+          "unit": "mmol/L",
+          "status": "warning",
+          "trend": "stable"
+        },
+        {
+          "id": "p3-lab-2",
+          "name": "K+",
+          "value": "3.9",
+          "unit": "mmol/L",
+          "status": "normal",
+          "trend": "stable"
+        },
+        {
+          "id": "p3-lab-3",
+          "name": "Creatinine",
+          "value": "88",
+          "unit": "µmol/L",
+          "status": "normal",
+          "trend": "stable"
+        },
+        {
+          "id": "p3-lab-4",
+          "name": "Glucose",
+          "value": "9.2",
+          "unit": "mmol/L",
+          "status": "warning",
+          "trend": "stable"
+        },
+        {
+          "id": "p3-lab-5",
+          "name": "Hb",
+          "value": "11.2",
+          "unit": "g/dL",
+          "status": "warning",
+          "trend": "stable"
+        }
+      ],
+      "systems": [
+        {
+          "id": "p3-sys-1",
+          "system": "neuro",
+          "summary": "GCS pre-sedation E2V1M4 (7). ICP 18 mmHg — acceptable but trending up. CPP 84. Pupils R 3mm sluggish, L 3mm reactive.",
+          "concerns": [
+            "ICP rising overnight",
+            "Risk of herniation"
+          ]
+        },
+        {
+          "id": "p3-sys-2",
+          "system": "respiratory",
+          "summary": "Mechanically ventilated. Clear secretions. Lungs clear bilaterally. SaO2 99%.",
+          "concerns": []
+        },
+        {
+          "id": "p3-sys-3",
+          "system": "cardiovascular",
+          "summary": "Sinus bradycardia — baseline. Noradrenaline to maintain CPP. ECG: no arrhythmia.",
+          "concerns": [
+            "Watch for Cushing's response"
+          ]
+        },
+        {
+          "id": "p3-sys-4",
+          "system": "renal",
+          "summary": "UO 1.2 mL/kg/hr. IDC in situ. Cr normal.",
+          "concerns": [
+            "Monitor for diabetes insipidus — 2-hourly UO charting"
+          ]
+        },
+        {
+          "id": "p3-sys-5",
+          "system": "gastrointestinal",
+          "summary": "NGT in situ. EN at 40 mL/hr (target 60). HOB at 30°. Omeprazole IV.",
+          "concerns": []
+        },
+        {
+          "id": "p3-sys-6",
+          "system": "skin",
+          "summary": "Post-craniotomy wound (R frontal/temporal) — dressing intact, no ooze. ICP bolt site clean.",
+          "concerns": []
+        }
+      ],
+      "plan": [
+        {
+          "id": "p3-plan-1",
+          "task": "Maintain ICP <20 mmHg, CPP >70 mmHg",
+          "dueTime": null,
+          "priority": "urgent"
+        },
+        {
+          "id": "p3-plan-2",
+          "task": "Neurosurgery review — repeat CT if ICP spikes",
+          "dueTime": "2026-04-28T07:00:00Z",
+          "priority": "urgent"
+        },
+        {
+          "id": "p3-plan-3",
+          "task": "Daily sedation holiday — neuro assessment",
+          "dueTime": "2026-04-28T08:00:00Z",
+          "priority": "urgent"
+        },
+        {
+          "id": "p3-plan-4",
+          "task": "Target Na 145-150 (3% NaCl infusion)",
+          "dueTime": null,
+          "priority": "routine"
+        },
+        {
+          "id": "p3-plan-5",
+          "task": "Continue seizure prophylaxis x 7 days",
+          "dueTime": null,
+          "priority": "routine"
+        },
+        {
+          "id": "p3-plan-6",
+          "task": "Physiotherapy — passive limb movement",
+          "dueTime": null,
+          "priority": "routine"
+        },
+        {
+          "id": "p3-plan-7",
+          "task": "Family update by neurosurgery team",
+          "dueTime": "2026-04-28T10:00:00Z",
+          "priority": "routine"
+        }
+      ],
+      "family": {
+        "primaryContact": "Wife and parents",
+        "presentAtBedside": false,
+        "notes": "Wife and parents at waiting area. Tamil interpreter arranged. Very anxious — needs regular updates."
+      },
+      "escalation": {
+        "mainConcerns": [
+          "ICP trending up overnight",
+          "Risk of herniation"
+        ],
+        "triggers": [
+          "ICP > 22 mmHg sustained",
+          "CPP < 60 mmHg",
+          "Cushing's triad (HTN + bradycardia + irregular respiration)",
+          "Pupil asymmetry or unreactive pupils"
+        ],
+        "escalateTo": "Neurosurgery / ICU Registrar"
+      }
+    },
+    {
+      "id": "p4",
+      "bedNumber": "BED-04",
+      "mrn": "MRN-202400899",
+      "name": "Noraini bt Zulkifli",
+      "age": 55,
+      "gender": "female",
+      "acuity": "critical",
+      "codeStatus": {
+        "type": "fullCode"
+      },
+      "allergies": [
+        {
+          "substance": "Codeine",
+          "reaction": "Nausea and vomiting"
+        },
+        {
+          "substance": "Contrast dye",
+          "reaction": "Urticaria — premedicate"
+        }
+      ],
+      "clinicalSummary": "Severe ARDS from influenza A pneumonitis, currently prone (Hour 14 of 16). Plan to supinate at 0600. P/F ratio remains 113.",
+      "handoverNotes": null,
+      "vitals": [
+        {
+          "id": "p4-vital-1",
+          "label": "HR",
+          "value": "96",
+          "unit": "bpm",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p4-vital-2",
+          "label": "BP",
+          "value": "124/78",
+          "unit": "mmHg",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p4-vital-3",
+          "label": "SpO2",
+          "value": "93",
+          "unit": "%",
+          "status": "warning",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p4-vital-4",
+          "label": "Temp",
+          "value": "37.4",
+          "unit": "°C",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p4-vital-5",
+          "label": "PaO2",
+          "value": "68",
+          "unit": "mmHg",
+          "status": "warning",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p4-vital-6",
+          "label": "P/F Ratio",
+          "value": "113",
+          "unit": "",
+          "status": "critical",
+          "timestamp": "2026-04-28T06:55:00Z"
+        }
+      ],
+      "infusions": [
+        {
+          "id": "p4-inf-1",
+          "drugName": "Propofol",
+          "dose": "25 mL/hr",
+          "route": "IV",
+          "purpose": "Sedation",
+          "isHighAlert": true
+        },
+        {
+          "id": "p4-inf-2",
+          "drugName": "Remifentanil",
+          "dose": "0.08 mcg/kg/min",
+          "route": "IV",
+          "purpose": "Analgesia",
+          "isHighAlert": true
+        },
+        {
+          "id": "p4-inf-3",
+          "drugName": "Cisatracurium",
+          "dose": "37.5 mg/hr",
+          "route": "IV",
+          "purpose": "Paralysis during proning",
+          "isHighAlert": true
+        },
+        {
+          "id": "p4-inf-4",
+          "drugName": "Oseltamivir",
+          "dose": "75 mg BD",
+          "route": "NGT",
+          "purpose": "Antiviral — Day 5 of 5",
+          "isHighAlert": false
+        },
+        {
+          "id": "p4-inf-5",
+          "drugName": "Furosemide",
+          "dose": "40 mg BD",
+          "route": "IV",
+          "purpose": "Diuresis — ARDS fluid management",
+          "isHighAlert": false
+        }
+      ],
+      "lines": [
+        {
+          "id": "p4-line-1",
+          "type": "Radial Arterial Line",
+          "location": "Left"
+        },
+        {
+          "id": "p4-line-2",
+          "type": "Triple-Lumen CVC",
+          "location": "Right Subclavian"
+        },
+        {
+          "id": "p4-line-3",
+          "type": "Urinary Catheter",
+          "location": "Urethral"
+        },
+        {
+          "id": "p4-line-4",
+          "type": "Nasogastric Tube",
+          "location": "Nasal"
+        },
+        {
+          "id": "p4-line-5",
+          "type": "Endotracheal Tube",
+          "location": "Oral"
+        }
+      ],
+      "labs": [
+        {
+          "id": "p4-lab-1",
+          "name": "P/F Ratio",
+          "value": "113",
+          "unit": "",
+          "status": "critical",
+          "trend": "stable"
+        },
+        {
+          "id": "p4-lab-2",
+          "name": "WBC",
+          "value": "14.2",
+          "unit": "x10^9/L",
+          "status": "warning",
+          "trend": "down"
+        },
+        {
+          "id": "p4-lab-3",
+          "name": "Creatinine",
+          "value": "168",
+          "unit": "µmol/L",
+          "status": "warning",
+          "trend": "up"
+        },
+        {
+          "id": "p4-lab-4",
+          "name": "Albumin",
+          "value": "26",
+          "unit": "g/L",
+          "status": "warning",
+          "trend": "down"
+        },
+        {
+          "id": "p4-lab-5",
+          "name": "pH",
+          "value": "7.36",
+          "unit": "",
+          "status": "normal",
+          "trend": "stable"
+        },
+        {
+          "id": "p4-lab-6",
+          "name": "PaCO2",
+          "value": "52",
+          "unit": "mmHg",
+          "status": "warning",
+          "trend": "stable"
+        }
+      ],
+      "systems": [
+        {
+          "id": "p4-sys-1",
+          "system": "neuro",
+          "summary": "Deeply sedated (RASS -4) + paralysed during prone. Last neuro exam: follows commands at RASS 0. Wake-up hold when supine.",
+          "concerns": []
+        },
+        {
+          "id": "p4-sys-2",
+          "system": "respiratory",
+          "summary": "Severe ARDS. Currently prone — improving PaO2. Frothy white secretions, q2h closed-circuit suction. Last ABG: pH 7.36, PaCO2 52, PaO2 68.",
+          "concerns": [
+            "Severe ARDS",
+            "Risk of pneumothorax",
+            "Watch P/F post-supination"
+          ]
+        },
+        {
+          "id": "p4-sys-3",
+          "system": "cardiovascular",
+          "summary": "Sinus tachycardia improving. No vasopressors. Echo Day 3: RVSP 38, mild RV strain.",
+          "concerns": [
+            "Mild RV strain — monitor"
+          ]
+        },
+        {
+          "id": "p4-sys-4",
+          "system": "renal",
+          "summary": "CKD baseline — Cr 168 (up from 130). UO 45 mL/hr with furosemide. Avoiding nephrotoxins.",
+          "concerns": [
+            "Worsening CKD"
+          ]
+        },
+        {
+          "id": "p4-sys-5",
+          "system": "gastrointestinal",
+          "summary": "EN via NGT 50 mL/hr continuous. Hold feed during supination turns. Target 1500 kcal/day.",
+          "concerns": []
+        },
+        {
+          "id": "p4-sys-6",
+          "system": "skin",
+          "summary": "Full prone check q4h. Facial oedema noted — eye pads in place. No pressure injuries. Mouth care q4h.",
+          "concerns": [
+            "Facial pressure injury risk"
+          ]
+        }
+      ],
+      "plan": [
+        {
+          "id": "p4-plan-1",
+          "task": "Supinate — 2-nurse check, note ETT depth before/after",
+          "dueTime": "2026-04-28T06:00:00Z",
+          "priority": "urgent"
+        },
+        {
+          "id": "p4-plan-2",
+          "task": "Stop cisatracurium once supine and stable",
+          "dueTime": null,
+          "priority": "urgent"
+        },
+        {
+          "id": "p4-plan-3",
+          "task": "ABG 1 hour post-supination — if P/F <150 re-discuss proning",
+          "dueTime": "2026-04-28T07:00:00Z",
+          "priority": "urgent"
+        },
+        {
+          "id": "p4-plan-4",
+          "task": "Last dose Oseltamivir tonight",
+          "dueTime": "2026-04-28T22:00:00Z",
+          "priority": "routine"
+        },
+        {
+          "id": "p4-plan-5",
+          "task": "Furosemide BD — target -1L fluid balance/day",
+          "dueTime": null,
+          "priority": "routine"
+        },
+        {
+          "id": "p4-plan-6",
+          "task": "Repeat echo if RV strain worsens",
+          "dueTime": null,
+          "priority": "routine"
+        }
+      ],
+      "family": {
+        "primaryContact": "Husband and 3 children",
+        "presentAtBedside": true,
+        "notes": "Family very distressed. Spiritual care requested. DNR discussion planned — not yet decided."
+      },
+      "escalation": {
+        "mainConcerns": [
+          "Severe ARDS with suboptimal P/F despite proning",
+          "RV strain on echo",
+          "Risk of pneumothorax during ventilation"
+        ],
+        "triggers": [
+          "Sudden desaturation",
+          "Sudden rise in airway pressures (?pneumothorax)",
+          "Haemodynamic deterioration during turns",
+          "Worsening RV function"
+        ],
+        "escalateTo": "ICU Registrar / Respiratory Physician"
+      }
+    },
+    {
+      "id": "p5",
+      "bedNumber": "BED-05",
+      "mrn": "MRN-202403312",
+      "name": "Lim Wei Jian",
+      "age": 29,
+      "gender": "male",
+      "acuity": "critical",
+      "codeStatus": {
+        "type": "fullCode"
+      },
+      "allergies": [],
+      "clinicalSummary": "New-diagnosis T1DM presenting with severe DKA and AKI Stage 3. CRRT commenced 0200; pH improving but still acidotic.",
+      "handoverNotes": null,
+      "vitals": [
+        {
+          "id": "p5-vital-1",
+          "label": "HR",
+          "value": "102",
+          "unit": "bpm",
+          "status": "warning",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p5-vital-2",
+          "label": "BP",
+          "value": "108/65",
+          "unit": "mmHg",
+          "status": "warning",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p5-vital-3",
+          "label": "SpO2",
+          "value": "98",
+          "unit": "%",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p5-vital-4",
+          "label": "Temp",
+          "value": "36.8",
+          "unit": "°C",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p5-vital-5",
+          "label": "pH",
+          "value": "7.21",
+          "unit": "",
+          "status": "critical",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p5-vital-6",
+          "label": "BSL",
+          "value": "22.4",
+          "unit": "mmol/L",
+          "status": "critical",
+          "timestamp": "2026-04-28T06:55:00Z"
+        }
+      ],
+      "infusions": [
+        {
+          "id": "p5-inf-1",
+          "drugName": "Insulin",
+          "dose": "6 U/hr",
+          "route": "IV",
+          "purpose": "Target BSL 10-14",
+          "isHighAlert": true
+        },
+        {
+          "id": "p5-inf-2",
+          "drugName": "0.9% NaCl",
+          "dose": "250 mL/hr",
+          "route": "IV",
+          "purpose": "Cautious rehydration",
+          "isHighAlert": false
+        },
+        {
+          "id": "p5-inf-3",
+          "drugName": "Potassium Chloride",
+          "dose": "40 mEq/hr",
+          "route": "IV (CVC)",
+          "purpose": "K+ replacement (admission K+ 2.8)",
+          "isHighAlert": true
+        },
+        {
+          "id": "p5-inf-4",
+          "drugName": "CRRT (CVVHDF)",
+          "dose": "Blood flow 200 mL/min",
+          "route": "Femoral HD catheter R",
+          "purpose": "AKI Stage 3 management — citrate anticoagulation",
+          "isHighAlert": true
+        }
+      ],
+      "lines": [
+        {
+          "id": "p5-line-1",
+          "type": "HD Catheter (Vas-Cath)",
+          "location": "Right Femoral"
+        },
+        {
+          "id": "p5-line-2",
+          "type": "Radial Arterial Line",
+          "location": "Left"
+        },
+        {
+          "id": "p5-line-3",
+          "type": "Peripheral IV (16G)",
+          "location": "Right ACF"
+        },
+        {
+          "id": "p5-line-4",
+          "type": "Peripheral IV (18G)",
+          "location": "Left forearm"
+        },
+        {
+          "id": "p5-line-5",
+          "type": "Urinary Catheter",
+          "location": "Urethral"
+        },
+        {
+          "id": "p5-line-6",
+          "type": "Nasogastric Tube",
+          "location": "Nasal — free drainage"
+        }
+      ],
+      "labs": [
+        {
+          "id": "p5-lab-1",
+          "name": "pH",
+          "value": "7.21",
+          "unit": "",
+          "status": "critical",
+          "trend": "up"
+        },
+        {
+          "id": "p5-lab-2",
+          "name": "HCO3",
+          "value": "9",
+          "unit": "mmol/L",
+          "status": "critical",
+          "trend": "up"
+        },
+        {
+          "id": "p5-lab-3",
+          "name": "Anion Gap",
+          "value": "28",
+          "unit": "mmol/L",
+          "status": "critical",
+          "trend": "down"
+        },
+        {
+          "id": "p5-lab-4",
+          "name": "Glucose",
+          "value": "22.4",
+          "unit": "mmol/L",
+          "status": "critical",
+          "trend": "down"
+        },
+        {
+          "id": "p5-lab-5",
+          "name": "K+",
+          "value": "3.1",
+          "unit": "mmol/L",
+          "status": "warning",
+          "trend": "up"
+        },
+        {
+          "id": "p5-lab-6",
+          "name": "Creatinine",
+          "value": "488",
+          "unit": "µmol/L",
+          "status": "critical",
+          "trend": "stable"
+        },
+        {
+          "id": "p5-lab-7",
+          "name": "Ketones",
+          "value": "++++",
+          "unit": "",
+          "status": "critical",
+          "trend": "stable"
+        }
+      ],
+      "systems": [
+        {
+          "id": "p5-sys-1",
+          "system": "neuro",
+          "summary": "Alert, GCS 15. Abdominal pain 4/10. Very anxious — first ICU admission, new T1DM diagnosis.",
+          "concerns": [
+            "Psychological distress — needs support"
+          ]
+        },
+        {
+          "id": "p5-sys-2",
+          "system": "respiratory",
+          "summary": "Self-ventilating on room air. Kussmaul breathing improving. SpO2 98% RA.",
+          "concerns": []
+        },
+        {
+          "id": "p5-sys-3",
+          "system": "cardiovascular",
+          "summary": "Mildly tachycardic, improving. BP 108/65 with fluid resuscitation. ECG: T-wave flattening (hypokalaemia).",
+          "concerns": [
+            "Hypokalaemia — risk of arrhythmia"
+          ]
+        },
+        {
+          "id": "p5-sys-4",
+          "system": "renal",
+          "summary": "Oliguric AKI Stage 3. CRRT commenced 0200. Fluid removal 100 mL/hr. UO pre-CRRT <5 mL/hr.",
+          "concerns": [
+            "AKI Stage 3 on CRRT"
+          ]
+        },
+        {
+          "id": "p5-sys-5",
+          "system": "gastrointestinal",
+          "summary": "NBM (nausea/vomiting). Antiemetics prescribed. NGT on free drainage. Gastric aspirate 200 mL.",
+          "concerns": []
+        }
+      ],
+      "plan": [
+        {
+          "id": "p5-plan-1",
+          "task": "Continue CRRT — target pH >7.35, Cr trending down",
+          "dueTime": null,
+          "priority": "urgent"
+        },
+        {
+          "id": "p5-plan-2",
+          "task": "Hourly BSL — titrate insulin to BSL 10-14",
+          "dueTime": null,
+          "priority": "urgent"
+        },
+        {
+          "id": "p5-plan-3",
+          "task": "K+ replacement protocol — recheck in 2 hours",
+          "dueTime": "2026-04-28T09:00:00Z",
+          "priority": "urgent"
+        },
+        {
+          "id": "p5-plan-4",
+          "task": "Endocrine review — new T1DM insulin planning",
+          "dueTime": "2026-04-28T09:00:00Z",
+          "priority": "urgent"
+        },
+        {
+          "id": "p5-plan-5",
+          "task": "Nephrology handover for CRRT management",
+          "dueTime": null,
+          "priority": "routine"
+        },
+        {
+          "id": "p5-plan-6",
+          "task": "Psychology/social work consult when stable",
+          "dueTime": null,
+          "priority": "routine"
+        }
+      ],
+      "family": {
+        "primaryContact": "Parents (in Penang)",
+        "presentAtBedside": false,
+        "notes": "Single, lives alone. Parents travelling from Penang — ETA 8 hours. Contacted by phone. Very anxious. Patient has asked about parents repeatedly."
+      },
+      "escalation": {
+        "mainConcerns": [
+          "Ongoing acidosis though improving",
+          "Risk of hypokalaemia during insulin infusion",
+          "First T1DM admission — needs education and psychological support"
+        ],
+        "triggers": [
+          "pH drops below 7.10",
+          "K+ falls below 3.0",
+          "CRRT circuit fails and cannot be re-established",
+          "Conscious state deteriorates"
+        ],
+        "escalateTo": "ICU Registrar / Nephrology"
+      }
+    },
+    {
+      "id": "p6",
+      "bedNumber": "BED-06",
+      "mrn": "MRN-202400123",
+      "name": "Datin Mariam bt Osman",
+      "age": 71,
+      "gender": "female",
+      "acuity": "stable",
+      "codeStatus": {
+        "type": "custom",
+        "details": "Full Code (Advance Directive: no CPR if primary graft non-function)"
+      },
+      "allergies": [
+        {
+          "substance": "Vancomycin",
+          "reaction": "Red Man Syndrome"
+        },
+        {
+          "substance": "Latex",
+          "reaction": "Contact reaction — strict latex-free environment required"
+        }
+      ],
+      "clinicalSummary": "Day 3 post-orthotopic liver transplant. Tacrolimus sub-therapeutic — dose increase needed today. Strict latex-free environment.",
+      "handoverNotes": null,
+      "vitals": [
+        {
+          "id": "p6-vital-1",
+          "label": "HR",
+          "value": "78",
+          "unit": "bpm",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p6-vital-2",
+          "label": "BP",
+          "value": "130/80",
+          "unit": "mmHg",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p6-vital-3",
+          "label": "SpO2",
+          "value": "96",
+          "unit": "%",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p6-vital-4",
+          "label": "Temp",
+          "value": "37.3",
+          "unit": "°C",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p6-vital-5",
+          "label": "Bilirubin",
+          "value": "38",
+          "unit": "µmol/L",
+          "status": "warning",
+          "timestamp": "2026-04-28T06:55:00Z"
+        },
+        {
+          "id": "p6-vital-6",
+          "label": "INR",
+          "value": "2.1",
+          "unit": "",
+          "status": "warning",
+          "timestamp": "2026-04-28T06:55:00Z"
+        }
+      ],
+      "infusions": [
+        {
+          "id": "p6-inf-1",
+          "drugName": "Tacrolimus",
+          "dose": "0.05 mg/kg/day (trough 8-12 target)",
+          "route": "IV/NGT",
+          "purpose": "Immunosuppression — DOSE TO BE INCREASED (trough 6.2)",
+          "isHighAlert": true
+        },
+        {
+          "id": "p6-inf-2",
+          "drugName": "Methylprednisolone",
+          "dose": "50 mg OD (tapering)",
+          "route": "IV",
+          "purpose": "Immunosuppression",
+          "isHighAlert": false
+        },
+        {
+          "id": "p6-inf-3",
+          "drugName": "Mycophenolate",
+          "dose": "500 mg BD",
+          "route": "NGT",
+          "purpose": "Immunosuppression",
+          "isHighAlert": false
+        },
+        {
+          "id": "p6-inf-4",
+          "drugName": "Valganciclovir",
+          "dose": "900 mg OD",
+          "route": "NGT",
+          "purpose": "CMV prophylaxis",
+          "isHighAlert": false
+        },
+        {
+          "id": "p6-inf-5",
+          "drugName": "Nystatin S&S",
+          "dose": "QID",
+          "route": "Oral",
+          "purpose": "Antifungal prophylaxis",
+          "isHighAlert": false
+        },
+        {
+          "id": "p6-inf-6",
+          "drugName": "Insulin",
+          "dose": "2 U/hr",
+          "route": "IV",
+          "purpose": "BSL target 4-10",
+          "isHighAlert": true
+        }
+      ],
+      "lines": [
+        {
+          "id": "p6-line-1",
+          "type": "Radial Arterial Line",
+          "location": "Right"
+        },
+        {
+          "id": "p6-line-2",
+          "type": "Triple-Lumen CVC",
+          "location": "Left IJV"
+        },
+        {
+          "id": "p6-line-3",
+          "type": "T-Tube (Biliary Drain)",
+          "location": "Common bile duct"
+        },
+        {
+          "id": "p6-line-4",
+          "type": "JP Drain",
+          "location": "Right Upper Quadrant (anterior)"
+        },
+        {
+          "id": "p6-line-5",
+          "type": "JP Drain",
+          "location": "Right Upper Quadrant (posterior)"
+        },
+        {
+          "id": "p6-line-6",
+          "type": "Urinary Catheter",
+          "location": "Urethral"
+        },
+        {
+          "id": "p6-line-7",
+          "type": "Nasogastric Tube",
+          "location": "Nasal"
+        }
+      ],
+      "labs": [
+        {
+          "id": "p6-lab-1",
+          "name": "ALT",
+          "value": "420",
+          "unit": "U/L",
+          "status": "warning",
+          "trend": "down"
+        },
+        {
+          "id": "p6-lab-2",
+          "name": "AST",
+          "value": "310",
+          "unit": "U/L",
+          "status": "warning",
+          "trend": "down"
+        },
+        {
+          "id": "p6-lab-3",
+          "name": "ALP",
+          "value": "190",
+          "unit": "U/L",
+          "status": "warning",
+          "trend": "stable"
+        },
+        {
+          "id": "p6-lab-4",
+          "name": "Bilirubin",
+          "value": "38",
+          "unit": "µmol/L",
+          "status": "warning",
+          "trend": "down"
+        },
+        {
+          "id": "p6-lab-5",
+          "name": "INR",
+          "value": "2.1",
+          "unit": "",
+          "status": "warning",
+          "trend": "stable"
+        },
+        {
+          "id": "p6-lab-6",
+          "name": "Tacrolimus Trough",
+          "value": "6.2",
+          "unit": "ng/mL",
+          "status": "critical",
+          "trend": "down"
+        },
+        {
+          "id": "p6-lab-7",
+          "name": "Creatinine",
+          "value": "112",
+          "unit": "µmol/L",
+          "status": "normal",
+          "trend": "stable"
+        },
+        {
+          "id": "p6-lab-8",
+          "name": "Hb",
+          "value": "9.1",
+          "unit": "g/dL",
+          "status": "warning",
+          "trend": "stable"
+        },
+        {
+          "id": "p6-lab-9",
+          "name": "Platelets",
+          "value": "62",
+          "unit": "x10^9/L",
+          "status": "warning",
+          "trend": "stable"
+        }
+      ],
+      "systems": [
+        {
+          "id": "p6-sys-1",
+          "system": "neuro",
+          "summary": "Alert and oriented, GCS 15. Brief confusion episode at 0200 — resolved. DDx: ICU delirium vs Tacrolimus neurotoxicity.",
+          "concerns": [
+            "Monitor closely for recurrent confusion"
+          ]
+        },
+        {
+          "id": "p6-sys-2",
+          "system": "respiratory",
+          "summary": "SV on 2L NPO2, SpO2 96%. R pleural effusion on CXR — monitoring. Incentive spirometry TDS.",
+          "concerns": [
+            "Right pleural effusion"
+          ]
+        },
+        {
+          "id": "p6-sys-3",
+          "system": "cardiovascular",
+          "summary": "Stable, no vasopressors. Hepatic artery doppler q6h — last reading triphasic flow, RI 0.68 (normal). No HAT.",
+          "concerns": [
+            "Hepatic artery thrombosis risk — q6h doppler"
+          ]
+        },
+        {
+          "id": "p6-sys-4",
+          "system": "renal",
+          "summary": "UO 0.9 mL/kg/hr. Tacrolimus nephrotoxicity risk. Cr 112 (baseline 110).",
+          "concerns": [
+            "Maintain adequate hydration",
+            "Avoid nephrotoxins"
+          ]
+        },
+        {
+          "id": "p6-sys-5",
+          "system": "gastrointestinal",
+          "summary": "T-tube draining green bile 120 mL (appropriate). JP drains: RUQ combined 60 mL serosanguinous. EN via NGT 50 mL/hr. Trial oral diet today.",
+          "concerns": [
+            "Watch JP output for haemorrhage"
+          ]
+        },
+        {
+          "id": "p6-sys-6",
+          "system": "infection",
+          "summary": "CMV prophylaxis ongoing. BAL Galactomannan pending. Strict latex-free environment. Blood cultures pending (fever spike Day 1).",
+          "concerns": [
+            "Opportunistic infection risk",
+            "Pending culture results"
+          ]
+        }
+      ],
+      "plan": [
+        {
+          "id": "p6-plan-1",
+          "task": "Tacrolimus dose increase — pharmacist to advise (trough 6.2, target 8-12)",
+          "dueTime": "2026-04-28T08:00:00Z",
+          "priority": "urgent"
+        },
+        {
+          "id": "p6-plan-2",
+          "task": "Hepatic artery doppler — alert surgeon if RI <0.5 or loss of triphasic",
+          "dueTime": "2026-04-28T10:00:00Z",
+          "priority": "urgent"
+        },
+        {
+          "id": "p6-plan-3",
+          "task": "LFTs, INR, renal panel",
+          "dueTime": "2026-04-28T06:00:00Z",
+          "priority": "routine"
+        },
+        {
+          "id": "p6-plan-4",
+          "task": "T-tube: measure and record output every shift",
+          "dueTime": null,
+          "priority": "routine"
+        },
+        {
+          "id": "p6-plan-5",
+          "task": "Trial oral diet — dietitian review",
+          "dueTime": null,
+          "priority": "routine"
+        },
+        {
+          "id": "p6-plan-6",
+          "task": "Transplant hepatology ward round",
+          "dueTime": "2026-04-28T08:30:00Z",
+          "priority": "routine"
+        },
+        {
+          "id": "p6-plan-7",
+          "task": "Chase blood culture and Galactomannan results — ID review if positive",
+          "dueTime": null,
+          "priority": "urgent"
+        }
+      ],
+      "family": {
+        "primaryContact": "Husband (Dato' Rashid) and 2 adult children",
+        "presentAtBedside": false,
+        "notes": "Family understand gravity of post-transplant period. Dato' Rashid specifically requested to be called for any clinical deterioration."
+      },
+      "escalation": {
+        "mainConcerns": [
+          "Tacrolimus sub-therapeutic — risk of acute rejection",
+          "Monitor hepatic artery closely",
+          "Watch for opportunistic infections"
+        ],
+        "triggers": [
+          "Hepatic artery doppler abnormal (RI <0.5 or loss of triphasic flow)",
+          "Sudden increase in JP drain output (?haemorrhage)",
+          "Sudden LFT spike (?acute rejection)",
+          "Recurrent or worsening confusion",
+          "Fever or new sepsis signs"
+        ],
+        "escalateTo": "Transplant Surgeon / ICU Registrar"
+      }
+    }
+  ]
+}
