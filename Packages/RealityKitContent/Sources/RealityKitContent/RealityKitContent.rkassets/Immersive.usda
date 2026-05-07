@@ -7,44 +7,342 @@
 
 def Xform "Root"
 {
-    reorder nameChildren = ["Sphere_Left", "Sphere_Right", "GridMaterial"]
-    def "SkyDome" (
+    reorder nameChildren = ["ICU_env", "Labs", "Plan", "Escalation", "System"]
+    float3 xformOp:translate = (0, 0, 0)
+    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+    def "ICU_env" (
         active = true
-        prepend references = @SkyDome.usdz@
+        customData = {
+            float3 rotationEulerHint = (0, 3.1415927, 0)
+        }
+        references = @ICU Env/ICU_PatientwithSpline_ClassicLight.usdz@
     )
     {
+        reorder nameChildren = ["Materials", "Spline", "Patient", "ICUArea", "Vitals", "Lines", "Infusions", "Labs", "Escalation", "Plan", "Systems"]
+        quatf xformOp:orient = (-4.371139e-8, 0, 1, 0)
         float3 xformOp:scale = (0.01, 0.01, 0.01)
-        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
-    }
-
-    def Xform "Video_Dock" (
-        references = None
-    )
-    {
-        double3 xformOp:translate = (0, 0.8, -3)
+        float3 xformOp:translate = (-0.9447302, -0.1, -0.42672086)
         uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
-        def Xform "Player"
+        def Xform "Vitals" (
+            active = true
+        )
         {
-            double3 xformOp:translate = (0, 0.6, 0)
+            quatf xformOp:orient = (1, 0, 6.9280863e-16, 0)
+            float3 xformOp:scale = (100, 100, 100)
+            float3 xformOp:translate = (140.44699, 252.08394, -140.1039)
             uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
-            def RealityKitComponent "CustomDockingRegion"
+            def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
             {
-                token info:id = "RealityKit.CustomDockingRegion"
-
-                def RealityKitStruct "m_bounds"
-                {
-                    float3 max = (1.2, 0.5, 0)
-                    float3 min = (-1.2, -0.5, -0)
-                }
+                uniform token info:id = "RealityKitContent.PointOfInterestComponent"
+                string name = "Vitals"
             }
         }
 
-        def "Ground" (
-            prepend references = @Ground/Ground.usda@
+        def Xform "Infusions" (
+            active = true
+            customData = {
+                float3 rotationEulerHint = (0, 3.1415925, 0)
+            }
         )
         {
+            reorder nameChildren = ["Escalation", "RealityKitContent_PointOfInterestComponent", "System"]
+            quatf xformOp:orient = (4.371139e-8, 0, 1, 0)
+            float3 xformOp:scale = (5662.4604, 5662.4604, 5662.4604)
+            float3 xformOp:translate = (102.76011, 182.89397, -204.32332)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+            def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
+            {
+                string description = "Normal Saline 0.9%, Dosage: 100mL/hr"
+                uniform token info:id = "RealityKitContent.PointOfInterestComponent"
+                string name = "Infusions"
+            }
+        }
+
+        over "ICUArea"
+        {
+            over "FloorTile"
+            {
+                quatf xformOp:orient = (1, 0, 0, 0)
+                float3 xformOp:scale = (1, 1, 1)
+                float3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+            }
+
+            over "IVDrip"
+            {
+                quatf xformOp:orient = (1, 0, 0, 0)
+                float3 xformOp:scale = (1, 1, 1)
+                float3 xformOp:translate = (51.99701, 0.000015854834, -15.595528)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+                over "default_11"
+                {
+                    over "default_11_geometry"
+                    {
+                        quatf xformOp:orient = (1, 0, 0, 0)
+                        float3 xformOp:scale = (1, 1, 1)
+                        float3 xformOp:translate = (0, 0, 0)
+                        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+                    }
+                }
+            }
+
+            over "CeilingTiles"
+            {
+                quatf xformOp:orient = (1, 0, 0, 0)
+                float3 xformOp:scale = (1, 1, 1)
+                float3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+            }
+
+            over "CeilingGrid"
+            {
+                quatf xformOp:orient = (1, 0, 0, 0)
+                float3 xformOp:scale = (1, 1, 1)
+                float3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+            }
+
+            over "CeilingLight"
+            {
+                quatf xformOp:orient = (1, 0, 0, 0)
+                float3 xformOp:scale = (1, 1, 1)
+                float3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+            }
+
+            over "Roof"
+            {
+                quatf xformOp:orient = (1, 0, 0, 0)
+                float3 xformOp:scale = (1, 1, 1)
+                float3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+            }
+
+            over "Headrail"
+            {
+                quatf xformOp:orient = (1, 0, 0, 0)
+                float3 xformOp:scale = (1, 1, 1)
+                float3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+            }
+
+            over "PaintedWall"
+            {
+                quatf xformOp:orient = (1, 0, 0, 0)
+                float3 xformOp:scale = (1, 1, 1)
+                float3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+            }
+
+            over "Skirting"
+            {
+                quatf xformOp:orient = (1, 0, 0, 0)
+                float3 xformOp:scale = (1, 1, 1)
+                float3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+            }
+
+            over "Blinds"
+            {
+                quatf xformOp:orient = (1, 0, 0, 0)
+                float3 xformOp:scale = (1, 1, 1)
+                float3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+            }
+
+            over "WindowFrame"
+            {
+                quatf xformOp:orient = (1, 0, 0, 0)
+                float3 xformOp:scale = (1, 1, 1)
+                float3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+            }
+
+            over "Headboard"
+            {
+                quatf xformOp:orient = (1, 0, 0, 0)
+                float3 xformOp:scale = (1, 1, 1)
+                float3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+            }
+
+            over "HospitalBed"
+            {
+                quatf xformOp:orient = (1, 0, 0, 0)
+                float3 xformOp:scale = (1, 1, 1)
+                float3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+            }
+
+            over "Ventilator"
+            {
+                quatf xformOp:orient = (1, 0, 0, 0)
+                float3 xformOp:scale = (1, 1, 1)
+                float3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+            }
+
+            over "InfusionPump"
+            {
+                quatf xformOp:orient = (1, 0, 0, 0)
+                float3 xformOp:scale = (1, 1, 1)
+                float3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+            }
+
+            over "MachineF"
+            {
+                quatf xformOp:orient = (1, 0, 0, 0)
+                float3 xformOp:scale = (1, 1, 1)
+                float3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+            }
+
+            over "MachineB" (
+                customData = {
+                    float3 rotationEulerHint = (0, 1.5707963, 0)
+                }
+            )
+            {
+                quatf xformOp:orient = (0.70710677, 0, 0.70710677, 0)
+                float3 xformOp:scale = (1, 1, 1)
+                float3 xformOp:translate = (134.91452, 0.00001633167, -4.54689)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+            }
+
+            over "LightFitting"
+            {
+                quatf xformOp:orient = (1, 0, 0, 0)
+                float3 xformOp:scale = (1, 1, 1)
+                float3 xformOp:translate = (0, 0, 0)
+                uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+            }
+        }
+
+        over "Spline"
+        {
+            quatf xformOp:orient = (1, 0, 0, 0)
+            float3 xformOp:scale = (1, 1, 1)
+            float3 xformOp:translate = (10.160403, 124.70585, -131.02068)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+        }
+
+        over "Patient"
+        {
+            quatf xformOp:orient = (-9.640376e-8, 9.1855256e-8, 0.72397983, 0.6898211)
+            float3 xformOp:scale = (1.0000005, 1.0000002, 1.0000002)
+            float3 xformOp:translate = (11, 103.5, -206.6)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+        }
+
+        def Xform "Lines" (
+            active = true
+        )
+        {
+            quatf xformOp:orient = (4.371139e-8, 0, 1, 0)
+            float3 xformOp:scale = (100, 100, 100)
+            float3 xformOp:translate = (97.0933, 182.8932, -204.32144)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+            def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
+            {
+                uniform token info:id = "RealityKitContent.PointOfInterestComponent"
+                string name = "Lines"
+            }
+        }
+
+        def Xform "Labs" (
+            active = true
+            customData = {
+                float3 rotationEulerHint = (0, 3.1415925, 0)
+            }
+        )
+        {
+            reorder nameChildren = ["RealityKitContent_PointOfInterestComponent", "Plan"]
+            float2 ui:nodegraph:node:pos = (20, 20)
+            int ui:nodegraph:node:stackingOrder = 1
+            quatf xformOp:orient = (4.371139e-8, 0, 1, 0)
+            float3 xformOp:scale = (5662.4595, 5662.4595, 5662.4595)
+            float3 xformOp:translate = (102.760124, 182.89397, -204.3233)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+            def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
+            {
+                string description = ""
+                uniform token info:id = "RealityKitContent.PointOfInterestComponent"
+                string name = "Labs"
+            }
+        }
+
+        def Xform "Escalation" (
+            active = true
+            customData = {
+                float3 rotationEulerHint = (0, 3.1415925, 0)
+            }
+        )
+        {
+            float2 ui:nodegraph:node:pos = (40, 40)
+            int ui:nodegraph:node:stackingOrder = 2
+            quatf xformOp:orient = (4.3711395e-8, 0, 1, 0)
+            float3 xformOp:scale = (5662.4585, 5662.4585, 5662.4585)
+            float3 xformOp:translate = (102.760124, 182.89397, -204.32332)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+            def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
+            {
+                string description = "Normal Saline 0.9%, Dosage: 100mL/hr"
+                uniform token info:id = "RealityKitContent.PointOfInterestComponent"
+                string name = "Escalation"
+            }
+        }
+
+        def Xform "Plan" (
+            active = true
+            customData = {
+                float3 rotationEulerHint = (0, 3.1415925, 0)
+            }
+        )
+        {
+            float2 ui:nodegraph:node:pos = (40, 40)
+            int ui:nodegraph:node:stackingOrder = 2
+            quatf xformOp:orient = (4.3711395e-8, 0, 1, 0)
+            float3 xformOp:scale = (5662.4585, 5662.4585, 5662.4585)
+            float3 xformOp:translate = (102.760124, 182.89397, -204.3233)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+            def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
+            {
+                string description = "Normal Saline 0.9%, Dosage: 100mL/hr"
+                uniform token info:id = "RealityKitContent.PointOfInterestComponent"
+                string name = "Plan"
+            }
+        }
+
+        def Xform "Systems" (
+            active = true
+            customData = {
+                float3 rotationEulerHint = (0, 3.1415925, 0)
+            }
+        )
+        {
+            float2 ui:nodegraph:node:pos = (40, 40)
+            int ui:nodegraph:node:stackingOrder = 2
+            quatf xformOp:orient = (4.3711395e-8, 0, 1, 0)
+            float3 xformOp:scale = (5662.4585, 5662.4585, 5662.4585)
+            float3 xformOp:translate = (102.760124, 182.89397, -204.32332)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+            def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
+            {
+                string description = "Normal Saline 0.9%, Dosage: 100mL/hr"
+                uniform token info:id = "RealityKitContent.PointOfInterestComponent"
+                string name = "Systems"
+            }
         }
     }
 }

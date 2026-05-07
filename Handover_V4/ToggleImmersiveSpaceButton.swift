@@ -7,12 +7,24 @@
 
 import SwiftUI
 
+struct ImmersiveControlsView: View {
+    var body: some View {
+        HStack {
+            ToggleImmersiveSpaceButton()
+        }
+        .padding()
+        .glassBackgroundEffect()
+    }
+}
+
 struct ToggleImmersiveSpaceButton: View {
 
     @Environment(AppModel.self) private var appModel
 
     @Environment(\.dismissImmersiveSpace) private var dismissImmersiveSpace
     @Environment(\.openImmersiveSpace) private var openImmersiveSpace
+    @Environment(\.openWindow) private var openWindow
+        @Environment(\.dismissWindow) private var dismissWindow
 
     var body: some View {
         Button {
@@ -24,6 +36,8 @@ struct ToggleImmersiveSpaceButton: View {
                         // Don't set immersiveSpaceState to .closed because there
                         // are multiple paths to ImmersiveView.onDisappear().
                         // Only set .closed in ImmersiveView.onDisappear().
+                        dismissWindow(id: "controls")
+                        openWindow(id: "dashboard")
 
                     case .closed:
                         appModel.immersiveSpaceState = .inTransition
@@ -32,6 +46,9 @@ struct ToggleImmersiveSpaceButton: View {
                                 // Don't set immersiveSpaceState to .open because there
                                 // may be multiple paths to ImmersiveView.onAppear().
                                 // Only set .open in ImmersiveView.onAppear().
+                                dismissWindow(id: "dashboard")
+                                openWindow(id: "controls")    // ← new
+
                                 break
 
                             case .userCancelled, .error:
@@ -49,7 +66,7 @@ struct ToggleImmersiveSpaceButton: View {
                 }
             }
         } label: {
-            Text(appModel.immersiveSpaceState == .open ? "Hide Immersive Space" : "Show Immersive Space")
+            Text(appModel.immersiveSpaceState == .open ? "Exit ICU Immersive Space" : "Enter ICU Immersive Space")
         }
         .disabled(appModel.immersiveSpaceState == .inTransition)
         .animation(.none, value: 0)

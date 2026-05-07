@@ -10,7 +10,7 @@
 //    - Load patients from PatientData.json
 //    - Track which patient is currently displayed
 //    - Track the order of dashboard sections (for drag-and-drop in Step 6)
-//    - Provide a hook for SharePlay to update state remotely (future)
+//    - Provide hooks for SharePlay to update state remotely
 //
 //  Marked @Observable (Swift 5.9+) so SwiftUI views automatically track
 //  changes to its properties without requiring @Published.
@@ -20,6 +20,7 @@ import Foundation
 import Observation
 
 @Observable
+@MainActor
 final class HandoverViewModel {
     
     /// All patients loaded from the bundle.
@@ -73,13 +74,15 @@ final class HandoverViewModel {
     // MARK: - Section ordering
     
     /// Moves a section from one index to another within the section order.
-    func moveSection(from source: Int, to destination: Int) {
-        guard source >= 0, source < sectionOrder.count else { return }
-        guard destination >= 0, destination <= sectionOrder.count else { return }
+    @discardableResult
+    func moveSection(from source: Int, to destination: Int) -> Bool {
+        guard source >= 0, source < sectionOrder.count else { return false }
+        guard destination >= 0, destination <= sectionOrder.count else { return false }
         
         let item = sectionOrder.remove(at: source)
         let insertionIndex = destination > source ? destination - 1 : destination
         sectionOrder.insert(item, at: insertionIndex)
+        return true
     }
     
     /// Moves the dragged section so it sits just before the destination section.
@@ -87,10 +90,11 @@ final class HandoverViewModel {
     ///
     /// Example: dragging Plan onto Vitals → Plan ends up immediately before Vitals.
     /// Dragging a section onto itself is a no-op.
-    func moveSection(_ dragged: SectionID, before destination: SectionID) {
-        guard dragged != destination else { return }
-        guard let fromIndex = sectionOrder.firstIndex(of: dragged) else { return }
-        guard sectionOrder.firstIndex(of: destination) != nil else { return }
+    @discardableResult
+    func moveSection(_ dragged: SectionID, before destination: SectionID) -> Bool {
+        guard dragged != destination else { return false }
+        guard let fromIndex = sectionOrder.firstIndex(of: dragged) else { return false }
+        guard sectionOrder.firstIndex(of: destination) != nil else { return false }
         
         // Remove the dragged item first; this may shift the destination index.
         sectionOrder.remove(at: fromIndex)
@@ -98,10 +102,35 @@ final class HandoverViewModel {
         // Recompute target index after removal.
         let adjustedTarget = sectionOrder.firstIndex(of: destination) ?? sectionOrder.count
         sectionOrder.insert(dragged, at: adjustedTarget)
+        return true
     }
     
     /// Resets the section order to the default. Useful for a "reset layout" button.
     func resetSectionOrder() {
         sectionOrder = SectionID.defaultOrder
+    }
+
+    /// Applies a remote section order while preserving any sections the sender did
+    /// not know about yet.
+    func applySectionOrder(_ remoteOrder: [SectionID]) {
+        var resolvedOrder: [SectionID] = []
+
+        for section in remoteOrder where !resolvedOrder.contains(section) {
+            resolvedOrder.append(section)
+        }
+
+        for section in SectionID.defaultOrder where !resolvedOrder.contains(section) {
+            resolvedOrder.append(section)
+        }
+
+        sectionOrder = resolvedOrder
+    }
+
+    func applyDashboardState(_ dashboardState: DashboardState) {
+        if let selectedPatientID = dashboardState.selectedPatientID {
+            selectPatient(byID: selectedPatientID)
+        }
+
+        applySectionOrder(dashboardState.sectionOrder)
     }
 }

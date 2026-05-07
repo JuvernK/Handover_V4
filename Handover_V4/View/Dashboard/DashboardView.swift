@@ -21,6 +21,7 @@ import SwiftUI
 
 struct DashboardView: View {
     @State var viewModel: HandoverViewModel
+    @Environment(AppModel.self) private var appModel
     
     /// Adaptive grid: cards reflow into 1, 2, or 3 columns based on window width.
     private let gridColumns = [
@@ -46,8 +47,7 @@ struct DashboardView: View {
                         ForEach(reorderableSections) { sectionID in
                             DraggableCard(
                                 sectionID: sectionID,
-                                patient: patient,
-                                viewModel: viewModel
+                                patient: patient
                             )
                         }
                     }
@@ -64,6 +64,56 @@ struct DashboardView: View {
             }
         }
         .dynamicTypeSize(.small)
+        .ornament(attachmentAnchor: .scene(.bottom)) {
+            DashboardControls()
+        }
+        .alert(
+            "SharePlay",
+            isPresented: Binding(
+                get: { appModel.sharePlayErrorMessage != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        appModel.sharePlayErrorMessage = nil
+                    }
+                }
+            )
+        ) {
+            Button("OK", role: .cancel) {
+                appModel.sharePlayErrorMessage = nil
+            }
+        } message: {
+            Text(appModel.sharePlayErrorMessage ?? "")
+        }
+    }
+}
+
+// MARK: - Dashboard controls
+
+private struct DashboardControls: View {
+    @Environment(AppModel.self) private var appModel
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Button {
+                Task { @MainActor in
+                    if appModel.isSharePlayActive {
+                        appModel.endSession()
+                    } else {
+                        await appModel.activateSharePlay()
+                    }
+                }
+            } label: {
+                Label(
+                    appModel.isSharePlayActive ? "End SharePlay" : "Start SharePlay",
+                    systemImage: appModel.isSharePlayActive ? "shareplay.slash" : "shareplay"
+                )
+            }
+            .disabled(appModel.isActivatingSharePlay)
+
+            ToggleImmersiveSpaceButton()
+        }
+        .padding(12)
+        .glassBackgroundEffect()
     }
 }
 
@@ -73,7 +123,7 @@ struct DashboardView: View {
 private struct DraggableCard: View {
     let sectionID: SectionID
     let patient: Patient
-    let viewModel: HandoverViewModel
+    @Environment(AppModel.self) private var appModel
     
     @State private var isTargeted: Bool = false
     
@@ -90,12 +140,12 @@ private struct DraggableCard: View {
             }
             .dropDestination(for: SectionID.self) { droppedItems, _ in
                 guard let dragged = droppedItems.first else { return false }
-                viewModel.moveSection(dragged, before: sectionID)
-                return true
+                return appModel.moveDashboardSection(dragged, before: sectionID, syncChanges: true)
             } isTargeted: { targeted in
                 isTargeted = targeted
             }
     }
+    
 }
 
 // MARK: - Empty state
@@ -121,13 +171,19 @@ private struct EmptyDashboardState: View {
 // MARK: - Previews
 
 #Preview("Dashboard — Bed 01 (Ahmad)") {
-    DashboardView(viewModel: HandoverViewModel(initialBedNumber: "BED-01"))
+    let appModel = AppModel()
+    DashboardView(viewModel: appModel.handoverViewModel)
+        .environment(appModel)
 }
 
 #Preview("Dashboard — Bed 02 (Siti, critical)") {
-    DashboardView(viewModel: HandoverViewModel(initialBedNumber: "BED-02"))
+    let appModel = AppModel(initialBedNumber: "BED-02")
+    DashboardView(viewModel: appModel.handoverViewModel)
+        .environment(appModel)
 }
 
 #Preview("Dashboard — Bed 06 (Datin Mariam, post-OLT)") {
-    DashboardView(viewModel: HandoverViewModel(initialBedNumber: "BED-06"))
+    let appModel = AppModel(initialBedNumber: "BED-06")
+    DashboardView(viewModel: appModel.handoverViewModel)
+        .environment(appModel)
 }
