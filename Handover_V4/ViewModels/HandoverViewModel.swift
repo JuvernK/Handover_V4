@@ -8,12 +8,9 @@
 //
 //  Responsibilities:
 //    - Load patients from PatientData.json
-//    - Track which patient is currently displayed
-//    - Track the order of dashboard sections (for drag-and-drop in Step 6)
+//    - Track which patient is currently displayed via appmodel.patient
+//    - Track the order of dashboard sections
 //    - Provide hooks for SharePlay to update state remotely
-//
-//  Marked @Observable (Swift 5.9+) so SwiftUI views automatically track
-//  changes to its properties without requiring @Published.
 //
 
 import Foundation
@@ -30,10 +27,8 @@ final class HandoverViewModel {
     var patient: Patient?
     
     /// The order in which dashboard sections appear in the grid.
-    /// Drag-and-drop in DashboardView mutates this through `moveSection(_:before:)`.
+    /// Drag-and-drop in DashboardView mutates this through moveSection().
     var sectionOrder: [SectionID] = SectionID.defaultOrder
-    
-    // MARK: - Init
     
     /// Loads all patients from JSON and selects an initial patient by bed number.
     /// If the bed number is not found, falls back to the first patient.
@@ -44,7 +39,7 @@ final class HandoverViewModel {
     
     // MARK: - Patient management
     
-    /// Loads patients from PatientData.json. Called automatically on init.
+    /// Loads patients from PatientData.json.
     func loadPatients() {
         do {
             self.patients = try PatientDataLoader.load()
@@ -54,7 +49,7 @@ final class HandoverViewModel {
         }
     }
     
-    /// Sets the displayed patient by bed number.
+    /// Sets the displayed patient by selected bed number.
     /// Falls back to the first patient if the bed number isn't found.
     func selectPatient(byBed bedNumber: String) {
         if let match = patients.first(where: { $0.bedNumber == bedNumber }) {
@@ -64,6 +59,7 @@ final class HandoverViewModel {
         }
     }
     
+    /// Note: Removable
     /// Sets the displayed patient by ID. Used internally by tests/previews.
     func selectPatient(byID id: String) {
         if let match = patients.first(where: { $0.id == id }) {
@@ -73,35 +69,37 @@ final class HandoverViewModel {
     
     // MARK: - Section ordering
     
-    /// Moves a section from one index to another within the section order.
-    @discardableResult
-    func moveSection(from source: Int, to destination: Int) -> Bool {
-        guard source >= 0, source < sectionOrder.count else { return false }
-        guard destination >= 0, destination <= sectionOrder.count else { return false }
+    /// Moves a section from one index to another within the section order. (Index`based))
+    // @discardableResult
+    // func moveSection(from source: Int, to destination: Int) -> Bool {
+    //     guard source >= 0, source < sectionOrder.count else { return false }
+    //     guard destination >= 0, destination <= sectionOrder.count else { return false }
         
-        let item = sectionOrder.remove(at: source)
-        let insertionIndex = destination > source ? destination - 1 : destination
-        sectionOrder.insert(item, at: insertionIndex)
-        return true
-    }
+    //     let item = sectionOrder.remove(at: source)
+    //     let insertionIndex = destination > source ? destination - 1 : destination
+    //     sectionOrder.insert(item, at: insertionIndex)
+    //     return true
+    // }
     
-    /// Moves the dragged section so it sits just before the destination section.
+
+
+    /// Moves the dragged section into the destination section's current position. (ID based)
     /// Used by .dropDestination handlers in DashboardView.
     ///
-    /// Example: dragging Plan onto Vitals → Plan ends up immediately before Vitals.
+    /// Example: if Vitals is in position 1 and Infusions is in position 2,
+    /// dragging Vitals onto Infusions moves Vitals into position 2.
     /// Dragging a section onto itself is a no-op.
     @discardableResult
-    func moveSection(_ dragged: SectionID, before destination: SectionID) -> Bool {
+    func moveSection(_ dragged: SectionID, toPositionOf destination: SectionID) -> Bool {
         guard dragged != destination else { return false }
         guard let fromIndex = sectionOrder.firstIndex(of: dragged) else { return false }
-        guard sectionOrder.firstIndex(of: destination) != nil else { return false }
+        guard let destinationIndex = sectionOrder.firstIndex(of: destination) else { return false }
         
         // Remove the dragged item first; this may shift the destination index.
         sectionOrder.remove(at: fromIndex)
         
-        // Recompute target index after removal.
-        let adjustedTarget = sectionOrder.firstIndex(of: destination) ?? sectionOrder.count
-        sectionOrder.insert(dragged, at: adjustedTarget)
+        let insertionIndex = min(destinationIndex, sectionOrder.count)
+        sectionOrder.insert(dragged, at: insertionIndex)
         return true
     }
     

@@ -13,7 +13,7 @@
 //  Drag-and-drop:
 //    - Each card in the grid is both a drag source and a drop target
 //    - The whole card is draggable (visionOS gesture model handles tap vs drag)
-//    - Dropping card A onto card B moves A so it appears immediately before B
+//    - Dropping card A onto card B moves A into B's current position
 //    - The Systems card is excluded from the grid and not reorderable
 //
 
@@ -140,7 +140,7 @@ private struct DraggableCard: View {
             }
             .dropDestination(for: SectionID.self) { droppedItems, _ in
                 guard let dragged = droppedItems.first else { return false }
-                return appModel.moveDashboardSection(dragged, before: sectionID, syncChanges: true)
+                return appModel.moveDashboardSection(dragged, toPositionOf: sectionID, syncChanges: true)
             } isTargeted: { targeted in
                 isTargeted = targeted
             }

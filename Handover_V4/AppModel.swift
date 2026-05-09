@@ -26,7 +26,7 @@ class AppModel {
     var isActivatingSharePlay = false
     var sharePlayErrorMessage: String?
     
-    init(initialBedNumber: String = "BED-01") {
+    init(initialBedNumber: String = "BED-02") {
         handoverViewModel = HandoverViewModel(initialBedNumber: initialBedNumber)
 //        // Temporary debug code to test decoding
 //        print("Loaded \(patients.count) patients")
@@ -168,8 +168,8 @@ class AppModel {
     }
 
     @discardableResult
-    func moveDashboardSection(_ dragged: SectionID, before destination: SectionID, syncChanges: Bool) -> Bool {
-        guard handoverViewModel.moveSection(dragged, before: destination) else { return false }
+    func moveDashboardSection(_ dragged: SectionID, toPositionOf destination: SectionID, syncChanges: Bool) -> Bool {
+        guard handoverViewModel.moveSection(dragged, toPositionOf: destination) else { return false }
 
         if syncChanges {
             incrementAndBroadcastDashboard(action: .sectionOrder(handoverViewModel.sectionOrder))

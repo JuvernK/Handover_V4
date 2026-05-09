@@ -40,7 +40,7 @@ struct ImmersiveView: View {
                     let audioEntity = Entity()
                     let resource = try await AudioFileResource(
 //                        named: "icu_ambience",
-                        named: "jay chou - 简单爱",
+                        named: "icu_ambience",
                         configuration: .init(shouldLoop: true)
                     )
                     audioEntity.components.set(AmbientAudioComponent()) // For audio
