@@ -63,7 +63,7 @@ struct DashboardView: View {
                 EmptyDashboardState()
             }
         }
-        .dynamicTypeSize(.small)
+        .dynamicTypeSize(.medium)
         .ornament(attachmentAnchor: .scene(.bottom)) {
             DashboardControls()
         }
@@ -118,7 +118,6 @@ private struct DashboardControls: View {
 }
 
 // MARK: - Draggable card wrapper
-
 /// Wraps a section's card view with drag source + drop destination behaviour.
 private struct DraggableCard: View {
     let sectionID: SectionID

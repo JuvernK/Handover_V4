@@ -31,13 +31,15 @@ struct SystemsAssessmentCard: View {
                 EmptyState()
                     .padding(16)
             } else {
-                VStack(spacing: 0) {
-                    ForEach(Array(patient.systems.enumerated()), id: \.element.id) { index, system in
+                LazyVGrid(
+                    columns: [
+                        GridItem(.adaptive(minimum: 360), spacing: 12, alignment: .top)
+                    ],
+                    alignment: .leading,
+                    spacing: 4
+                ) {
+                    ForEach(patient.systems) { system in
                         SystemRow(assessment: system)
-                        
-                        if index < patient.systems.count - 1 {
-                            Divider().padding(.horizontal, 16)
-                        }
                     }
                 }
                 .padding(.vertical, 4)

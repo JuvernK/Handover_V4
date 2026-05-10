@@ -80,11 +80,9 @@ struct ImmersiveView: View {
                         
                         // Feature: Draggable. First make the UI card interactable and allow collision
                         attachmentEntity.components.set(InputTargetComponent())
-                        
-                        // NEW: 3D Gaze Magnetism
-                        attachmentEntity.components.set(HoverEffectComponent())
-                        
-                        attachmentEntity.components.set(runtimeComponent)
+                    
+                        attachmentEntity.components.set(HoverEffectComponent())    
+                        attachmentEntity.components.set(runtimeComponent) // to use the id generated at runtime
                         
                         // Track entities to dynamically resize their collision boxes later
                         Task { @MainActor in
@@ -93,8 +91,8 @@ struct ImmersiveView: View {
                             }
                         }
                         
-                        // 3. Poll for visual bounds instead of sleeping a fixed amount.
-                        // Wait until SwiftUI actually calculates geometry.
+                        // Poll for visual bounds instead of sleeping a fixed amount.
+                        // Wait until SwiftUI actually calculates geometry. (for drag to work)
                         Task { @MainActor in
                             for _ in 0..<20 { // Try up to 2 seconds
                                 try? await Task.sleep(for: .milliseconds(100))
@@ -138,14 +136,13 @@ struct ImmersiveView: View {
                 }
             }
         }
-        // 1. The Spatial Tap Gesture
         .gesture(
             SpatialTapGesture()
                 .targetedToAnyEntity()
                 .onEnded { value in
                     //                    print("DEBUG: SpatialTapGesture fired!")
                     
-                    // Read the card name from our 3D entity component
+                    // Read the card name 3D entity component
                     if let runtimeComp = value.entity.components[PointOfInterestRuntimeComponent.self] {
                         let name = runtimeComp.cardName
                         //                        print("DEBUG: Found component! Toggling state for card: \(name)")
@@ -161,14 +158,14 @@ struct ImmersiveView: View {
                     }
                 }
         )
-        // 2. The Drag Gesture (Keep your existing one right below it)
+        // Billboard to let card facing the user
         .gesture(
             DragGesture(minimumDistance: 10)
                 .targetedToAnyEntity()
                 .onChanged { value in
                     if dragStartPosition == nil {
                         dragStartPosition = value.entity.position
-                        value.entity.components.remove(BillboardComponent.self)
+                        // value.entity.components.remove(BillboardComponent.self).      // Notes: If we remove the billboard during drag, the card will stop facing the user and stay fixed in its original orientation. This can make it easier to drag in a straight line, but may feel less natural.
                     }
                     guard let startPos = dragStartPosition else { return }
                     
@@ -177,7 +174,7 @@ struct ImmersiveView: View {
                 }
                 .onEnded { value in
                     dragStartPosition = nil
-                    value.entity.components.set(BillboardComponent())
+                    // value.entity.components.set(BillboardComponent())
                     
                     // Broadcast the final position to other users
                     if let runtimeComp = value.entity.components[PointOfInterestRuntimeComponent.self] {

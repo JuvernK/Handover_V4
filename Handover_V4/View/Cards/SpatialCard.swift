@@ -25,27 +25,32 @@ struct SpatialCardView: View {
     
     let patient: Patient
     
-    /// Width the card renders at in 3D space. 360pt reads comfortably
-    /// at a typical visionOS distance.
-    private let cardWidth: CGFloat = 360
+    /// Width the card renders at in 3D space. Most cards stay compact; Systems
+    /// gets extra width so its adaptive internal grid can split into columns.
+    private let defaultCardWidth: CGFloat = 360
+    private let systemsCardWidth: CGFloat = 760
     
     var body: some View {
         if let sectionID = SectionID(rawValue: poiName.lowercased()) {
             if isExpanded(sectionID) {
                 sectionID.view(for: patient)
-                    .frame(width: cardWidth)
+                    .frame(width: expandedWidth(for: sectionID))
             } else {
                 CompactSpatialCard(sectionID: sectionID)
-                    .frame(width: cardWidth)
+                    .frame(width: defaultCardWidth)
             }
         } else {
             UnknownPOIView(poiName: poiName)
-                .frame(width: cardWidth)
+                .frame(width: defaultCardWidth)
         }
     }
 
     private func isExpanded(_ sectionID: SectionID) -> Bool {
         appModel.cardStates[poiName] ?? appModel.cardStates[sectionID.rawValue] ?? true
+    }
+
+    private func expandedWidth(for sectionID: SectionID) -> CGFloat {
+        sectionID == .systems ? systemsCardWidth : defaultCardWidth
     }
 }
 
