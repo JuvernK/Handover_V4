@@ -28,10 +28,20 @@ struct SpatialCardView: View {
     /// Width the card renders at in 3D space. Most cards stay compact; Systems
     /// gets extra width so its adaptive internal grid can split into columns.
     private let defaultCardWidth: CGFloat = 360
+    private let basicInformationCardWidth: CGFloat = 720
     private let systemsCardWidth: CGFloat = 760
     
     var body: some View {
-        if let sectionID = SectionID(rawValue: poiName.lowercased()) {
+        if isBasicInformationPOI {
+            if isExpanded(cardName: poiName) {
+                PatientHeaderView(patient: patient)
+                    .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+                    .frame(width: basicInformationCardWidth)
+            } else {
+                CompactBasicInformationCard(patient: patient)
+                    .frame(width: defaultCardWidth)
+            }
+        } else if let sectionID = SectionID(rawValue: normalizedPOIName) {
             if isExpanded(sectionID) {
                 sectionID.view(for: patient)
                     .frame(width: expandedWidth(for: sectionID))
@@ -45,12 +55,61 @@ struct SpatialCardView: View {
         }
     }
 
+    private var normalizedPOIName: String {
+        poiName
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+            .replacingOccurrences(of: " ", with: "_")
+            .replacingOccurrences(of: "-", with: "_")
+    }
+
+    private var isBasicInformationPOI: Bool {
+        normalizedPOIName == "basic_information"
+    }
+
+    private func isExpanded(cardName: String) -> Bool {
+        appModel.cardStates[cardName] ?? true
+    }
+
     private func isExpanded(_ sectionID: SectionID) -> Bool {
         appModel.cardStates[poiName] ?? appModel.cardStates[sectionID.rawValue] ?? true
     }
 
     private func expandedWidth(for sectionID: SectionID) -> CGFloat {
         sectionID == .systems ? systemsCardWidth : defaultCardWidth
+    }
+}
+
+private struct CompactBasicInformationCard: View {
+    let patient: Patient
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "person.text.rectangle")
+                .font(.system(size: 18, weight: .semibold))
+                .frame(width: 28, height: 28)
+                .foregroundStyle(.tint)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Basic Information")
+                    .font(.system(size: 17, weight: .semibold))
+                Text("\(patient.name) · \(patient.bedNumber)")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
+            }
+
+            Spacer(minLength: 8)
+
+            Image(systemName: "chevron.up.circle.fill")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+        .hoverEffect()
     }
 }
 

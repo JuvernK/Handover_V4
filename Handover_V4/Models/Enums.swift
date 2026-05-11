@@ -24,6 +24,16 @@ enum AcuityLevel: String, Codable, CaseIterable {
     case critical
 }
 
+// MARK: - Trajectory
+
+/// Whether the patient's overall clinical condition is moving in the right
+/// direction, unchanged, or deteriorating.
+enum Trajectory: String, Codable, CaseIterable {
+    case improving
+    case stable
+    case worsening
+}
+
 // MARK: - Vital Status
 
 /// Status of an individual vital sign or lab result — drives colour coding.

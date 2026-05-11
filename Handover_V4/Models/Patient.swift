@@ -27,6 +27,7 @@ struct Patient: Identifiable, Codable, Hashable {
     let age: Int
     let gender: Gender
     let acuity: AcuityLevel
+    let trajectory: Trajectory
     
     let codeStatus: CodeStatus
     let allergies: [Allergy]
@@ -51,6 +52,52 @@ struct Patient: Identifiable, Codable, Hashable {
     let plan: [PlanItem]
     let family: FamilyInfo
     let escalation: EscalationInfo
+
+    init(
+        id: String,
+        bedNumber: String,
+        mrn: String,
+        name: String,
+        age: Int,
+        gender: Gender,
+        acuity: AcuityLevel,
+        trajectory: Trajectory = .stable,
+        codeStatus: CodeStatus,
+        allergies: [Allergy],
+        diagnosis: String,
+        avatarImageName: String?,
+        icuAdmissionDate: Date,
+        vitals: [VitalSign],
+        infusions: [Infusion],
+        lines: [LineAccess],
+        labs: [LabResult],
+        systems: [SystemAssessment],
+        plan: [PlanItem],
+        family: FamilyInfo,
+        escalation: EscalationInfo
+    ) {
+        self.id = id
+        self.bedNumber = bedNumber
+        self.mrn = mrn
+        self.name = name
+        self.age = age
+        self.gender = gender
+        self.acuity = acuity
+        self.trajectory = trajectory
+        self.codeStatus = codeStatus
+        self.allergies = allergies
+        self.diagnosis = diagnosis
+        self.avatarImageName = avatarImageName
+        self.icuAdmissionDate = icuAdmissionDate
+        self.vitals = vitals
+        self.infusions = infusions
+        self.lines = lines
+        self.labs = labs
+        self.systems = systems
+        self.plan = plan
+        self.family = family
+        self.escalation = escalation
+    }
     
     // MARK: - Computed properties
     

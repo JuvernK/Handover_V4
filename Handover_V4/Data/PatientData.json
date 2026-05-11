@@ -8,6 +8,7 @@
       "age": 62,
       "gender": "male",
       "acuity": "stable",
+      "trajectory": "improving",
       "codeStatus": {
         "type": "fullCode"
       },
@@ -346,6 +347,7 @@
       "age": 47,
       "gender": "female",
       "acuity": "critical",
+      "trajectory": "worsening",
       "codeStatus": {
         "type": "fullCode"
       },
@@ -735,6 +737,7 @@
       "age": 38,
       "gender": "male",
       "acuity": "critical",
+      "trajectory": "worsening",
       "codeStatus": {
         "type": "fullCode"
       },
@@ -1109,6 +1112,7 @@
       "age": 55,
       "gender": "female",
       "acuity": "critical",
+      "trajectory": "improving",
       "codeStatus": {
         "type": "fullCode"
       },
@@ -1494,6 +1498,7 @@
       "age": 29,
       "gender": "male",
       "acuity": "critical",
+      "trajectory": "improving",
       "codeStatus": {
         "type": "fullCode"
       },
@@ -1869,6 +1874,7 @@
       "age": 71,
       "gender": "female",
       "acuity": "stable",
+      "trajectory": "stable",
       "codeStatus": {
         "type": "custom",
         "details": "Full Code (Advance Directive: no CPR if primary graft non-function)"

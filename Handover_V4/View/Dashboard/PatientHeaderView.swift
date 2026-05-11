@@ -36,6 +36,8 @@ struct PatientHeaderView: View {
                             .foregroundStyle(.primary)
                         
                         LengthOfStayPill(text: patient.lengthOfStayDisplay)
+                        AcuityBadge(acuity: patient.acuity)
+                        TrajectoryBadge(trajectory: patient.trajectory)
                     }
                     
                     // Demographics
@@ -107,6 +109,110 @@ private struct LengthOfStayPill: View {
             .padding(.vertical, 4)
             .background(.secondary.opacity(0.15))
             .clipShape(Capsule())
+    }
+}
+
+// MARK: - Acuity badge
+
+private struct AcuityBadge: View {
+    let acuity: AcuityLevel
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Image(systemName: acuity.iconName)
+                .font(.system(size: 11, weight: .semibold))
+            Text(acuity.displayText)
+                .font(.system(size: 12, weight: .medium))
+        }
+        .foregroundStyle(acuity.foregroundColor)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 4)
+        .background(acuity.backgroundColor)
+        .clipShape(Capsule())
+    }
+}
+
+private extension AcuityLevel {
+    var displayText: String {
+        switch self {
+        case .stable: return "Stable acuity"
+        case .critical: return "Critical acuity"
+        }
+    }
+
+    var iconName: String {
+        switch self {
+        case .stable: return "checkmark.shield.fill"
+        case .critical: return "exclamationmark.triangle.fill"
+        }
+    }
+
+    var foregroundColor: Color {
+        switch self {
+        case .stable: return .green
+        case .critical: return .red
+        }
+    }
+
+    var backgroundColor: Color {
+        switch self {
+        case .stable: return .green.opacity(0.15)
+        case .critical: return .red.opacity(0.14)
+        }
+    }
+}
+
+// MARK: - Trajectory badge
+
+private struct TrajectoryBadge: View {
+    let trajectory: Trajectory
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Image(systemName: trajectory.iconName)
+                .font(.system(size: 11, weight: .semibold))
+            Text(trajectory.displayText)
+                .font(.system(size: 12, weight: .medium))
+        }
+        .foregroundStyle(trajectory.foregroundColor)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 4)
+        .background(trajectory.backgroundColor)
+        .clipShape(Capsule())
+    }
+}
+
+private extension Trajectory {
+    var displayText: String {
+        switch self {
+        case .improving: return "Improving"
+        case .stable: return "Stable"
+        case .worsening: return "Worsening"
+        }
+    }
+
+    var iconName: String {
+        switch self {
+        case .improving: return "arrow.down.right.circle.fill"
+        case .stable: return "equal.circle.fill"
+        case .worsening: return "arrow.up.right.circle.fill"
+        }
+    }
+
+    var foregroundColor: Color {
+        switch self {
+        case .improving: return .green
+        case .stable: return .blue
+        case .worsening: return .red
+        }
+    }
+
+    var backgroundColor: Color {
+        switch self {
+        case .improving: return .green.opacity(0.15)
+        case .stable: return .blue.opacity(0.14)
+        case .worsening: return .red.opacity(0.14)
+        }
     }
 }
 
@@ -332,5 +438,3 @@ extension Patient {
         }
     }
 }
-
-

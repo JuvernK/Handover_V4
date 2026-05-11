@@ -170,7 +170,7 @@ private struct EmptyDashboardState: View {
 // MARK: - Previews
 
 #Preview("Dashboard — Bed 01 (Ahmad)") {
-    let appModel = AppModel()
+    let appModel = AppModel(initialBedNumber: "BED-01")
     DashboardView(viewModel: appModel.handoverViewModel)
         .environment(appModel)
 }

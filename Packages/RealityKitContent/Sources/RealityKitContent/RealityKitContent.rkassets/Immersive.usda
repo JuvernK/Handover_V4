@@ -7,7 +7,7 @@
 
 def Xform "Root"
 {
-    reorder nameChildren = ["ICU_env", "Labs", "Plan", "Escalation", "System"]
+    reorder nameChildren = ["ICU_env", "Basic_Informations"]
     quatf xformOp:orient = (1, 0, 0, 0)
     float3 xformOp:scale = (1, 1, 1)
     float3 xformOp:translate = (0, 0, 0)
@@ -21,7 +21,7 @@ def Xform "Root"
         references = @ICU Env/ICU_PatientwithSpline_ClassicLight.usdz@
     )
     {
-        reorder nameChildren = ["Materials", "Spline", "Patient", "ICUArea", "Vitals", "Lines", "Infusions", "Labs", "Escalation", "Plan", "Systems"]
+        reorder nameChildren = ["Materials", "Spline", "Patient", "ICUArea", "Vitals", "Lines", "Infusions", "Labs", "Escalation", "Plan", "Systems", "Basic_Information"]
         quatf xformOp:orient = (-4.371139e-8, 0, 1, 0)
         float3 xformOp:scale = (0.01, 0.01, 0.01)
         float3 xformOp:translate = (-1.2751254, -0.1, -2.8798463)
@@ -347,6 +347,22 @@ def Xform "Root"
                 string description = "Normal Saline 0.9%, Dosage: 100mL/hr"
                 uniform token info:id = "RealityKitContent.PointOfInterestComponent"
                 string name = "Systems"
+            }
+        }
+
+        def Xform "Basic_Information" (
+            active = true
+        )
+        {
+            quatf xformOp:orient = (4.371139e-8, 0, 1, 0)
+            float3 xformOp:scale = (100, 100, 100)
+            float3 xformOp:translate = (18.564505, 132.8285, -129.75882)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+            def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
+            {
+                uniform token info:id = "RealityKitContent.PointOfInterestComponent"
+                string name = "Basic_Information"
             }
         }
     }
