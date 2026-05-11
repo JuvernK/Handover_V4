@@ -19,15 +19,15 @@ import SwiftUI
 struct VitalsCard: View {
     let patient: Patient
     
-    // 3-column grid — fixed for visual consistency across the dashboard
+    // 2-column grid — fixed for visual consistency across the dashboard
     private let columns = Array(
         repeating: GridItem(.flexible(), spacing: 12, alignment: .top),
-        count: 3
+        count: 2
     )
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            CardHeader(title: "Vitals", systemImage: "waveform.path.ecg")
+            CardHeader(title: "Vitals (Past 12 hrs)", systemImage: "waveform.path.ecg")
             
             Divider()
                 .padding(.horizontal, 12)

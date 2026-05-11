@@ -42,14 +42,14 @@ struct VitalBox: View {
             
             // Sparkline
             Sparkline(data: vital.history, lineColor: statusColor)
-                .frame(height: 24)
+                .frame(height: 36)
                 .padding(.vertical, 2)
             
             // 12-hour range
             HStack(spacing: 4) {
-                Text("12h")
-                    .font(.system(size: 10))
-                    .foregroundStyle(.tertiary)
+                // Text("12h")
+                //     .font(.system(size: 10))
+                //     .foregroundStyle(.tertiary)
                 Text(vital.rangeDisplay)
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(.secondary)

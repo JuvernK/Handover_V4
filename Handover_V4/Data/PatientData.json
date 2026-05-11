@@ -353,10 +353,6 @@
         {
           "substance": "Sulphonamides",
           "reaction": "Anaphylaxis"
-        },
-        {
-          "substance": "NSAIDs",
-          "reaction": "GI bleed"
         }
       ],
       "diagnosis": "Septic shock — RLL pneumonia",
@@ -1120,10 +1116,6 @@
         {
           "substance": "Codeine",
           "reaction": "Nausea and vomiting"
-        },
-        {
-          "substance": "Contrast dye",
-          "reaction": "Urticaria — premedicate"
         }
       ],
       "diagnosis": "Severe ARDS — Influenza A",
@@ -1882,10 +1874,6 @@
         "details": "Full Code (Advance Directive: no CPR if primary graft non-function)"
       },
       "allergies": [
-        {
-          "substance": "Vancomycin",
-          "reaction": "Red Man Syndrome"
-        },
         {
           "substance": "Latex",
           "reaction": "Contact reaction — strict latex-free environment required"

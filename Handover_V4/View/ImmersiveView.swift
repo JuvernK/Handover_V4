@@ -27,8 +27,8 @@ struct ImmersiveView: View {
                 let entity = try await Entity(named: "Immersive", in: realityKitContentBundle)
                 content.add(entity)
                 
-                // Offset the scene so it doesn't appear underneath the user or conflict with the main window.
-                entity.position = SIMD3<Float>(0, 0, -2)
+                // (Currently changed to 0 )Offset the scene so it doesn't appear underneath the user or conflict with the main window.
+                entity.position = SIMD3<Float>(0, 0, 0)
                 
                 // Listen for when points of interest are added
                 subscriptions.append(content.subscribe(to: ComponentEvents.DidAdd.self, componentType: PointOfInterestComponent.self, { event in
@@ -108,8 +108,6 @@ struct ImmersiveView: View {
                                         height: bounds.extents.y,
                                         depth: 0.05
                                     )
-                                    
-                                    // Apply our custom shape instead of the default recursive one
                                     attachmentEntity.components.set(CollisionComponent(shapes: [thickShape]))
                                     
                                     //                                    print("DEBUG: Thick 3D collision generated successfully.")
@@ -121,8 +119,8 @@ struct ImmersiveView: View {
                         // Set the attachment's location to the last synced position if
                         // this participant joined after another user moved it.
                         let worldPos = entity.position(relativeTo: nil)
-                        // Add 0.4m vertical offset so the expanded card sits above the anchor
-                        let offsetPosition = worldPos + SIMD3<Float>(0, 0.4, 0)
+                        // Add 0m vertical offset so the expanded card sits above the anchor (zero offset for now as it seem better in Immersive space)
+                        let offsetPosition = worldPos + SIMD3<Float>(0, 0, 0)
                         let syncedPosition = appModel.cardPositions[runtimeComponent.cardName]
                         attachmentEntity.setPosition(syncedPosition ?? offsetPosition, relativeTo: nil)
                     }
