@@ -145,6 +145,7 @@ private extension SectionID {
     var spatialSystemImage: String {
         switch self {
         case .vitals: return "waveform.path.ecg"
+        case .relatedBackground: return "person.text.rectangle"
         case .infusions: return "ivfluid.bag"
         case .lines: return "point.3.connected.trianglepath.dotted"
         case .labs: return "testtube.2"

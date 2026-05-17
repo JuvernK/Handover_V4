@@ -7,14 +7,14 @@
 //
 //  Top-level dashboard view. Composed of:
 //    - Pinned PatientHeaderView at the top (not draggable)
-//    - LazyVGrid of 6 reorderable cards (Systems is rendered separately below)
+//    - Flex-wrapped set of reorderable cards (Systems is rendered separately below)
 //    - Full-width SystemsAssessmentCard at the bottom (not draggable)
 //
 //  Drag-and-drop:
-//    - Each card in the grid is both a drag source and a drop target
+//    - Each card in the wrapped layout is both a drag source and a drop target
 //    - The whole card is draggable (visionOS gesture model handles tap vs drag)
 //    - Dropping card A onto card B moves A into B's current position
-//    - The Systems card is excluded from the grid and not reorderable
+//    - The Systems card is excluded from the wrapped layout and not reorderable
 //
 
 import SwiftUI
@@ -23,13 +23,8 @@ struct DashboardView: View {
     @State var viewModel: HandoverViewModel
     @Environment(AppModel.self) private var appModel
     
-    /// Adaptive grid: cards reflow into 1, 2, or 3 columns based on window width.
-    private let gridColumns = [
-        GridItem(.adaptive(minimum: 280), spacing: 12, alignment: .top)
-    ]
-    
-    /// Sections that flow in the adaptive grid (everything except Systems,
-    /// which is rendered full-width below the grid).
+    /// Sections that flow in the flex layout (everything except Systems,
+    /// which is rendered full-width below the wrapped cards).
     private var reorderableSections: [SectionID] {
         viewModel.sectionOrder.filter { $0 != .systems }
     }
@@ -43,7 +38,7 @@ struct DashboardView: View {
                         .glassBackgroundEffect(in: .rect(cornerRadius: 16))
                     
                     // Reorderable cards
-                    LazyVGrid(columns: gridColumns, spacing: 12) {
+                    DashboardFlexLayout(minimumItemWidth: 280, spacing: 12) {
                         ForEach(reorderableSections) { sectionID in
                             DraggableCard(
                                 sectionID: sectionID,
@@ -51,6 +46,7 @@ struct DashboardView: View {
                             )
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .animation(.smooth(duration: 0.25), value: viewModel.sectionOrder)
                     
                     // Systems Assessment — full-width, not reorderable
@@ -84,6 +80,113 @@ struct DashboardView: View {
         } message: {
             Text(appModel.sharePlayErrorMessage ?? "")
         }
+    }
+}
+
+// MARK: - Flex layout
+
+/// Flexbox-style wrapping layout for dashboard cards.
+///
+/// Each row fits as many cards as possible using `minimumItemWidth` as the
+/// flex basis. Cards then grow evenly to fill the row width.
+private struct DashboardFlexLayout: Layout {
+    var minimumItemWidth: CGFloat
+    var spacing: CGFloat
+    var rowSpacing: CGFloat
+    
+    init(minimumItemWidth: CGFloat, spacing: CGFloat, rowSpacing: CGFloat? = nil) {
+        self.minimumItemWidth = minimumItemWidth
+        self.spacing = spacing
+        self.rowSpacing = rowSpacing ?? spacing
+    }
+    
+    func sizeThatFits(
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout ()
+    ) -> CGSize {
+        let availableWidth = proposal.width ?? minimumItemWidth
+        let rows = makeRows(for: subviews, availableWidth: availableWidth)
+        let totalHeight = rows.enumerated().reduce(CGFloat.zero) { height, row in
+            height + row.element.height + (row.offset == rows.count - 1 ? 0 : rowSpacing)
+        }
+        
+        return CGSize(width: availableWidth, height: totalHeight)
+    }
+    
+    func placeSubviews(
+        in bounds: CGRect,
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout ()
+    ) {
+        let rows = makeRows(for: subviews, availableWidth: bounds.width)
+        var y = bounds.minY
+        
+        for row in rows {
+            var x = bounds.minX
+            
+            for (position, index) in row.indices.enumerated() {
+                subviews[index].place(
+                    at: CGPoint(x: x, y: y),
+                    anchor: .topLeading,
+                    proposal: ProposedViewSize(
+                        width: row.itemWidth,
+                        height: row.sizes[position].height
+                    )
+                )
+                x += row.itemWidth + spacing
+            }
+            
+            y += row.height + rowSpacing
+        }
+    }
+    
+    private func makeRows(for subviews: Subviews, availableWidth: CGFloat) -> [Row] {
+        guard !subviews.isEmpty else { return [] }
+        
+        let safeWidth = max(availableWidth, minimumItemWidth)
+        let itemsPerFullRow = max(
+            1,
+            Int((safeWidth + spacing) / (minimumItemWidth + spacing))
+        )
+        
+        var rows: [Row] = []
+        var startIndex = subviews.startIndex
+        
+        while startIndex < subviews.endIndex {
+            let endIndex = min(startIndex + itemsPerFullRow, subviews.endIndex)
+            let indices = Array(startIndex..<endIndex)
+            let itemWidth = (
+                safeWidth - spacing * CGFloat(indices.count - 1)
+            ) / CGFloat(indices.count)
+            let sizes = indices.map { index in
+                subviews[index].sizeThatFits(
+                    ProposedViewSize(width: itemWidth, height: nil)
+                )
+            }
+            let rowHeight = sizes.map(\.height).max() ?? 0
+            
+            rows.append(
+                Row(
+                    indices: indices,
+                    sizes: sizes,
+                    itemWidth: itemWidth,
+                    height: rowHeight
+                )
+            )
+            
+            startIndex = endIndex
+        }
+        
+        return rows
+    }
+    
+    private struct Row {
+        let indices: [Subviews.Index]
+        let sizes: [CGSize]
+        let itemWidth: CGFloat
+        let height: CGFloat
     }
 }
 
@@ -169,19 +272,19 @@ private struct EmptyDashboardState: View {
 
 // MARK: - Previews
 
-#Preview("Dashboard — Bed 01 (Ahmad)") {
+#Preview("Dashboard — Bed 01") {
     let appModel = AppModel(initialBedNumber: "BED-01")
     DashboardView(viewModel: appModel.handoverViewModel)
         .environment(appModel)
 }
 
-#Preview("Dashboard — Bed 02 (Siti, critical)") {
+#Preview("Dashboard — Bed 02") {
     let appModel = AppModel(initialBedNumber: "BED-02")
     DashboardView(viewModel: appModel.handoverViewModel)
         .environment(appModel)
 }
 
-#Preview("Dashboard — Bed 06 (Datin Mariam, post-OLT)") {
+#Preview("Dashboard — Bed 06") {
     let appModel = AppModel(initialBedNumber: "BED-06")
     DashboardView(viewModel: appModel.handoverViewModel)
         .environment(appModel)

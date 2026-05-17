@@ -36,6 +36,7 @@ struct Patient: Identifiable, Codable, Hashable {
     /// e.g. "Post-CABG x3", "Severe ARDS — Influenza A".
     /// Shown prominently in the patient header.
     let diagnosis: String
+    let relatedBackground: RelatedBackground
     
     /// Optional name of an image asset in the app bundle to use as the
     /// patient's avatar. If nil or missing, the UI falls back to initials.
@@ -65,6 +66,7 @@ struct Patient: Identifiable, Codable, Hashable {
         codeStatus: CodeStatus,
         allergies: [Allergy],
         diagnosis: String,
+        relatedBackground: RelatedBackground = .empty,
         avatarImageName: String?,
         icuAdmissionDate: Date,
         vitals: [VitalSign],
@@ -87,6 +89,7 @@ struct Patient: Identifiable, Codable, Hashable {
         self.codeStatus = codeStatus
         self.allergies = allergies
         self.diagnosis = diagnosis
+        self.relatedBackground = relatedBackground
         self.avatarImageName = avatarImageName
         self.icuAdmissionDate = icuAdmissionDate
         self.vitals = vitals
@@ -134,6 +137,22 @@ struct Patient: Identifiable, Codable, Hashable {
 struct Allergy: Codable, Hashable {
     let substance: String
     let reaction: String
+}
+
+// MARK: - Related Background
+
+struct RelatedBackground: Codable, Hashable {
+    let pastMedicalHistory: [String]
+    let presentingComplaint: String
+    let socialHistory: [String]
+    let relevantContext: [String]
+
+    static let empty = RelatedBackground(
+        pastMedicalHistory: [],
+        presentingComplaint: "",
+        socialHistory: [],
+        relevantContext: []
+    )
 }
 
 // MARK: - Vital Sign

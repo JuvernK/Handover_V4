@@ -17,6 +17,7 @@ internal import UniformTypeIdentifiers
 
 enum SectionID: String, CaseIterable, Identifiable, Codable, Hashable {
     case vitals
+    case relatedBackground = "related_background"
     case infusions
     case lines
     case labs
@@ -28,7 +29,7 @@ enum SectionID: String, CaseIterable, Identifiable, Codable, Hashable {
     
     /// Default order in which cards appear when the dashboard first loads.
     static var defaultOrder: [SectionID] {
-        [.vitals, .infusions, .lines, .labs, .systems, .plan, .escalation]
+        [.vitals, .relatedBackground, .infusions, .lines, .labs, .systems, .plan, .escalation]
     }
     
     /// Builds the SwiftUI view for this section, given a patient.
@@ -36,6 +37,7 @@ enum SectionID: String, CaseIterable, Identifiable, Codable, Hashable {
     func view(for patient: Patient) -> some View {
         switch self {
         case .vitals:     VitalsCard(patient: patient)
+        case .relatedBackground: RelatedBackgroundCard(patient: patient)
         case .infusions:  InfusionsCard(patient: patient)
         case .lines:      LinesAccessCard(patient: patient)
         case .labs:       LabsCard(patient: patient)
@@ -50,6 +52,7 @@ enum SectionID: String, CaseIterable, Identifiable, Codable, Hashable {
     var displayName: String {
         switch self {
         case .vitals:     return "Vitals"
+        case .relatedBackground: return "Related Background"
         case .infusions:  return "Active Infusions"
         case .lines:      return "Lines & Access"
         case .labs:       return "Abnormal Labs"
