@@ -48,7 +48,7 @@ final class SessionController {
             // Ensure support for the group immersive space
         
         systemCoordinator.configuration.supportsGroupImmersiveSpace = true
-        systemCoordinator.configuration.spatialTemplatePreference = .conversational // Arrange the spatial persona in a converstation style
+        systemCoordinator.configuration.spatialTemplatePreference = .sideBySide // Arrange the spatial persona in a converstation style
 
         // Connect to the room!
         session.join()
