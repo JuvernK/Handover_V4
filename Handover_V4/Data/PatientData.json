@@ -764,8 +764,8 @@
       }
     },
     {
-      "id": "p5",
-      "bedNumber": "BED-05",
+      "id": "p3",
+      "bedNumber": "BED-03",
       "mrn": "MRN-202403312",
       "name": "Lim Wei Jian",
       "age": 29,
@@ -1142,8 +1142,8 @@
       }
     },
     {
-      "id": "p6",
-      "bedNumber": "BED-06",
+      "id": "p4",
+      "bedNumber": "BED-04",
       "mrn": "MRN-202400123",
       "name": "Margaret Brown",
       "age": 71,

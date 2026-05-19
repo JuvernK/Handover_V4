@@ -6,9 +6,8 @@
 //
 //
 //  Top-level dashboard view. Composed of:
-//    - Pinned PatientHeaderView at the top (not draggable)
-//    - Flex-wrapped set of reorderable cards (Systems is rendered separately below)
-//    - Full-width SystemsAssessmentCard at the bottom (not draggable)
+//    - Left panel with PatientHeaderView and reorderable dashboard cards
+//    - Right panel with fixed SystemsAssessmentCard
 //
 //  Drag-and-drop:
 //    - Each card in the wrapped layout is both a drag source and a drop target
@@ -22,41 +21,54 @@ import SwiftUI
 struct DashboardView: View {
     @State var viewModel: HandoverViewModel
     @Environment(AppModel.self) private var appModel
+    private let contentPadding: CGFloat = 14
+    private let columnSpacing: CGFloat = 16
+    private let minimumLeftColumnWidth: CGFloat = 760
+    private let systemsPanelWidth: CGFloat = 440
     
     /// Sections that flow in the flex layout (everything except Systems,
-    /// which is rendered full-width below the wrapped cards).
+    /// which is rendered in the fixed right panel).
     private var reorderableSections: [SectionID] {
         viewModel.sectionOrder.filter { $0 != .systems }
     }
     
     var body: some View {
-        ScrollView {
-            if let patient = viewModel.patient {
-                VStack(spacing: 16) {
-                    // Pinned header (always at top, not draggable)
-                    PatientHeaderView(patient: patient)
-                        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
-                    
-                    // Reorderable cards
-                    DashboardFlexLayout(minimumItemWidth: 280, spacing: 12) {
-                        ForEach(reorderableSections) { sectionID in
-                            DraggableCard(
-                                sectionID: sectionID,
-                                patient: patient
-                            )
+        GeometryReader { geometry in
+            let layout = dashboardLayout(for: geometry.size.width)
+            
+            ScrollView {
+                if let patient = viewModel.patient {
+                    HStack(alignment: .top, spacing: columnSpacing) {
+                        VStack(spacing: 16) {
+                            // Pinned header (always at top, not draggable)
+                            PatientHeaderView(patient: patient)
+                                .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+                            
+                            // Reorderable cards
+                            DashboardFlexLayout(minimumItemWidth: 280, spacing: 12) {
+                                ForEach(reorderableSections) { sectionID in
+                                    DraggableCard(
+                                        sectionID: sectionID,
+                                        patient: patient
+                                    )
+                                }
+                            }
+                            .frame(width: layout.leftWidth, alignment: .leading)
+                            .animation(.smooth(duration: 0.25), value: viewModel.sectionOrder)
+                        }
+                        .frame(width: layout.leftWidth, alignment: .topLeading)
+                        
+                        // Systems Assessment — fixed right panel, not reorderable
+                        if viewModel.sectionOrder.contains(.systems) {
+                            SystemsAssessmentCard(patient: patient)
+                                .frame(width: systemsPanelWidth, alignment: .top)
                         }
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .animation(.smooth(duration: 0.25), value: viewModel.sectionOrder)
-                    
-                    // Systems Assessment — full-width, not reorderable
-                    if viewModel.sectionOrder.contains(.systems) {
-                        SystemsAssessmentCard(patient: patient)
-                    }
+                    .padding(contentPadding)
+                    .frame(width: layout.totalWidth, alignment: .leading)
+                } else {
+                    EmptyDashboardState()
                 }
-                .padding(14)
-            } else {
-                EmptyDashboardState()
             }
         }
         .dynamicTypeSize(.medium)
@@ -80,6 +92,29 @@ struct DashboardView: View {
         } message: {
             Text(appModel.sharePlayErrorMessage ?? "")
         }
+    }
+    
+    private func dashboardLayout(for availableWidth: CGFloat) -> DashboardColumnLayout {
+        let safeAvailableWidth = availableWidth.isFinite ? max(availableWidth, 1) : 1
+        let horizontalPadding = contentPadding * 2
+        let hasSystemsPanel = viewModel.sectionOrder.contains(.systems)
+        let rightWidth = hasSystemsPanel ? systemsPanelWidth : 0
+        let spacing = hasSystemsPanel ? columnSpacing : 0
+        let availableContentWidth = max(
+            safeAvailableWidth - horizontalPadding - rightWidth - spacing,
+            minimumLeftColumnWidth
+        )
+        let totalWidth = horizontalPadding + availableContentWidth + rightWidth + spacing
+        
+        return DashboardColumnLayout(
+            leftWidth: availableContentWidth,
+            totalWidth: totalWidth
+        )
+    }
+    
+    private struct DashboardColumnLayout {
+        let leftWidth: CGFloat
+        let totalWidth: CGFloat
     }
 }
 
@@ -105,7 +140,7 @@ private struct DashboardFlexLayout: Layout {
         subviews: Subviews,
         cache: inout ()
     ) -> CGSize {
-        let availableWidth = proposal.width ?? minimumItemWidth
+        let availableWidth = resolvedWidth(proposal.width, subviewCount: subviews.count)
         let rows = makeRows(for: subviews, availableWidth: availableWidth)
         let totalHeight = rows.enumerated().reduce(CGFloat.zero) { height, row in
             height + row.element.height + (row.offset == rows.count - 1 ? 0 : rowSpacing)
@@ -120,7 +155,10 @@ private struct DashboardFlexLayout: Layout {
         subviews: Subviews,
         cache: inout ()
     ) {
-        let rows = makeRows(for: subviews, availableWidth: bounds.width)
+        let rows = makeRows(
+            for: subviews,
+            availableWidth: resolvedWidth(bounds.width, subviewCount: subviews.count)
+        )
         var y = bounds.minY
         
         for row in rows {
@@ -145,7 +183,7 @@ private struct DashboardFlexLayout: Layout {
     private func makeRows(for subviews: Subviews, availableWidth: CGFloat) -> [Row] {
         guard !subviews.isEmpty else { return [] }
         
-        let safeWidth = max(availableWidth, minimumItemWidth)
+        let safeWidth = resolvedWidth(availableWidth, subviewCount: subviews.count)
         let itemsPerFullRow = max(
             1,
             Int((safeWidth + spacing) / (minimumItemWidth + spacing))
@@ -180,6 +218,15 @@ private struct DashboardFlexLayout: Layout {
         }
         
         return rows
+    }
+    
+    private func resolvedWidth(_ width: CGFloat?, subviewCount: Int) -> CGFloat {
+        if let width, width.isFinite, width > 0 {
+            return max(width, minimumItemWidth)
+        }
+        
+        let itemCount = max(1, subviewCount)
+        return minimumItemWidth * CGFloat(itemCount) + spacing * CGFloat(itemCount - 1)
     }
     
     private struct Row {

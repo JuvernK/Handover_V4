@@ -26,7 +26,7 @@ struct Handover_V4App: App {
             DashboardView(viewModel: appModel.handoverViewModel)
                 .environment(appModel)
         }
-        .defaultSize(width: 1000, height: 1100)
+        .defaultSize(width: 1700, height: 980)
         
         // Controls window (used & visible during immersive space)
             WindowGroup(id: "controls") {
