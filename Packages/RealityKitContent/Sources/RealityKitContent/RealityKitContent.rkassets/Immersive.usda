@@ -36,34 +36,13 @@ def Xform "Root"
         {
             quatf xformOp:orient = (1, 0, 6.9280863e-16, 0)
             float3 xformOp:scale = (100, 100, 100)
-            float3 xformOp:translate = (-130.6588, 180.90623, -169.14784)
+            float3 xformOp:translate = (-130.65706, 218.78696, -170.33586)
             uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
             def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
             {
                 uniform token info:id = "RealityKitContent.PointOfInterestComponent"
                 string name = "Vitals"
-            }
-        }
-
-        def Xform "Infusions" (
-            active = true
-            customData = {
-                float3 rotationEulerHint = (0, 3.1415925, 0)
-            }
-        )
-        {
-            reorder nameChildren = ["Escalation", "RealityKitContent_PointOfInterestComponent", "System"]
-            quatf xformOp:orient = (4.371139e-8, 0, 1, 0)
-            float3 xformOp:scale = (5662.4604, 5662.4604, 5662.4604)
-            float3 xformOp:translate = (107.158554, 201.11804, -154.54808)
-            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
-
-            def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
-            {
-                string description = "Normal Saline 0.9%, Dosage: 100mL/hr"
-                uniform token info:id = "RealityKitContent.PointOfInterestComponent"
-                string name = "Infusions"
             }
         }
 
@@ -247,11 +226,14 @@ def Xform "Root"
 
         def Xform "Lines" (
             active = true
+            customData = {
+                float3 rotationEulerHint = (0, 3.1415925, 0)
+            }
         )
         {
             quatf xformOp:orient = (4.371139e-8, 0, 1, 0)
             float3 xformOp:scale = (100, 100, 100)
-            float3 xformOp:translate = (91.401405, 182.88657, -202.51913)
+            float3 xformOp:translate = (96.68772, 151.33803, -224.5849)
             uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
             def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
@@ -273,7 +255,7 @@ def Xform "Root"
             int ui:nodegraph:node:stackingOrder = 1
             quatf xformOp:orient = (4.371139e-8, 0, 1, 0)
             float3 xformOp:scale = (5662.4595, 5662.4595, 5662.4595)
-            float3 xformOp:translate = (-96.03704, 168.37439, -183.26549)
+            float3 xformOp:translate = (-96.03342, 179.69327, -145.97688)
             uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
             def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
@@ -295,7 +277,7 @@ def Xform "Root"
             int ui:nodegraph:node:stackingOrder = 2
             quatf xformOp:orient = (4.3711395e-8, 0, 1, 0)
             float3 xformOp:scale = (5662.4585, 5662.4585, 5662.4585)
-            float3 xformOp:translate = (34.42387, 135.16191, -283.8871)
+            float3 xformOp:translate = (34.42374, 135.16136, -290.31903)
             uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
             def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
@@ -317,7 +299,7 @@ def Xform "Root"
             int ui:nodegraph:node:stackingOrder = 2
             quatf xformOp:orient = (4.3711395e-8, 0, 1, 0)
             float3 xformOp:scale = (5662.4585, 5662.4585, 5662.4585)
-            float3 xformOp:translate = (96.09334, 166.95619, -94.69079)
+            float3 xformOp:translate = (20.419317, 157.97827, -137.6871)
             uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
             def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
@@ -339,7 +321,7 @@ def Xform "Root"
             int ui:nodegraph:node:stackingOrder = 2
             quatf xformOp:orient = (4.3711395e-8, 0, 1, 0)
             float3 xformOp:scale = (5662.4585, 5662.4585, 5662.4585)
-            float3 xformOp:translate = (1.0804595, 137.43462, -226.28651)
+            float3 xformOp:translate = (-7.0798025, 137.43462, -226.28363)
             uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
             def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
@@ -356,7 +338,7 @@ def Xform "Root"
         {
             quatf xformOp:orient = (4.371139e-8, 0, 1, 0)
             float3 xformOp:scale = (100, 100, 100)
-            float3 xformOp:translate = (18.564505, 195.37059, -129.75674)
+            float3 xformOp:translate = (-17.834776, 187.94939, -129.7528)
             uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
             def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
@@ -372,13 +354,34 @@ def Xform "Root"
         {
             quatf xformOp:orient = (4.371139e-8, 0, 1, 0)
             float3 xformOp:scale = (100, 100, 100)
-            float3 xformOp:translate = (5.4859233, 147.44814, -117.0556)
+            float3 xformOp:translate = (-48.768402, 147.44582, -130.74901)
             uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
             def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
             {
                 uniform token info:id = "RealityKitContent.PointOfInterestComponent"
                 string name = "Related_Background"
+            }
+        }
+
+        def Xform "Infusions" (
+            active = true
+            customData = {
+                float3 rotationEulerHint = (0, 3.1415925, 0)
+            }
+        )
+        {
+            reorder nameChildren = ["Escalation", "RealityKitContent_PointOfInterestComponent", "System"]
+            quatf xformOp:orient = (4.371139e-8, 0, 1, 0)
+            float3 xformOp:scale = (5662.4604, 5662.4604, 5662.4604)
+            float3 xformOp:translate = (107.15855, 212.17563, -154.54726)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+            def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
+            {
+                string description = "Normal Saline 0.9%, Dosage: 100mL/hr"
+                uniform token info:id = "RealityKitContent.PointOfInterestComponent"
+                string name = "Infusions"
             }
         }
     }

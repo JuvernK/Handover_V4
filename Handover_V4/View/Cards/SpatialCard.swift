@@ -30,8 +30,15 @@ struct SpatialCardView: View {
     private let defaultCardWidth: CGFloat = 360
     private let basicInformationCardWidth: CGFloat = 720
     private let systemsCardWidth: CGFloat = 760
+    private let immersiveCardScale: CGFloat = 1.5
     
     var body: some View {
+        cardContent
+            .scaleEffect(immersiveCardScale)
+    }
+    
+    @ViewBuilder
+    private var cardContent: some View {
         if isBasicInformationPOI {
             if isExpanded(cardName: poiName) {
                 PatientHeaderView(patient: patient)

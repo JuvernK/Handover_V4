@@ -20,7 +20,7 @@
       ],
       "diagnosis": "Post-coronary artery bypass grafting x3",
       "avatarImageName": null,
-      "icuAdmissionDate": "2026-04-29T18:00:00Z",
+      "icuAdmissionDate": "2026-04-27T18:00:00+10:00",
       "vitals": [
         {
           "id": "p1-vital-1",
@@ -28,7 +28,7 @@
           "value": "88",
           "unit": "bpm",
           "status": "normal",
-          "timestamp": "2026-04-28T06:55:00Z",
+          "timestamp": "2026-04-28T06:55:00+10:00",
           "history": [
             97.1,
             94.5,
@@ -51,7 +51,7 @@
           "value": "97",
           "unit": "%",
           "status": "normal",
-          "timestamp": "2026-04-28T06:55:00Z",
+          "timestamp": "2026-04-28T06:55:00+10:00",
           "history": [
             95.3,
             95.5,
@@ -74,7 +74,7 @@
           "value": "16",
           "unit": "/min",
           "status": "normal",
-          "timestamp": "2026-04-28T06:55:00Z",
+          "timestamp": "2026-04-28T06:55:00+10:00",
           "history": [
             18.7,
             18.3,
@@ -97,7 +97,7 @@
           "value": "37.1",
           "unit": "°C",
           "status": "normal",
-          "timestamp": "2026-04-28T06:55:00Z",
+          "timestamp": "2026-04-28T06:55:00+10:00",
           "history": [
             37.1,
             37.1,
@@ -120,7 +120,7 @@
           "value": "87",
           "unit": "mmHg",
           "status": "normal",
-          "timestamp": "2026-04-28T06:55:00Z",
+          "timestamp": "2026-04-28T06:55:00+10:00",
           "history": [
             81.3,
             81.3,
@@ -281,7 +281,7 @@
         {
           "id": "p1-plan-1",
           "task": "Wean noradrenaline — target OFF if MAP stable",
-          "dueTime": "2026-04-28T10:00:00Z",
+          "dueTime": "2026-04-28T10:00:00+10:00",
           "priority": "urgent"
         },
         {
@@ -305,13 +305,13 @@
         {
           "id": "p1-plan-5",
           "task": "Chest X-ray",
-          "dueTime": "2026-04-28T06:00:00Z",
+          "dueTime": "2026-04-28T06:00:00+10:00",
           "priority": "routine"
         },
         {
           "id": "p1-plan-6",
           "task": "Cardiology review",
-          "dueTime": "2026-04-28T08:00:00Z",
+          "dueTime": "2026-04-28T08:00:00+10:00",
           "priority": "routine"
         },
         {
@@ -376,7 +376,7 @@
       ],
       "diagnosis": "Septic shock — right lower lobe pneumonia",
       "avatarImageName": null,
-      "icuAdmissionDate": "2026-04-26T22:00:00Z",
+      "icuAdmissionDate": "2026-04-26T22:00:00+10:00",
       "vitals": [
         {
           "id": "p2-vital-1",
@@ -384,7 +384,7 @@
           "value": "112",
           "unit": "bpm",
           "status": "warning",
-          "timestamp": "2026-04-28T06:55:00Z",
+          "timestamp": "2026-04-28T06:55:00+10:00",
           "history": [
             106.2,
             106.0,
@@ -407,7 +407,7 @@
           "value": "91",
           "unit": "%",
           "status": "critical",
-          "timestamp": "2026-04-28T06:55:00Z",
+          "timestamp": "2026-04-28T06:55:00+10:00",
           "history": [
             93.7,
             93.0,
@@ -430,7 +430,7 @@
           "value": "28",
           "unit": "/min",
           "status": "critical",
-          "timestamp": "2026-04-28T06:55:00Z",
+          "timestamp": "2026-04-28T06:55:00+10:00",
           "history": [
             25.0,
             24.8,
@@ -453,7 +453,7 @@
           "value": "38.9",
           "unit": "°C",
           "status": "warning",
-          "timestamp": "2026-04-28T06:55:00Z",
+          "timestamp": "2026-04-28T06:55:00+10:00",
           "history": [
             38.4,
             38.4,
@@ -476,7 +476,7 @@
           "value": "70",
           "unit": "mmHg",
           "status": "warning",
-          "timestamp": "2026-04-28T06:55:00Z",
+          "timestamp": "2026-04-28T06:55:00+10:00",
           "history": [
             69.9,
             70.6,
@@ -516,7 +516,7 @@
           "drugName": "Meropenem",
           "dose": "1g q8h",
           "route": "IV",
-          "purpose": "Antibiotic — Day 2 of 5",
+          "purpose": "Antibiotic — Day 1 of 5",
           "isHighAlert": false
         },
         {
@@ -682,7 +682,7 @@
         {
           "id": "p2-sys-7",
           "system": "infection",
-          "summary": "Septic shock — right lower lobe pneumonia. Day 2 Meropenem. Sputum C&S pending.",
+          "summary": "Septic shock — right lower lobe pneumonia. Day 1 Meropenem. Sputum C&S pending.",
           "concerns": [
             "Source control critical"
           ]
@@ -692,13 +692,13 @@
         {
           "id": "p2-plan-1",
           "task": "Daily wake-up trial — assess extubation readiness",
-          "dueTime": "2026-04-28T06:00:00Z",
+          "dueTime": "2026-04-28T06:00:00+10:00",
           "priority": "urgent"
         },
         {
           "id": "p2-plan-2",
           "task": "Repeat lactate — if >3.5 consider CRRT discussion",
-          "dueTime": "2026-04-28T08:00:00Z",
+          "dueTime": "2026-04-28T08:00:00+10:00",
           "priority": "urgent"
         },
         {
@@ -722,7 +722,7 @@
         {
           "id": "p2-plan-6",
           "task": "Family meeting — prognosis discussion",
-          "dueTime": "2026-04-28T14:00:00Z",
+          "dueTime": "2026-04-28T14:00:00+10:00",
           "priority": "routine"
         }
       ],
@@ -778,7 +778,7 @@
       "allergies": [],
       "diagnosis": "Severe diabetic ketoacidosis with acute kidney injury Stage 3",
       "avatarImageName": null,
-      "icuAdmissionDate": "2026-04-29T20:00:00Z",
+      "icuAdmissionDate": "2026-04-27T20:00:00+10:00",
       "vitals": [
         {
           "id": "p5-vital-1",
@@ -786,7 +786,7 @@
           "value": "102",
           "unit": "bpm",
           "status": "warning",
-          "timestamp": "2026-04-28T06:55:00Z",
+          "timestamp": "2026-04-28T06:55:00+10:00",
           "history": [
             114.3,
             112.8,
@@ -809,7 +809,7 @@
           "value": "98",
           "unit": "%",
           "status": "normal",
-          "timestamp": "2026-04-28T06:55:00Z",
+          "timestamp": "2026-04-28T06:55:00+10:00",
           "history": [
             97.8,
             98.0,
@@ -832,7 +832,7 @@
           "value": "22",
           "unit": "/min",
           "status": "warning",
-          "timestamp": "2026-04-28T06:55:00Z",
+          "timestamp": "2026-04-28T06:55:00+10:00",
           "history": [
             27.4,
             26.4,
@@ -855,7 +855,7 @@
           "value": "36.8",
           "unit": "°C",
           "status": "normal",
-          "timestamp": "2026-04-28T06:55:00Z",
+          "timestamp": "2026-04-28T06:55:00+10:00",
           "history": [
             36.8,
             36.8,
@@ -878,7 +878,7 @@
           "value": "79",
           "unit": "mmHg",
           "status": "warning",
-          "timestamp": "2026-04-28T06:55:00Z",
+          "timestamp": "2026-04-28T06:55:00+10:00",
           "history": [
             72.0,
             72.8,
@@ -1020,7 +1020,7 @@
           "trend": "stable"
         },
         {
-          "id": "p5-lab-6",
+          "id": "p5-lab-8",
           "name": "BSL",
           "value": "22.4",
           "unit": "mmol/L",
@@ -1054,7 +1054,7 @@
         {
           "id": "p5-sys-4",
           "system": "renal",
-          "summary": "Oliguric acute kidney injury Stage 3. CRRT commenced 0200. Fluid removal 100 mL/hr. UO pre-CRRT <5 mL/hr.",
+          "summary": "Oliguric acute kidney injury Stage 3. CRRT commenced 2am. Fluid removal 100 mL/hr. UO pre-CRRT <5 mL/hr.",
           "concerns": [
             "acute kidney injury Stage 3 on CRRT"
           ]
@@ -1082,13 +1082,13 @@
         {
           "id": "p5-plan-3",
           "task": "K+ replacement protocol — recheck in 2 hours",
-          "dueTime": "2026-04-28T09:00:00Z",
+          "dueTime": "2026-04-28T09:00:00+10:00",
           "priority": "urgent"
         },
         {
           "id": "p5-plan-4",
           "task": "Endocrine review — new type 1 diabetes mellitus insulin planning",
-          "dueTime": "2026-04-28T09:00:00Z",
+          "dueTime": "2026-04-28T09:00:00+10:00",
           "priority": "urgent"
         },
         {
@@ -1162,7 +1162,7 @@
       ],
       "diagnosis": "Orthotopic liver transplant",
       "avatarImageName": null,
-      "icuAdmissionDate": "2026-04-25T14:00:00Z",
+      "icuAdmissionDate": "2026-04-25T14:00:00+10:00",
       "vitals": [
         {
           "id": "p6-vital-1",
@@ -1170,7 +1170,7 @@
           "value": "78",
           "unit": "bpm",
           "status": "normal",
-          "timestamp": "2026-04-28T06:55:00Z",
+          "timestamp": "2026-04-28T06:55:00+10:00",
           "history": [
             77.6,
             78.5,
@@ -1193,7 +1193,7 @@
           "value": "96",
           "unit": "%",
           "status": "normal",
-          "timestamp": "2026-04-28T06:55:00Z",
+          "timestamp": "2026-04-28T06:55:00+10:00",
           "history": [
             96.1,
             96.0,
@@ -1216,7 +1216,7 @@
           "value": "18",
           "unit": "/min",
           "status": "normal",
-          "timestamp": "2026-04-28T06:55:00Z",
+          "timestamp": "2026-04-28T06:55:00+10:00",
           "history": [
             18.1,
             18.1,
@@ -1239,7 +1239,7 @@
           "value": "37.3",
           "unit": "°C",
           "status": "normal",
-          "timestamp": "2026-04-28T06:55:00Z",
+          "timestamp": "2026-04-28T06:55:00+10:00",
           "history": [
             37.3,
             37.3,
@@ -1262,7 +1262,7 @@
           "value": "86",
           "unit": "mmHg",
           "status": "normal",
-          "timestamp": "2026-04-28T06:55:00Z",
+          "timestamp": "2026-04-28T06:55:00+10:00",
           "history": [
             85.8,
             86.1,
@@ -1445,7 +1445,7 @@
         {
           "id": "p6-sys-1",
           "system": "neuro",
-          "summary": "Alert and oriented, GCS 15. Brief confusion episode at 0200 — resolved. DDx: ICU delirium vs Tacrolimus neurotoxicity.",
+          "summary": "Alert and oriented, GCS 15. Brief confusion episode at 2am — resolved. DDx: ICU delirium vs Tacrolimus neurotoxicity.",
           "concerns": [
             "Monitor closely for recurrent confusion"
           ]
@@ -1453,7 +1453,7 @@
         {
           "id": "p6-sys-2",
           "system": "respiratory",
-          "summary": "SV on 2L NPO2, SpO2 96%. R pleural effusion on CXR — monitoring. Incentive spirometry TDS.",
+          "summary": "Self-ventilating on 2L nasal prong oxygen, SpO2 96%. R pleural effusion on CXR — monitoring. Incentive spirometry TDS.",
           "concerns": [
             "Right pleural effusion"
           ]
@@ -1497,19 +1497,19 @@
         {
           "id": "p6-plan-1",
           "task": "Tacrolimus dose increase — pharmacist to advise (trough 6.2, target 8-12)",
-          "dueTime": "2026-04-28T08:00:00Z",
+          "dueTime": "2026-04-28T08:00:00+10:00",
           "priority": "urgent"
         },
         {
           "id": "p6-plan-2",
-          "task": "Hepatic artery doppler — alert surgeon if RI <0.5 or loss of triphasic",
-          "dueTime": "2026-04-28T10:00:00Z",
+          "task": "Hepatic artery doppler — alert surgeon if RI <0.5 or loss of triphasic flow",
+          "dueTime": "2026-04-28T10:00:00+10:00",
           "priority": "urgent"
         },
         {
           "id": "p6-plan-3",
           "task": "LFTs, INR, renal panel",
-          "dueTime": "2026-04-28T06:00:00Z",
+          "dueTime": "2026-04-28T06:00:00+10:00",
           "priority": "routine"
         },
         {
@@ -1527,7 +1527,7 @@
         {
           "id": "p6-plan-6",
           "task": "Transplant hepatology ward round",
-          "dueTime": "2026-04-28T08:30:00Z",
+          "dueTime": "2026-04-28T08:30:00+10:00",
           "priority": "routine"
         },
         {
@@ -1573,6 +1573,242 @@
         "relevantContext": [
           "Key post-transplant priorities: graft perfusion, bleeding, rejection, infection prevention, immunosuppression levels and renal protection",
           "Latex allergy requires a strict latex-free environment"
+        ]
+      }
+    },
+    {
+      "id": "p5",
+      "bedNumber": "BED-05",
+      "mrn": "MRN-DEMO-0005",
+      "name": "Demo Patient",
+      "age": 54,
+      "gender": "female",
+      "acuity": "stable",
+      "trajectory": "stable",
+      "codeStatus": {
+        "type": "fullCode"
+      },
+      "allergies": [],
+      "diagnosis": "Demo admission for dashboard testing",
+      "avatarImageName": null,
+      "icuAdmissionDate": "2026-04-27T08:00:00+10:00",
+      "vitals": [
+        {
+          "id": "p5-vital-1",
+          "label": "HR",
+          "value": "76",
+          "unit": "bpm",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00+10:00",
+          "history": [
+            74,
+            75,
+            75,
+            76,
+            77,
+            76,
+            76,
+            75,
+            76,
+            76,
+            77,
+            76
+          ],
+          "trend": "stable"
+        },
+        {
+          "id": "p5-vital-2",
+          "label": "SpO₂",
+          "value": "98",
+          "unit": "%",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00+10:00",
+          "history": [
+            98,
+            98,
+            97,
+            98,
+            98,
+            99,
+            98,
+            98,
+            98,
+            97,
+            98,
+            98
+          ],
+          "trend": "stable"
+        },
+        {
+          "id": "p5-vital-3",
+          "label": "RR",
+          "value": "18",
+          "unit": "/min",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00+10:00",
+          "history": [
+            18,
+            17,
+            18,
+            18,
+            19,
+            18,
+            18,
+            18,
+            17,
+            18,
+            18,
+            18
+          ],
+          "trend": "stable"
+        },
+        {
+          "id": "p5-vital-4",
+          "label": "Temp",
+          "value": "36.8",
+          "unit": "°C",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00+10:00",
+          "history": [
+            36.7,
+            36.7,
+            36.8,
+            36.8,
+            36.9,
+            36.8,
+            36.8,
+            36.7,
+            36.8,
+            36.8,
+            36.8,
+            36.8
+          ],
+          "trend": "stable"
+        },
+        {
+          "id": "p5-vital-5",
+          "label": "MAP",
+          "value": "82",
+          "unit": "mmHg",
+          "status": "normal",
+          "timestamp": "2026-04-28T06:55:00+10:00",
+          "history": [
+            80,
+            81,
+            82,
+            82,
+            83,
+            82,
+            81,
+            82,
+            82,
+            83,
+            82,
+            82
+          ],
+          "trend": "stable"
+        }
+      ],
+      "infusions": [],
+      "lines": [
+        {
+          "id": "p5-line-1",
+          "type": "Peripheral IV",
+          "location": "Left forearm"
+        },
+        {
+          "id": "p5-line-2",
+          "type": "",
+          "location": ""
+        }
+      ],
+      "labs": [
+        {
+          "id": "p5-lab-1",
+          "name": "Hb",
+          "value": "12.1",
+          "unit": "g/dL",
+          "status": "normal",
+          "trend": "stable"
+        },
+        {
+          "id": "p5-lab-2",
+          "name": "Creatinine",
+          "value": "",
+          "unit": "µmol/L",
+          "status": "normal",
+          "trend": null
+        },
+        {
+          "id": "p5-lab-3",
+          "name": "Lactate",
+          "value": "1.1",
+          "unit": "mmol/L",
+          "status": "normal",
+          "trend": "down"
+        }
+      ],
+      "systems": [
+        {
+          "id": "p5-sys-1",
+          "system": "neuro",
+          "summary": "Awake, comfortable, no major concerns documented.",
+          "concerns": []
+        },
+        {
+          "id": "p5-sys-2",
+          "system": "respiratory",
+          "summary": "Self-ventilating in room air. Demo text only.",
+          "concerns": []
+        },
+        {
+          "id": "p5-sys-3",
+          "system": "cardiovascular",
+          "summary": "",
+          "concerns": []
+        },
+        {
+          "id": "p5-sys-4",
+          "system": "renal",
+          "summary": "Passing urine. Balance not meaningful for demo.",
+          "concerns": []
+        }
+      ],
+      "plan": [
+        {
+          "id": "p5-plan-1",
+          "task": "Demo ward round item",
+          "dueTime": null,
+          "priority": "routine"
+        },
+        {
+          "id": "p5-plan-2",
+          "task": "",
+          "dueTime": null,
+          "priority": "routine"
+        }
+      ],
+      "family": {
+        "primaryContact": "",
+        "presentAtBedside": false,
+        "notes": ""
+      },
+      "escalation": {
+        "mainConcerns": [],
+        "triggers": [
+          "Demo trigger if condition changes"
+        ],
+        "escalateTo": "ICU Registrar"
+      },
+      "relatedBackground": {
+        "pastMedicalHistory": [
+          "Hypertension",
+          ""
+        ],
+        "presentingComplaint": "Short demo case for dashboard presentation.",
+        "socialHistory": [],
+        "relevantContext": [
+          "Some fields intentionally blank for demo purposes"
         ]
       }
     }

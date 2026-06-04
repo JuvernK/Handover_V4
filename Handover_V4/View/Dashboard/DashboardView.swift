@@ -51,6 +51,7 @@ struct DashboardView: View {
                                         sectionID: sectionID,
                                         patient: patient
                                     )
+                                    .dashboardCardSpan(sectionID == .vitals ? 2 : 1)
                                 }
                             }
                             .frame(width: layout.leftWidth, alignment: .leading)
@@ -123,7 +124,7 @@ struct DashboardView: View {
 /// Flexbox-style wrapping layout for dashboard cards.
 ///
 /// Each row fits as many cards as possible using `minimumItemWidth` as the
-/// flex basis. Cards then grow evenly to fill the row width.
+/// flex basis. Cards can span multiple columns, then grow to fill the row width.
 private struct DashboardFlexLayout: Layout {
     var minimumItemWidth: CGFloat
     var spacing: CGFloat
@@ -169,11 +170,11 @@ private struct DashboardFlexLayout: Layout {
                     at: CGPoint(x: x, y: y),
                     anchor: .topLeading,
                     proposal: ProposedViewSize(
-                        width: row.itemWidth,
+                        width: row.widths[position],
                         height: row.sizes[position].height
                     )
                 )
-                x += row.itemWidth + spacing
+                x += row.widths[position] + spacing
             }
             
             y += row.height + rowSpacing
@@ -184,23 +185,43 @@ private struct DashboardFlexLayout: Layout {
         guard !subviews.isEmpty else { return [] }
         
         let safeWidth = resolvedWidth(availableWidth, subviewCount: subviews.count)
-        let itemsPerFullRow = max(
+        let columnCount = max(
             1,
             Int((safeWidth + spacing) / (minimumItemWidth + spacing))
         )
+        let baseItemWidth = (
+            safeWidth - spacing * CGFloat(columnCount - 1)
+        ) / CGFloat(columnCount)
         
         var rows: [Row] = []
         var startIndex = subviews.startIndex
         
         while startIndex < subviews.endIndex {
-            let endIndex = min(startIndex + itemsPerFullRow, subviews.endIndex)
-            let indices = Array(startIndex..<endIndex)
-            let itemWidth = (
-                safeWidth - spacing * CGFloat(indices.count - 1)
-            ) / CGFloat(indices.count)
-            let sizes = indices.map { index in
+            var indices: [Subviews.Index] = []
+            var widths: [CGFloat] = []
+            var occupiedColumns = 0
+            var index = startIndex
+            
+            while index < subviews.endIndex {
+                let span = cardSpan(for: subviews[index], columnCount: columnCount)
+                
+                if !indices.isEmpty, occupiedColumns + span > columnCount {
+                    break
+                }
+                
+                indices.append(index)
+                widths.append(width(forSpan: span, baseItemWidth: baseItemWidth))
+                occupiedColumns += span
+                index = subviews.index(after: index)
+                
+                if occupiedColumns >= columnCount {
+                    break
+                }
+            }
+            
+            let sizes = indices.enumerated().map { position, index in
                 subviews[index].sizeThatFits(
-                    ProposedViewSize(width: itemWidth, height: nil)
+                    ProposedViewSize(width: widths[position], height: nil)
                 )
             }
             let rowHeight = sizes.map(\.height).max() ?? 0
@@ -209,15 +230,23 @@ private struct DashboardFlexLayout: Layout {
                 Row(
                     indices: indices,
                     sizes: sizes,
-                    itemWidth: itemWidth,
+                    widths: widths,
                     height: rowHeight
                 )
             )
             
-            startIndex = endIndex
+            startIndex = index
         }
         
         return rows
+    }
+    
+    private func cardSpan(for subview: LayoutSubview, columnCount: Int) -> Int {
+        min(max(1, subview[DashboardCardSpanKey.self]), columnCount)
+    }
+    
+    private func width(forSpan span: Int, baseItemWidth: CGFloat) -> CGFloat {
+        baseItemWidth * CGFloat(span) + spacing * CGFloat(span - 1)
     }
     
     private func resolvedWidth(_ width: CGFloat?, subviewCount: Int) -> CGFloat {
@@ -232,8 +261,18 @@ private struct DashboardFlexLayout: Layout {
     private struct Row {
         let indices: [Subviews.Index]
         let sizes: [CGSize]
-        let itemWidth: CGFloat
+        let widths: [CGFloat]
         let height: CGFloat
+    }
+}
+
+private struct DashboardCardSpanKey: LayoutValueKey {
+    static let defaultValue = 1
+}
+
+private extension View {
+    func dashboardCardSpan(_ span: Int) -> some View {
+        layoutValue(key: DashboardCardSpanKey.self, value: span)
     }
 }
 

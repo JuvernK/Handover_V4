@@ -151,7 +151,7 @@ extension Patient {
                 Infusion(id: "i2", drugName: "Vasopressin", dose: "0.03 U/min",
                          route: "IV (CVC)", purpose: "Vasopressor support", isHighAlert: true),
                 Infusion(id: "i3", drugName: "Meropenem", dose: "1g q8h",
-                         route: "IV", purpose: "Antibiotic — Day 2 of 5", isHighAlert: false),
+                         route: "IV", purpose: "Antibiotic — Day 1 of 5", isHighAlert: false),
                 Infusion(id: "i4", drugName: "Hydrocortisone", dose: "200 mg/24hr",
                          route: "IV infusion", purpose: "Septic shock", isHighAlert: false),
                 Infusion(id: "i5", drugName: "Insulin", dose: "4 U/hr",

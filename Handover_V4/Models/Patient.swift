@@ -54,6 +54,10 @@ struct Patient: Identifiable, Codable, Hashable {
     let family: FamilyInfo
     let escalation: EscalationInfo
 
+    static let demoReferenceDate: Date = {
+            ISO8601DateFormatter().date(from: "2026-04-28T07:00:00Z")!
+        }()
+    
     init(
         id: String,
         bedNumber: String,
@@ -120,11 +124,12 @@ struct Patient: Identifiable, Codable, Hashable {
     /// Number of full days the patient has been in ICU.
     /// Returns 0 if admitted today.
     var lengthOfStay: Int {
-        let cal = Calendar.current
-        let start = cal.startOfDay(for: icuAdmissionDate)
-        let now = cal.startOfDay(for: Date())
-        return cal.dateComponents([.day], from: start, to: now).day ?? 0
-    }
+            let cal = Calendar.current
+            let start = cal.startOfDay(for: icuAdmissionDate)
+            let now = cal.startOfDay(for: Patient.demoReferenceDate)
+            return cal.dateComponents([.day], from: start, to: now).day ?? 0
+        }
+
     
     /// Human-readable LOS for display (e.g. "ICU Day 5").
     var lengthOfStayDisplay: String {

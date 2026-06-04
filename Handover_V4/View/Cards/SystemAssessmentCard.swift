@@ -214,7 +214,7 @@ extension Patient {
                                  summary: "No pressure injuries. Flowtron boots on. Turn q2h protocol.",
                                  concerns: []),
                 SystemAssessment(id: "s7", system: .infection,
-                                 summary: "Septic shock — RLL pneumonia. Day 2 Meropenem. Sputum C&S pending.",
+                                 summary: "Septic shock — RLL pneumonia. Day 1 Meropenem. Sputum C&S pending.",
                                  concerns: ["Source control critical"])
             ],
             plan: [],
