@@ -26,7 +26,7 @@ class AppModel {
     var isActivatingSharePlay = false
     var sharePlayErrorMessage: String?
     
-    init(initialBedNumber: String = "BED-02") {
+    init(initialBedNumber: String = "BED-01") {
         handoverViewModel = HandoverViewModel(initialBedNumber: initialBedNumber)
 //        // Temporary debug code to test decoding
 //        print("Loaded \(patients.count) patients")

@@ -48,7 +48,9 @@ final class SessionController {
             // Ensure support for the group immersive space
         
         systemCoordinator.configuration.supportsGroupImmersiveSpace = true
-        systemCoordinator.configuration.spatialTemplatePreference = .sideBySide // Arrange the spatial persona in a converstation style
+        // Keep the immersive scene anchored like the solo experience. A side-by-side
+        // spatial template can shift the group coordinate space when SharePlay starts.
+        systemCoordinator.configuration.spatialTemplatePreference = .none
 
         // Connect to the room!
         session.join()
