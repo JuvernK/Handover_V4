@@ -31,9 +31,11 @@ struct PatientHeaderView: View {
                     
                     // Diagnosis + LOS pill
                     HStack(spacing: 8) {
-                        Text(patient.diagnosis)
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(.primary)
+                        ClinicalAbbreviationText(
+                            patient.diagnosis,
+                            font: .system(size: 18, weight: .semibold),
+                            foregroundColor: .primary
+                        )
                         
                         LengthOfStayPill(text: patient.lengthOfStayDisplay)
                         AcuityBadge(acuity: patient.acuity)

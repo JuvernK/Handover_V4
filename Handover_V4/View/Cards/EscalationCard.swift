@@ -66,10 +66,11 @@ private struct ConcernsSection: View {
                             .foregroundStyle(.orange)
                             .padding(.top, 3)
 
-                        Text(concern)
-                            .font(.system(size: 13))
-                            .foregroundStyle(.primary)
-                            .fixedSize(horizontal: false, vertical: true)
+                        ClinicalAbbreviationText(
+                            concern,
+                            font: .system(size: 13),
+                            foregroundColor: .primary
+                        )
                     }
                 }
             }
@@ -95,10 +96,11 @@ private struct TriggersSection: View {
                             .foregroundStyle(.red)
                             .padding(.top, 4)
 
-                        Text(trigger)
-                            .font(.system(size: 13))
-                            .foregroundStyle(.primary)
-                            .fixedSize(horizontal: false, vertical: true)
+                        ClinicalAbbreviationText(
+                            trigger,
+                            font: .system(size: 13),
+                            foregroundColor: .primary
+                        )
                     }
                 }
             }

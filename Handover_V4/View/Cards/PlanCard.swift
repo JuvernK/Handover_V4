@@ -57,10 +57,11 @@ private struct PlanRow: View {
                 .frame(width: 14)
             
             // Task text
-            Text(item.task)
-                .font(.system(size: 14))
-                .foregroundStyle(.primary)
-                .fixedSize(horizontal: false, vertical: true)
+            ClinicalAbbreviationText(
+                item.task,
+                font: .system(size: 14),
+                foregroundColor: .primary
+            )
             
             Spacer(minLength: 8)
             

@@ -41,10 +41,11 @@ struct RelatedBackgroundCard: View {
                             title: "Presenting complaint",
                             systemImage: "doc.text.magnifyingglass"
                         ) {
-                            Text(background.presentingComplaint)
-                                .font(.system(size: 13))
-                                .foregroundStyle(.primary)
-                                .fixedSize(horizontal: false, vertical: true)
+                            ClinicalAbbreviationText(
+                                background.presentingComplaint,
+                                font: .system(size: 13),
+                                foregroundColor: .primary
+                            )
                         }
                     }
 
@@ -111,10 +112,11 @@ private struct BulletList: View {
                         .frame(width: 5, height: 5)
                         .padding(.top, 6)
 
-                    Text(item)
-                        .font(.system(size: 13))
-                        .foregroundStyle(.primary)
-                        .fixedSize(horizontal: false, vertical: true)
+                    ClinicalAbbreviationText(
+                        item,
+                        font: .system(size: 13),
+                        foregroundColor: .primary
+                    )
                 }
             }
         }

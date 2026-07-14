@@ -66,26 +66,34 @@ private struct InfusionRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 // Top line: drug name + dose
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(infusion.drugName)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.primary)
+                    ClinicalAbbreviationText(
+                        infusion.drugName,
+                        font: .system(size: 14, weight: .semibold),
+                        foregroundColor: .primary
+                    )
                     
-                    Text(infusion.dose)
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
-                        .foregroundStyle(.primary)
+                    ClinicalAbbreviationText(
+                        infusion.dose,
+                        font: .system(size: 13, weight: .medium, design: .rounded),
+                        foregroundColor: .primary
+                    )
                     
                     Spacer(minLength: 8)
                     
-                    Text(infusion.route)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
+                    ClinicalAbbreviationText(
+                        infusion.route,
+                        font: .system(size: 11),
+                        foregroundColor: .secondary
+                    )
                 }
                 
                 // Purpose (optional, smaller, secondary)
                 if !infusion.purpose.isEmpty {
-                    Text(infusion.purpose)
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
+                    ClinicalAbbreviationText(
+                        infusion.purpose,
+                        font: .system(size: 12),
+                        foregroundColor: .secondary
+                    )
                         .lineLimit(2)
                 }
             }

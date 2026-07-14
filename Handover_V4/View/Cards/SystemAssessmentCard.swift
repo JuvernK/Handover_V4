@@ -70,10 +70,11 @@ private struct SystemRow: View {
                     .foregroundStyle(.primary)
                 
                 // Summary text
-                Text(assessment.summary)
-                    .font(.system(size: 13))
-                    .foregroundStyle(.primary.opacity(0.85))
-                    .fixedSize(horizontal: false, vertical: true)
+                ClinicalAbbreviationText(
+                    assessment.summary,
+                    font: .system(size: 13),
+                    foregroundColor: .primary.opacity(0.85)
+                )
                 
                 // Concerns (if any)
                 if !assessment.concerns.isEmpty {
@@ -85,10 +86,11 @@ private struct SystemRow: View {
                                     .foregroundStyle(.orange)
                                     .padding(.top, 3)
                                 
-                                Text(concern)
-                                    .font(.system(size: 12))
-                                    .foregroundStyle(.secondary)
-                                    .fixedSize(horizontal: false, vertical: true)
+                                ClinicalAbbreviationText(
+                                    concern,
+                                    font: .system(size: 12),
+                                    foregroundColor: .secondary
+                                )
                             }
                         }
                     }

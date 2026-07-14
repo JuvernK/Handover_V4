@@ -50,15 +50,19 @@ private struct LineRow: View {
                 .font(.system(size: 6))
                 .foregroundStyle(.secondary)
             
-            Text(line.type)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.primary)
+            ClinicalAbbreviationText(
+                line.type,
+                font: .system(size: 14, weight: .medium),
+                foregroundColor: .primary
+            )
             
             Spacer(minLength: 12)
             
-            Text(line.location)
-                .font(.system(size: 13))
-                .foregroundStyle(.secondary)
+            ClinicalAbbreviationText(
+                line.location,
+                font: .system(size: 13),
+                foregroundColor: .secondary
+            )
                 .multilineTextAlignment(.trailing)
         }
         .padding(.horizontal, 16)

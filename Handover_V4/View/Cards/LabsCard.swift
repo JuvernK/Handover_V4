@@ -62,9 +62,11 @@ private struct LabRow: View {
                 .frame(width: 8, height: 8)
             
             // Lab name
-            Text(lab.name)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.primary)
+            ClinicalAbbreviationText(
+                lab.name,
+                font: .system(size: 14, weight: .medium),
+                foregroundColor: .primary
+            )
             
             Spacer(minLength: 8)
             
