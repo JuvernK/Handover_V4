@@ -123,6 +123,9 @@
 			);
 			mainGroup = D6950CBE2FA22A1200A576CA;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				D6A1F0002FA22A1200A576CA /* XCLocalSwiftPackageReference "Packages/RealityKitContent" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = D6950CC82FA22A1200A576CA /* Products */;
 			projectDirPath = "";
@@ -159,6 +162,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Handover_V4/Handover_V4.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = L8FKNLG3XM;
@@ -188,6 +192,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Handover_V4/Handover_V4.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = L8FKNLG3XM;
@@ -356,9 +361,17 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		D6A1F0002FA22A1200A576CA /* XCLocalSwiftPackageReference "Packages/RealityKitContent" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/RealityKitContent;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		D6950CCC2FA22A1200A576CA /* RealityKitContent */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = D6A1F0002FA22A1200A576CA /* XCLocalSwiftPackageReference "Packages/RealityKitContent" */;
 			productName = RealityKitContent;
 		};
 /* End XCSwiftPackageProductDependency section */
