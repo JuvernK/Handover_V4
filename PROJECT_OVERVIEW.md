@@ -35,8 +35,12 @@ This project is a visionOS SwiftUI + RealityKit ICU handover prototype. It prese
 
 - `Handover_V4/View/Dashboard/`
   - Main dashboard UI.
-  - `DashboardView.swift` includes the custom wrapping card layout, drag-and-drop reordering, SharePlay controls, and immersive entry control.
+  - `DashboardView.swift` composes the patient header, reorderable clinical cards, fixed Systems Assessment panel, dashboard controls, and empty state.
   - `PatientHeaderView.swift` renders pinned patient identity/basic information.
+  - `DashboardFlexLayout.swift` implements the custom wrapping layout and multi-column card spans.
+  - `DraggableDashboardCard.swift` adds drag-and-drop section reordering and sends local layout changes through `AppModel` for SharePlay synchronization.
+  - `DashboardControls.swift` contains the SharePlay and immersive-space controls shown in the dashboard ornament.
+  - `EmptyDashboardState.swift` renders the fallback UI when no patient is selected.
 
 - `Handover_V4/View/Cards/`
   - Clinical cards for vitals, related background, infusions, lines/access, labs, systems assessment, plan, escalation, and spatial card rendering.
@@ -69,6 +73,14 @@ Default order:
 ```
 
 The Systems Assessment card is special in `DashboardView`: it is kept in a fixed right-side panel and excluded from the reorderable wrapped card layout.
+
+### Dashboard Responsibilities
+
+- `DashboardView` owns screen-level composition and calculates the widths of the main card area and fixed Systems Assessment panel.
+- `DashboardFlexLayout` measures and positions the reorderable cards. The Vitals card spans two columns when enough space is available; other cards occupy one column.
+- `DraggableDashboardCard` is both the drag source and drop target for a section. Dropping one section onto another moves it into the destination section's current position.
+- `DashboardControls` starts or ends SharePlay and provides entry to the immersive space.
+- `HandoverViewModel.sectionOrder` remains the source of truth for dashboard ordering. Reordering is routed through `AppModel` so changes can be synchronized with SharePlay participants.
 
 ## Immersive POI Mapping
 
