@@ -19,33 +19,47 @@ import Observation
 @Observable
 @MainActor
 final class HandoverViewModel {
-    
+    private let patientLoader: any PatientLoading
+
     /// All patients loaded from the bundle.
     private(set) var patients: [Patient] = []
-    
+
     /// The patient currently displayed on the dashboard.
-    var patient: Patient?
-    
+    private(set) var patient: Patient?
+
+    /// A user-facing description of the most recent loading failure.
+    private(set) var loadingErrorMessage: String?
+
     /// The order in which dashboard sections appear in the grid.
     /// Drag-and-drop in DashboardView mutates this through moveSection().
     var sectionOrder: [SectionID] = SectionID.defaultOrder
     
     /// Loads all patients from JSON and selects an initial patient by bed number.
     /// If the bed number is not found, falls back to the first patient.
-    init(initialBedNumber: String = "BED-01") {
-        loadPatients()
+    convenience init(initialBedNumber: String = "BED-01") {
+        self.init(
+            initialBedNumber: initialBedNumber,
+            patientLoader: PatientDataLoader()
+        )
+    }
+
+    init(initialBedNumber: String, patientLoader: any PatientLoading) {
+        self.patientLoader = patientLoader
+        reloadPatients()
         selectPatient(byBed: initialBedNumber)
     }
-    
+
     // MARK: - Patient management
-    
-    /// Loads patients from PatientData.json.
-    func loadPatients() {
+
+    /// Reloads patient data using the injected loader.
+    func reloadPatients() {
         do {
-            self.patients = try PatientDataLoader.load()
+            patients = try patientLoader.loadPatients()
+            loadingErrorMessage = nil
         } catch {
-            print("⚠️ Failed to load patients: \(error)")
-            self.patients = []
+            patients = []
+            patient = nil
+            loadingErrorMessage = error.localizedDescription
         }
     }
     
@@ -53,37 +67,22 @@ final class HandoverViewModel {
     /// Falls back to the first patient if the bed number isn't found.
     func selectPatient(byBed bedNumber: String) {
         if let match = patients.first(where: { $0.bedNumber == bedNumber }) {
-            self.patient = match
+            patient = match
         } else {
-            self.patient = patients.first
+            patient = patients.first
         }
     }
-    
-    /// Note: Removable
-    /// Sets the displayed patient by ID. Used internally by tests/previews.
+
+    /// Sets the displayed patient by ID when that patient exists.
     func selectPatient(byID id: String) {
         if let match = patients.first(where: { $0.id == id }) {
-            self.patient = match
+            patient = match
         }
     }
-    
+
     // MARK: - Section ordering
-    
-    /// Moves a section from one index to another within the section order. (Index`based))
-    // @discardableResult
-    // func moveSection(from source: Int, to destination: Int) -> Bool {
-    //     guard source >= 0, source < sectionOrder.count else { return false }
-    //     guard destination >= 0, destination <= sectionOrder.count else { return false }
-        
-    //     let item = sectionOrder.remove(at: source)
-    //     let insertionIndex = destination > source ? destination - 1 : destination
-    //     sectionOrder.insert(item, at: insertionIndex)
-    //     return true
-    // }
-    
 
-
-    /// Moves the dragged section into the destination section's current position. (ID based)
+    /// Moves the dragged section into the destination section's current position.
     /// Used by .dropDestination handlers in DashboardView.
     ///
     /// Example: if Vitals is in position 1 and Infusions is in position 2,

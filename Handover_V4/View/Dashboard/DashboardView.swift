@@ -58,7 +58,10 @@ struct DashboardView: View {
                     .padding(contentPadding)
                     .frame(width: layout.totalWidth, alignment: .leading)
                 } else {
-                    EmptyDashboardState()
+                    EmptyDashboardState(
+                        hasPatients: !viewModel.patients.isEmpty,
+                        loadingErrorMessage: viewModel.loadingErrorMessage
+                    )
                 }
             }
         }

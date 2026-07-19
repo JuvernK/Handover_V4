@@ -4,62 +4,73 @@
 //
 //  Created by Juvern Khor on 29/4/2026.
 //
-//  Loads PatientData.json from the app bundle and decodes into [Patient].
+//  Loads PatientData.json from a bundle and decodes it into patients.
 //
 
 import Foundation
 
-// MARK: - Top-level container matching the JSON root
+protocol PatientLoading {
+    func loadPatients() throws -> [Patient]
+}
 
-struct PatientDataFile: Codable {
+struct PatientDataLoader: PatientLoading {
+    private let bundle: Bundle
+    private let resourceName: String
+
+    init(bundle: Bundle = .main, resourceName: String = "PatientData") {
+        self.bundle = bundle
+        self.resourceName = resourceName
+    }
+
+    func loadPatients() throws -> [Patient] {
+        guard let url = bundle.url(forResource: resourceName, withExtension: "json") else {
+            throw PatientDataLoadingError.fileNotFound(resourceName: resourceName)
+        }
+
+        let data: Data
+        do {
+            data = try Data(contentsOf: url)
+        } catch {
+            throw PatientDataLoadingError.unreadableFile(underlying: error)
+        }
+
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+
+        do {
+            return try decoder.decode(PatientDataFile.self, from: data).patients
+        } catch {
+            throw PatientDataLoadingError.invalidFile(underlying: error)
+        }
+    }
+}
+
+enum PatientDataLoadingError: LocalizedError {
+    case fileNotFound(resourceName: String)
+    case unreadableFile(underlying: Error)
+    case invalidFile(underlying: Error)
+
+    var errorDescription: String? {
+        switch self {
+        case .fileNotFound(let resourceName):
+            return "\(resourceName).json could not be found."
+        case .unreadableFile:
+            return "Patient data could not be read."
+        case .invalidFile:
+            return "Patient data is not in the expected format."
+        }
+    }
+
+    var failureReason: String? {
+        switch self {
+        case .fileNotFound:
+            return nil
+        case .unreadableFile(let underlying), .invalidFile(let underlying):
+            return underlying.localizedDescription
+        }
+    }
+}
+
+private struct PatientDataFile: Decodable {
     let patients: [Patient]
 }
-
-// MARK: - Loader
-
-enum PatientDataLoader {
-    
-    /// Loads and decodes PatientData.json from the main bundle.
-    /// - Returns: An array of Patient objects.
-    /// - Throws: An error if the file is missing or decoding fails.
-    static func load() throws -> [Patient] {
-        guard let url = Bundle.main.url(forResource: "PatientData", withExtension: "json") else {
-            throw LoaderError.fileNotFound
-        }
-        
-        let data = try Data(contentsOf: url)
-        
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601   // matches "2026-04-28T07:00:00Z"
-        
-        let file = try decoder.decode(PatientDataFile.self, from: data)
-        return file.patients
-    }
-    
-    /// Convenience non-throwing variant — returns [] if anything goes wrong.
-    /// Useful for SwiftUI previews and quick prototyping.
-    static func loadOrEmpty() -> [Patient] {
-        (try? load()) ?? []
-    }
-    
-    enum LoaderError: Error {
-        case fileNotFound
-    }
-}
-
-// MARK: - Example usage in a ViewModel
-//
-// @Observable
-// final class HandoverViewModel {
-//     var patients: [Patient] = []
-//     var currentPatient: Patient?
-//
-//     init() {
-//         do {
-//             self.patients = try PatientDataLoader.load()
-//             self.currentPatient = patients.first
-//         } catch {
-//             print("Failed to load patient data: \(error)")
-//         }
-//     }
-// }

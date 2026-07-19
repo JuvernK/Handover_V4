@@ -407,25 +407,8 @@ extension Patient {
 }
 #endif
 
-//#Preview("patient header") {
-//    let patients = PatientDataLoader.loadOrEmpty()
-//    
-//    return Group {
-//        if let p = patients.first(where: { $0.bedNumber == "BED-03" }) {
-//            VStack(spacing: 16) {
-//                PatientHeaderView(patient: p)
-//                    .glassBackgroundEffect(in: .rect(cornerRadius: 16))
-//                VitalsCard(patient: p)
-//            }
-//            .padding()
-//        } else {
-//            Text("No patients loaded")
-//        }
-//    }
-//}
-
 #Preview("patient header") {
-    let patients = PatientDataLoader.loadOrEmpty()
+    let patients = (try? PatientDataLoader().loadPatients()) ?? []
 
     return Group {
         if let p = patients.first(where: { $0.bedNumber == "BED-02" }) {

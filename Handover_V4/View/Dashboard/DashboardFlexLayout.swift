@@ -149,7 +149,7 @@ struct DashboardFlexLayout: Layout {
     }
 }
 
-private struct DashboardCardSpanKey: LayoutValueKey {
+private nonisolated struct DashboardCardSpanKey: LayoutValueKey {
     static let defaultValue = 1
 }
 

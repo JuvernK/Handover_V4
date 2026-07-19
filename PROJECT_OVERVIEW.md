@@ -19,13 +19,14 @@ This project is a visionOS SwiftUI + RealityKit ICU handover prototype. It prese
   - Remote SharePlay message handling and late-join catch-up state.
 
 - `ViewModels/HandoverViewModel.swift` is the dashboard data source.
-  - Loads patients from JSON.
+  - Loads patients through an injected `PatientLoading` dependency.
   - Tracks the selected patient.
   - Tracks dashboard section order.
+  - Exposes patient-loading failures for the dashboard empty state.
   - Applies remote dashboard state from SharePlay.
 
 - `Data/PatientData.json` is the static ICU patient dataset.
-  - Decoded by `Data/PatientDataLoader.swift`.
+  - Decoded by `Data/PatientDataLoader.swift`, the production implementation of `PatientLoading`.
   - Modelled by `Models/Patient.swift` and related enums.
 
 ## Main Folder Structure

@@ -22,17 +22,11 @@ class AppModel {
     var immersiveSpaceState = ImmersiveSpaceState.closed
     
     let handoverViewModel: HandoverViewModel
-    let patients = PatientDataLoader.loadOrEmpty()
     var isActivatingSharePlay = false
     var sharePlayErrorMessage: String?
     
     init(initialBedNumber: String = "BED-01") {
         handoverViewModel = HandoverViewModel(initialBedNumber: initialBedNumber)
-//        // Temporary debug code to test decoding
-//        print("Loaded \(patients.count) patients")
-//        for p in patients {
-//            print("• \(p.bedNumber): \(p.name) — \(p.initials)")
-//        }
         Task(name: "group session observation") {
             await observeGroupSessions()
         }
