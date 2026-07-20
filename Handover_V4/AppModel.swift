@@ -2,254 +2,114 @@
 //  AppModel.swift
 //  Handover_V4
 //
-//  Created by Juvern Khor on 29/4/2026.
-//
 
 import SwiftUI
-import GroupActivities
-import Combine
 
-/// Maintains app-wide state
+/// Composes the app's feature state and preserves a small API for its views.
 @MainActor
 @Observable
-class AppModel {
+final class AppModel {
     let immersiveSpaceID = "ImmersiveSpace"
+
     enum ImmersiveSpaceState {
         case closed
         case inTransition
         case open
     }
+
     var immersiveSpaceState = ImmersiveSpaceState.closed
-    
+
     let handoverViewModel: HandoverViewModel
-    var isActivatingSharePlay = false
-    var sharePlayErrorMessage: String?
-    
-    init(initialBedNumber: String = "BED-01") {
-        handoverViewModel = HandoverViewModel(initialBedNumber: initialBedNumber)
-        Task(name: "group session observation") {
-            await observeGroupSessions()
-        }
-    }
-    
-    // MARK: - Set up SharePlay
-    private var sessionController: SessionController?
-    
+    let sharedCardState: SharedCardState
+    let sharePlayCoordinator: SharePlayCoordinator
 
-    /// Returns whether a SharePlay session is currently active.
+    init(initialBedNumber: String = "BED-03") {
+        let handoverViewModel = HandoverViewModel(
+            initialBedNumber: initialBedNumber
+        )
+        let sharedCardState = SharedCardState()
+
+        self.handoverViewModel = handoverViewModel
+        self.sharedCardState = sharedCardState
+        sharePlayCoordinator = SharePlayCoordinator(
+            handoverViewModel: handoverViewModel,
+            sharedCardState: sharedCardState
+        )
+        sharePlayCoordinator.startObservingSessions()
+    }
+
+    // MARK: - SharePlay presentation
+
     var isSharePlayActive: Bool {
-        sessionController != nil
-    }
-    
-    /// Ends the current SharePlay session if one is active.
-    func endSession() {
-        sessionController?.endSession()
+        sharePlayCoordinator.isActive
     }
 
-    /// Starts the SharePlay group activity. In FaceTime this joins the active call;
-    /// outside FaceTime the system may ask the user how they want to share.
+    var isActivatingSharePlay: Bool {
+        sharePlayCoordinator.isActivating
+    }
+
+    var sharePlayErrorMessage: String? {
+        get { sharePlayCoordinator.errorMessage }
+        set { sharePlayCoordinator.errorMessage = newValue }
+    }
+
     func activateSharePlay() async {
-        guard !isSharePlayActive, !isActivatingSharePlay else { return }
-
-        isActivatingSharePlay = true
-        sharePlayErrorMessage = nil
-        defer { isActivatingSharePlay = false }
-
-        let activity = SharePlayTogether()
-        switch await activity.prepareForActivation() {
-        case .activationPreferred:
-            do {
-                _ = try await activity.activate()
-            } catch {
-                sharePlayErrorMessage = "SharePlay could not be started: \(error.localizedDescription)"
-            }
-
-        case .activationDisabled:
-            sharePlayErrorMessage = "Start or join a FaceTime call before starting SharePlay."
-
-        case .cancelled:
-            break
-
-        @unknown default:
-            sharePlayErrorMessage = "SharePlay is not available right now."
-        }
-    }
-    
-    /// Observes the life cycle of SharePlay group sessions.
-    /// This method listens for new `SharePlayTogether` sessions and manages their life cycles.
-    /// The method runs continuously in a background task and the system calls it only once during initialization.
-    private func observeGroupSessions() async {
-        for await session in SharePlayTogether.sessions() {
-            let sessionController = await SessionController(session, appModel: self)
-            guard let sessionController else { // Safely store session
-                continue
-            }
-            self.sessionController = sessionController
-            
-            // Create a task to observe the group session state and clear the
-            // session controller when the group session invalidates.
-            Task.immediate(name: "session state observation")  {
-                for await state in session.$state.values {
-                    // Safety check for active session before new one created
-                    guard self.sessionController?.session.id == session.id else {
-                        return
-                    }
-                    if case .invalidated = state {
-                        self.sessionController = nil
-                        return
-                    }
-                }
-            }
-        }
-    }
-    
-    // MARK: - Card State Management
-    
-    // State Dictionaries
-    var cardStates: [String: Bool] = [:]
-    var cardPositions: [String: SIMD3<Float>] = [:]
-    
-    // update counts to prevent race conditions
-    private var cardUpdateCounts: [String: MessageUpdateCount] = [:]
-    private var dashboardUpdateCount: MessageUpdateCount?
-
-    var currentDashboardState: DashboardState {
-        DashboardState(
-            selectedPatientID: handoverViewModel.patient?.id,
-            sectionOrder: handoverViewModel.sectionOrder
-        )
+        await sharePlayCoordinator.activate()
     }
 
-    func makeCatchUpMessage() -> CatchUpMessage {
-        CatchUpMessage(
-            allCardStates: cardStates,
-            allCardPositions: cardPositions,
-            cardUpdateCounts: cardUpdateCounts,
-            dashboardState: currentDashboardState,
-            dashboardUpdateCount: dashboardUpdateCount
-        )
+    func endSession() {
+        sharePlayCoordinator.endSession()
     }
-    
-    // MARK: - Local Updates  (SELF)
+
+    // MARK: - Shared card state
+
+    var cardStates: [String: Bool] {
+        sharedCardState.expansionStates
+    }
+
+    var cardPositions: [String: SIMD3<Float>] {
+        sharedCardState.positions
+    }
+
     func setCardState(name: String, isExpanded: Bool, syncChanges: Bool) {
-        cardStates[name] = isExpanded
-        
-        if syncChanges {
-            incrementAndBroadcast(name: name, action: .toggle(isExpanded: isExpanded))
-        }
+        sharePlayCoordinator.setCardState(
+            name: name,
+            isExpanded: isExpanded,
+            syncChanges: syncChanges
+        )
     }
-    
-    func setCardPosition(name: String, position: SIMD3<Float>, syncChanges: Bool) {
-        cardPositions[name] = position
-        
-        if syncChanges {
-            incrementAndBroadcast(name: name, action: .move(position: position))
-        }
-    }
-    
-    // Helper to handle the counter logic and send the message
-    /// Seal message and counter into CardSyncMessage type and send via SessionController
-    private func incrementAndBroadcast(name: String, action: CardAction) {
 
-        guard let newUpdateCount = nextUpdateCount(after: cardUpdateCounts[name]) else { return }
-        cardUpdateCounts[name] = newUpdateCount // Save our new count locally
-        
-        let message = CardSyncMessage(cardName: name, action: action, updateCount: newUpdateCount)
-        
-        Task {
-            await sessionController?.sendMessage(message)
-        }
+    func setCardPosition(
+        name: String,
+        position: SIMD3<Float>,
+        syncChanges: Bool
+    ) {
+        sharePlayCoordinator.setCardPosition(
+            name: name,
+            position: position,
+            syncChanges: syncChanges
+        )
     }
+
+    // MARK: - Shared dashboard state
 
     @discardableResult
-    func moveDashboardSection(_ dragged: SectionID, toPositionOf destination: SectionID, syncChanges: Bool) -> Bool {
-        guard handoverViewModel.moveSection(dragged, toPositionOf: destination) else { return false }
-
-        if syncChanges {
-            incrementAndBroadcastDashboard(action: .sectionOrder(handoverViewModel.sectionOrder))
-        }
-
-        return true
+    func moveDashboardSection(
+        _ dragged: SectionID,
+        toPositionOf destination: SectionID,
+        syncChanges: Bool
+    ) -> Bool {
+        sharePlayCoordinator.moveDashboardSection(
+            dragged,
+            toPositionOf: destination,
+            syncChanges: syncChanges
+        )
     }
 
     func selectPatient(id: String, syncChanges: Bool) {
-        handoverViewModel.selectPatient(byID: id)
-
-        if syncChanges {
-            incrementAndBroadcastDashboard(action: .selectedPatient(id: id))
-        }
-    }
-
-    private func incrementAndBroadcastDashboard(action: DashboardAction) {
-        guard let newUpdateCount = nextUpdateCount(after: dashboardUpdateCount) else { return }
-        dashboardUpdateCount = newUpdateCount
-
-        let message = DashboardSyncMessage(action: action, updateCount: newUpdateCount)
-
-        Task {
-            await sessionController?.sendMessage(message)
-        }
-    }
-
-    private func nextUpdateCount(after existingCount: MessageUpdateCount?) -> MessageUpdateCount? {
-        guard let participantId = sessionController?.session.localParticipant.id else { return nil }
-
-        return MessageUpdateCount(
-            count: (existingCount?.count ?? 0) + 1,
-            participant: participantId
+        sharePlayCoordinator.selectPatient(
+            id: id,
+            syncChanges: syncChanges
         )
-    }
-    
-    // MARK: - Remote Updates (Changes Other Participant)
-    func handleRemoteSyncMessage(_ message: CardSyncMessage) {
-        // 1. Check for race conditions. Ignore if our local record is newer than the incoming message.
-        if let existingCount = cardUpdateCounts[message.cardName], message.updateCount <= existingCount {
-            return
-        }
-        
-        // 2. It's a valid new update. Save the new high score.
-        cardUpdateCounts[message.cardName] = message.updateCount
-        
-        // 3. Apply the state change
-        switch message.action {
-        case .toggle(let isExpanded):
-            cardStates[message.cardName] = isExpanded
-        case .move(let position):
-            cardPositions[message.cardName] = position
-        }
-    }
-
-    func handleRemoteDashboardSyncMessage(_ message: DashboardSyncMessage) {
-        if let existingCount = dashboardUpdateCount, message.updateCount <= existingCount {
-            return
-        }
-
-        dashboardUpdateCount = message.updateCount
-
-        switch message.action {
-        case .state(let dashboardState):
-            handoverViewModel.applyDashboardState(dashboardState)
-
-        case .selectedPatient(let id):
-            handoverViewModel.selectPatient(byID: id)
-
-        case .sectionOrder(let sectionOrder):
-            handoverViewModel.applySectionOrder(sectionOrder)
-        }
-    }
-
-    /// Replaces all card states (used for catch-up when joining late)
-    func replaceAllSharedState(
-        states: [String: Bool],
-        positions: [String: SIMD3<Float>],
-        cardUpdateCounts: [String: MessageUpdateCount],
-        dashboardState: DashboardState,
-        dashboardUpdateCount: MessageUpdateCount?
-    ) {
-        cardStates = states
-        cardPositions = positions
-        self.cardUpdateCounts = cardUpdateCounts
-        self.dashboardUpdateCount = dashboardUpdateCount
-        handoverViewModel.applyDashboardState(dashboardState)
     }
 }

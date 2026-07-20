@@ -10,13 +10,20 @@ This project is a visionOS SwiftUI + RealityKit ICU handover prototype. It prese
   - Creates the full immersive space.
   - Registers `PointOfInterestComponent` and `PointOfInterestRuntimeComponent`.
 
-- `AppModel.swift` owns app-wide state.
+- `WindowManagement/AppWindow.swift` defines stable identities for the dashboard and immersive-controls windows.
+  - Both scenes use value-based `WindowGroup` declarations so repeated open requests reuse the same logical window.
+  - Window transitions open and dismiss using the same scene ID and value.
+
+- `AppModel.swift` composes app-wide feature state and provides the small API used by views.
   - Immersive space state.
-  - SharePlay lifecycle.
-  - Expanded/collapsed state for spatial cards.
-  - 3D card positions.
-  - Dashboard section order and selected patient sync.
-  - Remote SharePlay message handling and late-join catch-up state.
+  - `HandoverViewModel` for dashboard state.
+  - `SharedCardState` for spatial-card state.
+  - `SharePlayCoordinator` for synchronized updates.
+
+- `SharedState/SharedCardState.swift` owns spatial-card presentation state independently of SharePlay.
+  - Expanded/collapsed state for each card.
+  - 3D position for each card.
+  - Applying and replacing card state without knowing how it is transported.
 
 - `ViewModels/HandoverViewModel.swift` is the dashboard data source.
   - Loads patients through an injected `PatientLoading` dependency.
@@ -39,7 +46,7 @@ This project is a visionOS SwiftUI + RealityKit ICU handover prototype. It prese
   - `DashboardView.swift` composes the patient header, reorderable clinical cards, fixed Systems Assessment panel, dashboard controls, and empty state.
   - `PatientHeaderView.swift` renders pinned patient identity/basic information.
   - `DashboardFlexLayout.swift` implements the custom wrapping layout and multi-column card spans.
-  - `DraggableDashboardCard.swift` adds drag-and-drop section reordering and sends local layout changes through `AppModel` for SharePlay synchronization.
+  - `DraggableDashboardCard.swift` adds drag-and-drop section reordering and routes local layout changes through the app model to `SharePlayCoordinator`.
   - `DashboardControls.swift` contains the SharePlay and immersive-space controls shown in the dashboard ornament.
   - `EmptyDashboardState.swift` renders the fallback UI when no patient is selected.
 
@@ -58,7 +65,8 @@ This project is a visionOS SwiftUI + RealityKit ICU handover prototype. It prese
 
 - `Handover_V4/SharePlay/`
   - GroupActivities / SharePlay session code.
-  - `SessionController.swift` manages group sessions and message observation.
+  - `SharePlayCoordinator.swift` manages activation, active-session lifecycle, update counters, local broadcasts, remote state application, and late-join snapshots.
+  - `SessionController.swift` manages one active group session, configures the spatial coordinator, observes messages, and provides message transport.
   - `SharePlayMessagingType.swift` defines card sync, dashboard sync, update counters, and catch-up messages.
 
 - `Packages/RealityKitContent/`
@@ -83,7 +91,7 @@ The Systems Assessment card is special in `DashboardView`: it is kept in a fixed
 - `DashboardFlexLayout` measures and positions the reorderable cards. The Vitals card spans two columns when enough space is available; other cards occupy one column.
 - `DraggableDashboardCard` is both the drag source and drop target for a section. Dropping one section onto another moves it into the destination section's current position.
 - `DashboardControls` starts or ends SharePlay and provides entry to the immersive space.
-- `HandoverViewModel.sectionOrder` remains the source of truth for dashboard ordering. Reordering is routed through `AppModel` so changes can be synchronized with SharePlay participants.
+- `HandoverViewModel.sectionOrder` remains the source of truth for dashboard ordering. `SharePlayCoordinator` synchronizes reorder operations with other participants.
 
 ## Immersive POI Mapping
 
@@ -106,7 +114,13 @@ If a POI name does not match, `SpatialCardView` renders an unknown POI debug car
 
 ## SharePlay Sync
 
-SharePlay sync is centered in `AppModel` and `SessionController`.
+SharePlay sync is centered in `SharePlayCoordinator` and `SessionController`.
+
+- Ownership:
+  - `SharedCardState` owns spatial-card values without depending on GroupActivities.
+  - `HandoverViewModel` owns selected-patient and dashboard-order values.
+  - `SharePlayCoordinator` owns synchronization metadata and applies local or remote changes to those state objects.
+  - `SessionController` transports messages for one concrete `GroupSession`.
 
 - Dashboard sync:
   - Selected patient.
@@ -127,6 +141,7 @@ SharePlay sync is centered in `AppModel` and `SessionController`.
 - `Patient.lengthOfStay` currently uses `Patient.demoReferenceDate`, not the live current date, so demo ICU day values remain stable.
 - `ContentView.swift` is minimal; the real first-class UI is `DashboardView`.
 - `ToggleImmersiveSpaceButton.swift` handles opening/closing the immersive space and swaps between the dashboard and controls windows.
+- Dashboard and controls windows use stable `AppWindow` values; ID-only `openWindow` calls would create additional `WindowGroup` instances.
 - `ImmersiveView` adds SwiftUI attachments to the root RealityView content so they avoid inherited scene scaling.
 - Spatial card collision shapes are regenerated after expand/collapse because the SwiftUI attachment size changes.
 - The project currently targets visionOS through the Xcode project and uses the local `RealityKitContent` package.

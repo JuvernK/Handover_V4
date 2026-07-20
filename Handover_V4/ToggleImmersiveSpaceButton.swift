@@ -18,57 +18,78 @@ struct ImmersiveControlsView: View {
 }
 
 struct ToggleImmersiveSpaceButton: View {
-
     @Environment(AppModel.self) private var appModel
-
     @Environment(\.dismissImmersiveSpace) private var dismissImmersiveSpace
     @Environment(\.openImmersiveSpace) private var openImmersiveSpace
     @Environment(\.openWindow) private var openWindow
-        @Environment(\.dismissWindow) private var dismissWindow
+    @Environment(\.dismissWindow) private var dismissWindow
+
+    @State private var isPerformingTransition = false
 
     var body: some View {
         Button {
+            guard !isPerformingTransition else { return }
+            isPerformingTransition = true
+
             Task { @MainActor in
+                defer { isPerformingTransition = false }
+
                 switch appModel.immersiveSpaceState {
-                    case .open:
-                        appModel.immersiveSpaceState = .inTransition
-                        await dismissImmersiveSpace()
-                        // Don't set immersiveSpaceState to .closed because there
-                        // are multiple paths to ImmersiveView.onDisappear().
-                        // Only set .closed in ImmersiveView.onDisappear().
-                        dismissWindow(id: "controls")
-                        openWindow(id: "dashboard")
+                case .open:
+                    appModel.immersiveSpaceState = .inTransition
 
-                    case .closed:
-                        appModel.immersiveSpaceState = .inTransition
-                        switch await openImmersiveSpace(id: appModel.immersiveSpaceID) {
-                            case .opened:
-                                // Don't set immersiveSpaceState to .open because there
-                                // may be multiple paths to ImmersiveView.onAppear().
-                                // Only set .open in ImmersiveView.onAppear().
-                                dismissWindow(id: "dashboard")
-                                openWindow(id: "controls")    // ← new
+                    // Close every controls window with this logical identity before
+                    // ImmersiveView.onDisappear changes the shared state to closed.
+                    dismissWindow(
+                        id: AppWindow.immersiveControls.sceneID,
+                        value: AppWindow.immersiveControls
+                    )
+                    await dismissImmersiveSpace()
+                    openWindow(
+                        id: AppWindow.dashboard.sceneID,
+                        value: AppWindow.dashboard
+                    )
 
-                                break
+                case .closed:
+                    appModel.immersiveSpaceState = .inTransition
 
-                            case .userCancelled, .error:
-                                // On error, we need to mark the immersive space
-                                // as closed because it failed to open.
-                                fallthrough
-                            @unknown default:
-                                // On unknown response, assume space did not open.
-                                appModel.immersiveSpaceState = .closed
-                        }
+                    switch await openImmersiveSpace(
+                        id: appModel.immersiveSpaceID
+                    ) {
+                    case .opened:
+                        // The scene callbacks remain the source of truth for the
+                        // final open/closed immersive-space state.
+                        dismissWindow(
+                            id: AppWindow.dashboard.sceneID,
+                            value: AppWindow.dashboard
+                        )
+                        openWindow(
+                            id: AppWindow.immersiveControls.sceneID,
+                            value: AppWindow.immersiveControls
+                        )
 
-                    case .inTransition:
-                        // This case should not ever happen because button is disabled for this case.
-                        break
+                    case .userCancelled, .error:
+                        appModel.immersiveSpaceState = .closed
+
+                    @unknown default:
+                        appModel.immersiveSpaceState = .closed
+                    }
+
+                case .inTransition:
+                    break
                 }
             }
         } label: {
-            Text(appModel.immersiveSpaceState == .open ? "Exit ICU Immersive Space" : "Enter ICU Immersive Space")
+            Text(
+                appModel.immersiveSpaceState == .open
+                    ? "Exit ICU Immersive Space"
+                    : "Enter ICU Immersive Space"
+            )
         }
-        .disabled(appModel.immersiveSpaceState == .inTransition)
+        .disabled(
+            appModel.immersiveSpaceState == .inTransition
+                || isPerformingTransition
+        )
         .animation(.none, value: 0)
         .fontWeight(.semibold)
     }

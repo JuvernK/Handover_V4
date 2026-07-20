@@ -22,19 +22,29 @@ struct Handover_V4App: App {
     }
     
     var body: some SwiftUI.Scene {
-        WindowGroup(id: "dashboard") {
+        WindowGroup(
+            id: AppWindow.dashboard.sceneID,
+            for: AppWindow.self
+        ) { _ in
             DashboardView(viewModel: appModel.handoverViewModel)
                 .environment(appModel)
+        } defaultValue: {
+            .dashboard
         }
         .defaultSize(width: 1700, height: 980)
-        
+
         // Controls window (used & visible during immersive space)
-            WindowGroup(id: "controls") {
-                ImmersiveControlsView()
-                    .environment(appModel)
-            }
-            .defaultSize(width: 320, height: 100)  // just the buttons
-            .windowResizability(.contentSize)        // sized to its content
+        WindowGroup(
+            id: AppWindow.immersiveControls.sceneID,
+            for: AppWindow.self
+        ) { _ in
+            ImmersiveControlsView()
+                .environment(appModel)
+        } defaultValue: {
+            .immersiveControls
+        }
+        .defaultSize(width: 320, height: 100)
+        .windowResizability(.contentSize)
         
         ImmersiveSpace(id: appModel.immersiveSpaceID) {
             ImmersiveView()
