@@ -39,7 +39,8 @@ struct SpatialCardView: View {
     
     @ViewBuilder
     private var cardContent: some View {
-        if isBasicInformationPOI {
+        switch PointOfInterestMapper.destination(for: poiName) {
+        case .basicInformation:
             if isExpanded(cardName: poiName) {
                 PatientHeaderView(patient: patient)
                     .glassBackgroundEffect(in: .rect(cornerRadius: 16))
@@ -48,7 +49,8 @@ struct SpatialCardView: View {
                 CompactBasicInformationCard(patient: patient)
                     .frame(width: defaultCardWidth)
             }
-        } else if let sectionID = SectionID(rawValue: normalizedPOIName) {
+
+        case .section(let sectionID):
             if isExpanded(sectionID) {
                 sectionID.view(for: patient)
                     .frame(width: expandedWidth(for: sectionID))
@@ -56,22 +58,11 @@ struct SpatialCardView: View {
                 CompactSpatialCard(sectionID: sectionID)
                     .frame(width: defaultCardWidth)
             }
-        } else {
+
+        case .unknown:
             UnknownPOIView(poiName: poiName)
                 .frame(width: defaultCardWidth)
         }
-    }
-
-    private var normalizedPOIName: String {
-        poiName
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
-            .replacingOccurrences(of: " ", with: "_")
-            .replacingOccurrences(of: "-", with: "_")
-    }
-
-    private var isBasicInformationPOI: Bool {
-        normalizedPOIName == "basic_information"
     }
 
     private func isExpanded(cardName: String) -> Bool {

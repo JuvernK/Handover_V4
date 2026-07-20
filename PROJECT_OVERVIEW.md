@@ -46,13 +46,15 @@ This project is a visionOS SwiftUI + RealityKit ICU handover prototype. It prese
 - `Handover_V4/View/Cards/`
   - Clinical cards for vitals, related background, infusions, lines/access, labs, systems assessment, plan, escalation, and spatial card rendering.
 
-- `Handover_V4/View/ImmersiveView.swift`
-  - Loads the RealityKit `Immersive` scene.
-  - Detects entities with `PointOfInterestComponent`.
-  - Creates SwiftUI attachments for spatial cards.
-  - Supports spatial tap to expand/collapse cards.
-  - Supports drag to reposition cards in 3D.
-  - Syncs card state and position through `AppModel`.
+- `Handover_V4/View/Immersive/`
+  - `ImmersiveView.swift` coordinates the RealityKit scene, spatial attachments, gestures, and shared state updates.
+  - `ImmersiveSceneLoader.swift` loads the Reality Composer Pro scene and optional ambient audio.
+  - `ImmersiveAttachmentFactory.swift` creates SwiftUI card attachments for discovered points of interest.
+  - `ImmersiveAttachmentConfigurator.swift` configures RealityKit attachment entities, collision shapes, and synchronized positions.
+  - `AttachmentsProvider.swift` stores the SwiftUI views exposed to RealityKit as attachments.
+  - `SpatialCardGestures.swift` handles tap-to-expand and 3D card dragging.
+  - `PointOfInterestMapper.swift` normalizes authored POI names and maps them to dashboard sections.
+  - `ImmersiveConfiguration.swift` contains shared scene, collision, timing, and movement constants.
 
 - `Handover_V4/SharePlay/`
   - GroupActivities / SharePlay session code.
