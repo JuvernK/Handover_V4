@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import simd
 
 /// Composes the app's feature state and preserves a small API for its views.
 @MainActor
@@ -22,6 +23,7 @@ final class AppModel {
     let handoverViewModel: HandoverViewModel
     let sharedCardState: SharedCardState
     let sharePlayCoordinator: SharePlayCoordinator
+    var orbitGestureWorldToLocal = matrix_identity_float4x4
 
     init(initialBedNumber: String = "BED-03") {
         let handoverViewModel = HandoverViewModel(
@@ -71,6 +73,18 @@ final class AppModel {
         sharedCardState.positions
     }
 
+    var orbitState: OrbitState {
+        sharedCardState.orbitState
+    }
+
+    var orbitAnimationDuration: TimeInterval {
+        sharedCardState.orbitAnimationDuration
+    }
+
+    var orbitCardNames: [String] {
+        handoverViewModel.sectionOrder.map(\.rawValue)
+    }
+
     func setCardState(name: String, isExpanded: Bool, syncChanges: Bool) {
         sharePlayCoordinator.setCardState(
             name: name,
@@ -88,6 +102,39 @@ final class AppModel {
             name: name,
             position: position,
             syncChanges: syncChanges
+        )
+    }
+
+    func setOrbitEnabled(_ isEnabled: Bool) {
+        sharePlayCoordinator.setOrbitEnabled(
+            isEnabled,
+            orderedCardNames: orbitCardNames
+        )
+    }
+
+    func updateOrbitRotation(_ rotation: Float, isFinal: Bool) {
+        sharePlayCoordinator.updateOrbitRotation(
+            rotation,
+            orderedCardNames: orbitCardNames,
+            isFinal: isFinal
+        )
+    }
+
+    func focusOrbitCard(named cardName: String) {
+        sharePlayCoordinator.focusOrbitCard(
+            named: cardName,
+            orderedCardNames: orbitCardNames
+        )
+    }
+
+    func toggleFocusedOrbitCardExpansion() {
+        sharePlayCoordinator.toggleFocusedOrbitCardExpansion()
+    }
+
+    func moveOrbitFocus(by offset: Int) {
+        sharePlayCoordinator.moveOrbitFocus(
+            by: offset,
+            orderedCardNames: orbitCardNames
         )
     }
 

@@ -23,6 +23,7 @@ This project is a visionOS SwiftUI + RealityKit ICU handover prototype. It prese
 - `SharedState/SharedCardState.swift` owns spatial-card presentation state independently of SharePlay.
   - Expanded/collapsed state for each card.
   - 3D position for each card.
+  - Transient synchronized orbit mode, rotation, focus, and focus expansion.
   - Applying and replacing card state without knowing how it is transported.
 
 - `ViewModels/HandoverViewModel.swift` is the dashboard data source.
@@ -60,6 +61,7 @@ This project is a visionOS SwiftUI + RealityKit ICU handover prototype. It prese
   - `ImmersiveAttachmentConfigurator.swift` configures RealityKit attachment entities, collision shapes, and synchronized positions.
   - `AttachmentsProvider.swift` stores the SwiftUI views exposed to RealityKit as attachments.
   - `SpatialCardGestures.swift` handles tap-to-expand and 3D card dragging.
+  - `OrbitLayoutController.swift` builds the interactive ring and lays cards out in the focused carousel.
   - `PointOfInterestMapper.swift` normalizes authored POI names and maps them to dashboard sections.
   - `ImmersiveConfiguration.swift` contains shared scene, collision, timing, and movement constants.
 
@@ -112,6 +114,60 @@ Known mappings:
 
 If a POI name does not match, `SpatialCardView` renders an unknown POI debug card.
 
+### Orbit authoring
+
+Orbit is an eight-card, slot-snapping carousel. Patient Information remains
+stationary at the center while the eight clinical cards rotate together.
+Starting a rotation collapses the focused card; releasing snaps the carousel
+to the nearest slot and automatically expands the card at the front.
+
+The Reality Composer Pro hierarchy is:
+
+```text
+Root
+├── ICU_env                 scale 0.01
+└── OrbitAnchor             scale 1.0
+    ├── PatientInformationSlot
+    ├── OrbitSlot_0         front reading position
+    ├── OrbitSlot_1
+    ├── OrbitSlot_2
+    ├── OrbitSlot_3
+    ├── OrbitSlot_4
+    ├── OrbitSlot_5
+    ├── OrbitSlot_6
+    └── OrbitSlot_7
+```
+
+- Keep `OrbitAnchor` outside `ICU_env` and at scale `1`; otherwise it inherits
+  the ICU asset's `0.01` scale.
+- Slots run clockwise from `OrbitSlot_0` when viewed from above. Their authored
+  world positions are preserved at runtime by `OrbitSlotComponent`.
+- `PatientInformationSlot` controls the central Basic Information card.
+- `OrbitLayoutController` builds a smooth closed Catmull–Rom path through the
+  eight slots. The visible ring consists of 64 procedural cylinder segments,
+  each with a larger collision box for gaze-and-pinch targeting.
+- Dragging the ring or a card rotates all eight cards along the path. The
+  Previous/Next controls perform the same slot transition.
+
+The Orbit size is determined by the slot positions, not a radius setting. To
+make it smaller, keep `OrbitAnchor` at scale `1` and reduce every slot's local
+X/Z distance from the anchor while leaving Y unchanged. For a circular orbit
+with radius `r`, use:
+
+```text
+OrbitSlot_0: ( 0.000r, Y,  1.000r)
+OrbitSlot_1: (-0.707r, Y,  0.707r)
+OrbitSlot_2: (-1.000r, Y,  0.000r)
+OrbitSlot_3: (-0.707r, Y, -0.707r)
+OrbitSlot_4: ( 0.000r, Y, -1.000r)
+OrbitSlot_5: ( 0.707r, Y, -0.707r)
+OrbitSlot_6: ( 1.000r, Y,  0.000r)
+OrbitSlot_7: ( 0.707r, Y,  0.707r)
+```
+
+Debug builds emit `[OrbitDebug]` messages for slot discovery, attachment
+registration, Orbit state changes, and calculated card targets.
+
 ## SharePlay Sync
 
 SharePlay sync is centered in `SharePlayCoordinator` and `SessionController`.
@@ -129,6 +185,7 @@ SharePlay sync is centered in `SharePlayCoordinator` and `SessionController`.
 - Spatial card sync:
   - Expanded/collapsed state.
   - 3D card position.
+  - Orbit activation, rotation, focused card, and transient focus expansion.
 
 - Conflict handling:
   - `MessageUpdateCount` compares update count first, then participant ID as a deterministic tiebreaker.

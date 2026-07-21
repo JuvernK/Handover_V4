@@ -66,11 +66,24 @@ struct SpatialCardView: View {
     }
 
     private func isExpanded(cardName: String) -> Bool {
-        appModel.cardStates[cardName] ?? true
+        if appModel.orbitState.isActive {
+            if PointOfInterestMapper.normalize(cardName) == "basic_information" {
+                return true
+            }
+            return appModel.orbitState.expandedCardName
+                == PointOfInterestMapper.normalize(cardName)
+        }
+        return appModel.cardStates[cardName] ?? true
     }
 
     private func isExpanded(_ sectionID: SectionID) -> Bool {
-        appModel.cardStates[poiName] ?? appModel.cardStates[sectionID.rawValue] ?? true
+        if appModel.orbitState.isActive {
+            return appModel.orbitState.expandedCardName
+                == PointOfInterestMapper.normalize(poiName)
+        }
+        return appModel.cardStates[poiName]
+            ?? appModel.cardStates[sectionID.rawValue]
+            ?? true
     }
 
     private func expandedWidth(for sectionID: SectionID) -> CGFloat {

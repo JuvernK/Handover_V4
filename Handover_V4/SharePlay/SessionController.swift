@@ -39,6 +39,7 @@ final class SessionController {
         self.coordinator = coordinator
 
         observeCardMessages()
+        observeOrbitMessages()
         observeDashboardMessages()
         observeCatchUpMessages()
         observeActiveRemoteParticipants()
@@ -68,6 +69,15 @@ final class SessionController {
             for await (message, _) in messenger.messages(of: DashboardSyncMessage.self) {
                 guard let coordinator else { return }
                 coordinator.handleRemoteDashboardMessage(message)
+            }
+        }
+    }
+
+    private func observeOrbitMessages() {
+        Task.immediate(name: "orbit message observation") {
+            for await (message, _) in messenger.messages(of: OrbitSyncMessage.self) {
+                guard let coordinator else { return }
+                coordinator.handleRemoteOrbitMessage(message)
             }
         }
     }
@@ -131,6 +141,15 @@ final class SessionController {
             try await messenger.send(message)
         } catch {
             print("Failed to send dashboard sync message: \(error)")
+        }
+    }
+
+
+    func sendMessage(_ message: OrbitSyncMessage) async {
+        do {
+            try await messenger.send(message)
+        } catch {
+            print("Failed to send orbit sync message: \(error)")
         }
     }
 }

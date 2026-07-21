@@ -18,6 +18,7 @@ struct Handover_V4App: App {
     // register so RealityKit can use it at runtime
     init() {
         PointOfInterestComponent.registerComponent()
+        OrbitSlotComponent.registerComponent()
         PointOfInterestRuntimeComponent.registerComponent()
     }
     
@@ -43,7 +44,7 @@ struct Handover_V4App: App {
         } defaultValue: {
             .immersiveControls
         }
-        .defaultSize(width: 320, height: 100)
+        .defaultSize(width: 560, height: 100)
         .windowResizability(.contentSize)
         
         ImmersiveSpace(id: appModel.immersiveSpaceID) {

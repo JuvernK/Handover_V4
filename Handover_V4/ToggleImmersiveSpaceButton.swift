@@ -8,9 +8,46 @@
 import SwiftUI
 
 struct ImmersiveControlsView: View {
+    @Environment(AppModel.self) private var appModel
+
     var body: some View {
-        HStack {
+        HStack(spacing: 14) {
             ToggleImmersiveSpaceButton()
+
+            Divider()
+                .frame(height: 28)
+
+            Button {
+                appModel.moveOrbitFocus(by: -1)
+            } label: {
+                Label("Previous card", systemImage: "chevron.left")
+                    .labelStyle(.iconOnly)
+            }
+            .disabled(
+                !appModel.orbitState.isActive
+            )
+
+            Button {
+                appModel.setOrbitEnabled(!appModel.orbitState.isActive)
+            } label: {
+                Label(
+                    appModel.orbitState.isActive ? "End Orbit" : "Start Orbit",
+                    systemImage: appModel.orbitState.isActive
+                        ? "circle.dashed.inset.filled"
+                        : "circle.dashed"
+                )
+            }
+            .buttonStyle(.borderedProminent)
+
+            Button {
+                appModel.moveOrbitFocus(by: 1)
+            } label: {
+                Label("Next card", systemImage: "chevron.right")
+                    .labelStyle(.iconOnly)
+            }
+            .disabled(
+                !appModel.orbitState.isActive
+            )
         }
         .padding()
         .glassBackgroundEffect()

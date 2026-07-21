@@ -9,19 +9,50 @@ import SwiftUI
 import RealityKit
 import RealityKitContent
 
+/// Mutable RealityKit bookkeeping that must not invalidate SwiftUI while a
+/// `RealityView.update` closure is executing.
+private final class ImmersiveAttachmentRegistry {
+    var entities: [Entity] = []
+    var homePositions: [String: SIMD3<Float>] = [:]
+    var baseScales: [String: SIMD3<Float>] = [:]
+
+    @discardableResult
+    func register(_ entity: Entity) -> Bool {
+        guard !entities.contains(entity) else { return false }
+        entities.append(entity)
+        return true
+    }
+}
+
 struct ImmersiveView: View {
     @Environment(AppModel.self) private var appModel
     @Environment(HandoverViewModel.self) private var handoverViewModel
 
     @State private var attachmentsProvider = AttachmentsProvider()
     @State private var subscriptions: [EventSubscription] = []
-    @State private var attachmentEntities: [Entity] = []
+    @State private var attachmentRegistry = ImmersiveAttachmentRegistry()
+    @State private var orbitGeometry: OrbitGeometry?
+    @State private var orbitRing: Entity?
 
     var body: some View {
         RealityView { content, _ in
             do {
                 let scene = try await ImmersiveSceneLoader.load()
                 content.add(scene)
+
+                let geometry = OrbitLayoutController.geometry(in: scene)
+                let ring = OrbitLayoutController.makeRing(for: geometry)
+                content.add(ring)
+                orbitGeometry = geometry
+                orbitRing = ring
+                appModel.orbitGestureWorldToLocal = geometry.worldToLocal
+#if DEBUG
+                print(
+                    "[OrbitDebug] Immersive scene loaded; "
+                        + "slotCount=\(geometry.slots.count), "
+                        + "patientTarget=\(geometry.patientInformationPosition)"
+                )
+#endif
 
                 let subscription = content.subscribe(
                     to: ComponentEvents.DidAdd.self,
@@ -41,6 +72,11 @@ struct ImmersiveView: View {
             guard let scene = content.entities.first?.scene else { return }
 
             for pointOfInterest in scene.performQuery(ImmersiveAttachmentConfigurator.runtimeQuery) {
+                // The same runtime component is copied onto the attachment.
+                // Only source POIs should drive attachment registration/home data.
+                guard pointOfInterest.components[PointOfInterestComponent.self] != nil else {
+                    continue
+                }
                 guard let runtimeComponent = pointOfInterest.components[
                     PointOfInterestRuntimeComponent.self
                 ] else {
@@ -49,9 +85,28 @@ struct ImmersiveView: View {
 
                 guard let attachment = attachments.entity(
                     for: runtimeComponent.attachmentTag
-                ), attachment.parent == nil else {
+                ) else {
                     continue
                 }
+
+                attachmentRegistry.homePositions[runtimeComponent.cardName] =
+                    pointOfInterest.position(relativeTo: nil)
+                attachmentRegistry.baseScales[runtimeComponent.cardName] = .one
+
+                // Always recover the live attachment reference, even after it
+                // has already been parented to the RealityView root.
+                if attachmentRegistry.register(attachment) {
+#if DEBUG
+                    let parentName = attachment.parent?.name ?? "nil"
+                    print(
+                        "[OrbitDebug] Registered card \(runtimeComponent.cardName); "
+                            + "parent=\(parentName), "
+                            + "total=\(attachmentRegistry.entities.count)"
+                    )
+#endif
+                }
+
+                guard attachment.parent == nil else { continue }
 
                 // Attach to the root to avoid inheriting the ICU scene's scale.
                 content.add(attachment)
@@ -62,10 +117,18 @@ struct ImmersiveView: View {
                     syncedPosition: appModel.cardPositions[runtimeComponent.cardName]
                 )
 
-                if !attachmentEntities.contains(attachment) {
-                    attachmentEntities.append(attachment)
-                }
+#if DEBUG
+                let homePosition =
+                    attachmentRegistry.homePositions[runtimeComponent.cardName] ?? .zero
+                print(
+                    "[OrbitDebug] Configured card \(runtimeComponent.cardName); "
+                        + "home=\(homePosition)"
+                )
+#endif
             }
+
+
+            applyCurrentLayout()
         } attachments: {
             ForEach(attachmentsProvider.sortedTagViewPairs, id: \.tag) { pair in
                 Attachment(id: pair.tag) {
@@ -78,16 +141,78 @@ struct ImmersiveView: View {
             Task { @MainActor in
                 try? await Task.sleep(for: ImmersiveConfiguration.collisionResizeDelay)
                 ImmersiveAttachmentConfigurator.regenerateCollisionShapes(
-                    for: attachmentEntities
+                    for: resolvedAttachmentEntities()
                 )
             }
         }
         .onChange(of: appModel.cardPositions) { _, newPositions in
-            ImmersiveAttachmentConfigurator.applySyncedPositions(
-                newPositions,
-                to: attachmentEntities
-            )
+            if appModel.orbitState.isActive {
+                applyCurrentLayout()
+            } else {
+                ImmersiveAttachmentConfigurator.applySyncedPositions(
+                    newPositions,
+                    to: resolvedAttachmentEntities()
+                )
+            }
         }
+        .onChange(of: appModel.orbitState) { oldState, newState in
+#if DEBUG
+            let focusedCardName = newState.focusedCardName ?? "nil"
+            let expandedCardName = newState.expandedCardName ?? "nil"
+            let liveAttachmentCount = resolvedAttachmentEntities().count
+            print(
+                "[OrbitDebug] Orbit state changed: "
+                    + "\(oldState.interactionMode) -> \(newState.interactionMode), "
+                    + "rotation=\(newState.rotation), "
+                    + "focus=\(focusedCardName), "
+                    + "expanded=\(expandedCardName), "
+                    + "attachmentCount=\(liveAttachmentCount)"
+            )
+#endif
+            applyCurrentLayout()
+
+            if oldState.interactionMode != newState.interactionMode
+                || oldState.expandedCardName != newState.expandedCardName {
+                Task { @MainActor in
+                    try? await Task.sleep(for: ImmersiveConfiguration.collisionResizeDelay)
+                    ImmersiveAttachmentConfigurator.regenerateCollisionShapes(
+                        for: resolvedAttachmentEntities()
+                    )
+                    applyCurrentLayout()
+                }
+            }
+        }
+    }
+
+    private func applyCurrentLayout() {
+        guard let orbitGeometry else { return }
+        let liveAttachments = resolvedAttachmentEntities()
+        OrbitLayoutController.apply(
+            state: appModel.orbitState,
+            geometry: orbitGeometry,
+            orderedCardNames: appModel.orbitCardNames,
+            attachments: liveAttachments,
+            homePositions: attachmentRegistry.homePositions,
+            savedPositions: appModel.cardPositions,
+            baseScales: attachmentRegistry.baseScales,
+            ring: orbitRing,
+            animationDuration: appModel.orbitAnimationDuration
+        )
+    }
+
+    private func resolvedAttachmentEntities() -> [Entity] {
+        guard let scene = orbitRing?.scene else {
+            return attachmentRegistry.entities
+        }
+
+        let queriedAttachments = scene.performQuery(
+            ImmersiveAttachmentConfigurator.runtimeQuery
+        ).filter { entity in
+            entity.components[PointOfInterestComponent.self] == nil
+        }
+        return queriedAttachments.isEmpty
+            ? attachmentRegistry.entities
+            : Array(queriedAttachments)
     }
 }
 
