@@ -28,4 +28,18 @@ enum ImmersiveConfiguration {
     static func orbitSlotEntityName(_ index: Int) -> String {
         "OrbitSlot_\(index)"
     }
+
+    // MARK: - Source Coupling
+
+    /// Authored body-region anchor on the patient (under `Root`, scale 1.0).
+    static let torsoOrganAnchorName = "OrganAnchor_torso"
+    /// Emissive boost applied to an equipment Source when its card is active.
+    static let sourceHighlightEmissiveIntensity: Float = 6
+    static let sourceHighlightAnimationDuration: TimeInterval = 0.3
+    /// Edge length (metres) of an organ SF-Symbol placard.
+    static let organPlacardSize: Float = 0.14
+    /// Minimum halo box extent (metres) when the emissive fallback is used.
+    static let sourceHaloMinimumExtent: Float = 0.05
+    static let sourceHaloOpacity: CGFloat = 0.28
+    static let sourceHaloEntityName = "SourceHalo"
 }

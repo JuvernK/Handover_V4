@@ -54,9 +54,11 @@ struct SpatialCardView: View {
             if isExpanded(sectionID) {
                 sectionID.view(for: patient)
                     .frame(width: expandedWidth(for: sectionID))
+                    .identityStyled(sectionID)
             } else {
                 CompactSpatialCard(sectionID: sectionID)
                     .frame(width: defaultCardWidth)
+                    .identityStyled(sectionID)
             }
 
         case .unknown:
@@ -149,6 +151,20 @@ private struct CompactSpatialCard: View {
         .padding(.vertical, 14)
         .glassBackgroundEffect(in: .rect(cornerRadius: 16))
         .hoverEffect()
+    }
+}
+
+private extension View {
+    /// Applies a card's Card Identity Colour to its border and tinted glyphs so
+    /// the card reads as a matched pair with its highlighted Source. See
+    /// CONTEXT.md and docs/adr/0001-source-coupling.md.
+    func identityStyled(_ sectionID: SectionID) -> some View {
+        self
+            .tint(sectionID.identityColor)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(sectionID.identityColor.opacity(0.9), lineWidth: 2)
+            )
     }
 }
 

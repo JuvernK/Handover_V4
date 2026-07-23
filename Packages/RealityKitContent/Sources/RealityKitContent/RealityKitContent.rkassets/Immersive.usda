@@ -7,7 +7,7 @@
 
 def Xform "Root"
 {
-    reorder nameChildren = ["ICU_env", "Related_Background", "OrbitAnchor"]
+    reorder nameChildren = ["ICU_env", "OrbitAnchor", "OrganAnchor_torso"]
     quatf xformOp:orient = (1, 0, 0, 0)
     float3 xformOp:scale = (1, 1, 1)
     float3 xformOp:translate = (0, 0, 0)
@@ -60,7 +60,7 @@ def Xform "Root"
             {
                 quatf xformOp:orient = (1, 0, 0, 0)
                 float3 xformOp:scale = (1, 1, 1)
-                float3 xformOp:translate = (51.99701, 0.000015854834, -15.595528)
+                float3 xformOp:translate = (16.805044, 0.000022292135, 47.564114)
                 uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
                 over "default_11"
@@ -519,6 +519,14 @@ def Xform "Root"
                 int slotIndex = 7
             }
         }
+    }
+
+    def Xform "OrganAnchor_torso" (
+        active = true
+    )
+    {
+        float3 xformOp:translate = (0, 1.1902657, -2.8335395)
+        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
     }
 }
 

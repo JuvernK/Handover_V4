@@ -33,6 +33,8 @@ struct ImmersiveView: View {
     @State private var attachmentRegistry = ImmersiveAttachmentRegistry()
     @State private var orbitGeometry: OrbitGeometry?
     @State private var orbitRing: Entity?
+    @State private var sceneRoot: Entity?
+    @State private var sourceHighlightController = SourceHighlightController()
 
     var body: some View {
         RealityView { content, _ in
@@ -45,7 +47,13 @@ struct ImmersiveView: View {
                 content.add(ring)
                 orbitGeometry = geometry
                 orbitRing = ring
+                sceneRoot = scene
                 appModel.orbitGestureWorldToLocal = geometry.worldToLocal
+                sourceHighlightController.prepareOrganPlacards(in: scene)
+                sourceHighlightController.update(
+                    activeSections: activeSections(),
+                    in: scene
+                )
 #if DEBUG
                 print(
                     "[OrbitDebug] Immersive scene loaded; "
@@ -138,6 +146,7 @@ struct ImmersiveView: View {
         }
         .spatialCardGestures()
         .onChange(of: appModel.cardStates) { _, _ in
+            updateSourceHighlights()
             Task { @MainActor in
                 try? await Task.sleep(for: ImmersiveConfiguration.collisionResizeDelay)
                 ImmersiveAttachmentConfigurator.regenerateCollisionShapes(
@@ -170,6 +179,7 @@ struct ImmersiveView: View {
             )
 #endif
             applyCurrentLayout()
+            updateSourceHighlights()
 
             if oldState.interactionMode != newState.interactionMode
                 || oldState.expandedCardName != newState.expandedCardName {
@@ -198,6 +208,36 @@ struct ImmersiveView: View {
             ring: orbitRing,
             animationDuration: appModel.orbitAnimationDuration
         )
+    }
+
+    /// The cards the user is currently attending to (see CONTEXT.md: Active Card).
+    /// In Orbit, the settled front card — driven by `expandedCardName`, which is
+    /// nil mid-spin, so highlighting suppresses during rotation and reappears on
+    /// snap. In normal mode, every expanded card.
+    private func activeSections() -> Set<SectionID> {
+        let orbitState = appModel.orbitState
+        if orbitState.isActive {
+            guard let expanded = orbitState.expandedCardName,
+                  let section = SectionID(rawValue: expanded) else {
+                return []
+            }
+            return [section]
+        }
+
+        var sections: Set<SectionID> = []
+        for (cardName, isExpanded) in appModel.cardStates where isExpanded {
+            if let section = SectionID(
+                rawValue: PointOfInterestMapper.normalize(cardName)
+            ) {
+                sections.insert(section)
+            }
+        }
+        return sections
+    }
+
+    private func updateSourceHighlights() {
+        guard let sceneRoot else { return }
+        sourceHighlightController.update(activeSections: activeSections(), in: sceneRoot)
     }
 
     private func resolvedAttachmentEntities() -> [Entity] {
