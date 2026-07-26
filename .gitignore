@@ -40,3 +40,7 @@ xcdebugger/
 
 *.log
 *.tmp
+
+CLAUDE.md
+CONTEXT.md
+docs
