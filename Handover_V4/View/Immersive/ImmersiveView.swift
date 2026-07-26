@@ -224,12 +224,14 @@ struct ImmersiveView: View {
             return [section]
         }
 
-        var sections: Set<SectionID> = []
-        for (cardName, isExpanded) in appModel.cardStates where isExpanded {
+        // Cards default to expanded (SpatialCardView uses `?? true`), so treat
+        // every section as active unless it has been explicitly collapsed.
+        var sections = Set(SectionID.allCases)
+        for (cardName, isExpanded) in appModel.cardStates where !isExpanded {
             if let section = SectionID(
                 rawValue: PointOfInterestMapper.normalize(cardName)
             ) {
-                sections.insert(section)
+                sections.remove(section)
             }
         }
         return sections

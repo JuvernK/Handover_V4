@@ -222,8 +222,8 @@ final class SourceHighlightController {
         }
 
         guard let cgImage = image.cgImage else { return nil }
-        return try? TextureResource.generate(
-            from: cgImage,
+        return try? TextureResource(
+            image: cgImage,
             options: .init(semantic: .color)
         )
     }
