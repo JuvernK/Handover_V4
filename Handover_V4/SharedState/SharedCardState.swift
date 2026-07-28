@@ -31,6 +31,7 @@ struct OrbitState: Codable, Equatable {
 final class SharedCardState {
     private(set) var expansionStates: [String: Bool] = [:]
     private(set) var positions: [String: SIMD3<Float>] = [:]
+    private(set) var abbreviationSelections: [String: AbbreviationSelection] = [:]
     private(set) var orbitState = OrbitState.inactive
 
     /// Controls how RealityKit presents the latest orbit state. This is local
@@ -43,6 +44,17 @@ final class SharedCardState {
 
     func setPosition(_ position: SIMD3<Float>, for cardName: String) {
         positions[cardName] = position
+    }
+
+    func toggleAbbreviationSelection(
+        _ selection: AbbreviationSelection,
+        for cardName: String
+    ) {
+        if abbreviationSelections[cardName] == selection {
+            abbreviationSelections.removeValue(forKey: cardName)
+        } else {
+            abbreviationSelections[cardName] = selection
+        }
     }
 
     func setOrbitState(_ state: OrbitState, animationDuration: TimeInterval) {

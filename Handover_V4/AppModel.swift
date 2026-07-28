@@ -73,6 +73,14 @@ final class AppModel {
         sharedCardState.positions
     }
 
+    var abbreviationSelections: [String: AbbreviationSelection] {
+        sharedCardState.abbreviationSelections
+    }
+
+    func abbreviationSelection(for section: SectionID) -> AbbreviationSelection? {
+        abbreviationSelections[section.rawValue]
+    }
+
     var orbitState: OrbitState {
         sharedCardState.orbitState
     }
@@ -102,6 +110,16 @@ final class AppModel {
             name: name,
             position: position,
             syncChanges: syncChanges
+        )
+    }
+
+    func toggleAbbreviationSelection(
+        _ selection: AbbreviationSelection,
+        for section: SectionID
+    ) {
+        sharedCardState.toggleAbbreviationSelection(
+            selection,
+            for: section.rawValue
         )
     }
 

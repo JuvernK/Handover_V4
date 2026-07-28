@@ -15,7 +15,7 @@ participants through SharePlay.
 - Deployment target: visionOS 26.2
 - Language: Swift 5
 - Bundle ID: `com.monash.Handover-V4`
-- No test target currently exists
+- Swift Testing unit tests live in the `Handover_V4Tests` target
 
 ## Build and run
 

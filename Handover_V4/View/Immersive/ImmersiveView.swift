@@ -147,12 +147,10 @@ struct ImmersiveView: View {
         .spatialCardGestures()
         .onChange(of: appModel.cardStates) { _, _ in
             updateSourceHighlights()
-            Task { @MainActor in
-                try? await Task.sleep(for: ImmersiveConfiguration.collisionResizeDelay)
-                ImmersiveAttachmentConfigurator.regenerateCollisionShapes(
-                    for: resolvedAttachmentEntities()
-                )
-            }
+            scheduleCollisionShapeRegeneration()
+        }
+        .onChange(of: appModel.abbreviationSelections) { _, _ in
+            scheduleCollisionShapeRegeneration()
         }
         .onChange(of: appModel.cardPositions) { _, newPositions in
             if appModel.orbitState.isActive {
@@ -183,13 +181,23 @@ struct ImmersiveView: View {
 
             if oldState.interactionMode != newState.interactionMode
                 || oldState.expandedCardName != newState.expandedCardName {
-                Task { @MainActor in
-                    try? await Task.sleep(for: ImmersiveConfiguration.collisionResizeDelay)
-                    ImmersiveAttachmentConfigurator.regenerateCollisionShapes(
-                        for: resolvedAttachmentEntities()
-                    )
-                    applyCurrentLayout()
-                }
+                scheduleCollisionShapeRegeneration(reapplyLayout: true)
+            }
+        }
+    }
+
+    private func scheduleCollisionShapeRegeneration(
+        reapplyLayout: Bool = false
+    ) {
+        Task { @MainActor in
+            try? await Task.sleep(
+                for: ImmersiveConfiguration.collisionResizeDelay
+            )
+            ImmersiveAttachmentConfigurator.regenerateCollisionShapes(
+                for: resolvedAttachmentEntities()
+            )
+            if reapplyLayout {
+                applyCurrentLayout()
             }
         }
     }

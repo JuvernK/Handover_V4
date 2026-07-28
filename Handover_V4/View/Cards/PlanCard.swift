@@ -47,7 +47,15 @@ struct PlanCard: View {
 // MARK: - Single plan item row
 
 private struct PlanRow: View {
+    @Environment(AppModel.self) private var appModel
+
     let item: PlanItem
+
+    private let section = SectionID.plan
+
+    private var textID: String {
+        "\(section.rawValue).item.\(item.id).task"
+    }
     
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -59,9 +67,16 @@ private struct PlanRow: View {
             // Task text
             ClinicalAbbreviationText(
                 item.task,
+                textID: textID,
+                selection: appModel.abbreviationSelection(for: section),
                 font: .system(size: 14),
                 foregroundColor: .primary
-            )
+            ) { selection in
+                appModel.toggleAbbreviationSelection(
+                    selection,
+                    for: section
+                )
+            }
             
             Spacer(minLength: 8)
             
@@ -159,7 +174,9 @@ extension Patient {
 #endif
 
 #Preview("Plan — Ahmad") {
+    let appModel = AppModel()
     PlanCard(patient: .mockPlan_Ahmad)
+        .environment(appModel)
         .frame(width: 420)
         .padding()
 }

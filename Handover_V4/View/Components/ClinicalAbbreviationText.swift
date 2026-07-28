@@ -10,10 +10,13 @@ import SwiftUI
 
 struct ClinicalAbbreviationText: View {
     let text: String
+    let textID: String?
+    let selection: AbbreviationSelection?
     let font: Font
     let foregroundColor: Color
     let abbreviationColor: Color
     let fixedVertical: Bool
+    let onSelection: ((AbbreviationSelection) -> Void)?
 
     @State private var selectedEntry: ClinicalAbbreviationEntry?
 
@@ -25,37 +28,80 @@ struct ClinicalAbbreviationText: View {
         fixedVertical: Bool = true
     ) {
         self.text = text
+        self.textID = nil
+        self.selection = nil
         self.font = font
         self.foregroundColor = foregroundColor
         self.abbreviationColor = abbreviationColor
         self.fixedVertical = fixedVertical
+        self.onSelection = nil
+    }
+
+    init(
+        _ text: String,
+        textID: String,
+        selection: AbbreviationSelection?,
+        font: Font = .body,
+        foregroundColor: Color = .primary,
+        abbreviationColor: Color = .accentColor,
+        fixedVertical: Bool = true,
+        onSelection: @escaping (AbbreviationSelection) -> Void
+    ) {
+        self.text = text
+        self.textID = textID
+        self.selection = selection
+        self.font = font
+        self.foregroundColor = foregroundColor
+        self.abbreviationColor = abbreviationColor
+        self.fixedVertical = fixedVertical
+        self.onSelection = onSelection
     }
 
     var body: some View {
-        Text(
-            ClinicalAbbreviationGlossary.attributedString(
+        Text(attributedText)
+            .font(font)
+            .fixedSize(horizontal: false, vertical: fixedVertical)
+            .environment(\.openURL, OpenURLAction { url in
+                if
+                    let onSelection,
+                    let occurrence = ClinicalAbbreviationGlossary.selection(from: url)
+                {
+                    onSelection(occurrence)
+                    return .handled
+                }
+
+                guard
+                    url.scheme == ClinicalAbbreviationGlossary.urlScheme,
+                    let id = url.host,
+                    let entry = ClinicalAbbreviationGlossary.entry(id: id)
+                else {
+                    return .systemAction
+                }
+
+                selectedEntry = entry
+                return .handled
+            })
+            .popover(item: $selectedEntry) { entry in
+                ClinicalAbbreviationPopover(entry: entry)
+            }
+    }
+
+    private var attributedText: AttributedString {
+        guard let textID else {
+            return ClinicalAbbreviationGlossary.attributedString(
                 for: text,
                 baseColor: foregroundColor,
                 abbreviationColor: abbreviationColor
             )
-        )
-        .font(font)
-        .fixedSize(horizontal: false, vertical: fixedVertical)
-        .environment(\.openURL, OpenURLAction { url in
-            guard
-                url.scheme == ClinicalAbbreviationGlossary.urlScheme,
-                let id = url.host,
-                let entry = ClinicalAbbreviationGlossary.entry(id: id)
-            else {
-                return .systemAction
-            }
-
-            selectedEntry = entry
-            return .handled
-        })
-        .popover(item: $selectedEntry) { entry in
-            ClinicalAbbreviationPopover(entry: entry)
         }
+
+        return ClinicalAbbreviationGlossary.attributedString(
+            for: text,
+            textID: textID,
+            selection: selection,
+            baseColor: foregroundColor,
+            abbreviationColor: abbreviationColor
+        )
     }
 }
 
@@ -386,22 +432,81 @@ enum ClinicalAbbreviationGlossary {
         entriesByID[id]
     }
 
+    static func selection(from url: URL) -> AbbreviationSelection? {
+        guard
+            url.scheme == urlScheme,
+            let glossaryEntryID = url.host,
+            entriesByID[glossaryEntryID] != nil,
+            let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+            let textID = components.queryItems?.first(where: { $0.name == "textID" })?.value,
+            let occurrenceValue = components.queryItems?
+                .first(where: { $0.name == "occurrence" })?
+                .value,
+            let occurrenceIndex = Int(occurrenceValue),
+            occurrenceIndex >= 0
+        else {
+            return nil
+        }
+
+        return AbbreviationSelection(
+            textID: textID,
+            glossaryEntryID: glossaryEntryID,
+            occurrenceIndex: occurrenceIndex
+        )
+    }
+
+    static func occurrences(
+        in text: String,
+        textID: String
+    ) -> [AbbreviationSelection] {
+        matchedOccurrences(in: text).map { match in
+            return AbbreviationSelection(
+                textID: textID,
+                glossaryEntryID: match.entry.id,
+                occurrenceIndex: match.occurrenceIndex
+            )
+        }
+    }
+
     static func attributedString(
         for text: String,
         baseColor: Color,
         abbreviationColor: Color
     ) -> AttributedString {
+        attributedString(
+            for: text,
+            presentation: .legacy,
+            baseColor: baseColor,
+            abbreviationColor: abbreviationColor
+        )
+    }
+
+    static func attributedString(
+        for text: String,
+        textID: String,
+        selection: AbbreviationSelection?,
+        baseColor: Color,
+        abbreviationColor: Color
+    ) -> AttributedString {
+        attributedString(
+            for: text,
+            presentation: .inline(textID: textID, selection: selection),
+            baseColor: baseColor,
+            abbreviationColor: abbreviationColor
+        )
+    }
+
+    private static func attributedString(
+        for text: String,
+        presentation: Presentation,
+        baseColor: Color,
+        abbreviationColor: Color
+    ) -> AttributedString {
         var result = AttributedString()
         let nsText = text as NSString
-        let matches = matcher.matches(
-            in: text,
-            options: [],
-            range: NSRange(location: 0, length: nsText.length)
-        )
-
         var cursor = 0
 
-        for match in matches {
+        for match in matchedOccurrences(in: text) {
             guard match.range.location >= cursor else { continue }
 
             if match.range.location > cursor {
@@ -412,13 +517,28 @@ enum ClinicalAbbreviationGlossary {
                 )
             }
 
-            let matchedText = nsText.substring(with: match.range)
+            let occurrence = presentation.selection(
+                entryID: match.entry.id,
+                occurrenceIndex: match.occurrenceIndex
+            )
+
             appendMatchedText(
-                matchedText,
+                match.text,
+                entry: match.entry,
+                occurrence: occurrence,
+                isInline: presentation.isInline,
                 baseColor: baseColor,
                 abbreviationColor: abbreviationColor,
                 to: &result
             )
+
+            if occurrence == presentation.selectedOccurrence {
+                append(
+                    " (\(match.entry.expansion))",
+                    color: baseColor,
+                    to: &result
+                )
+            }
 
             cursor = match.range.location + match.range.length
         }
@@ -434,16 +554,42 @@ enum ClinicalAbbreviationGlossary {
         return result
     }
 
+    private static func matchedOccurrences(in text: String) -> [MatchedOccurrence] {
+        let nsText = text as NSString
+        let regexMatches = matcher.matches(
+            in: text,
+            options: [],
+            range: NSRange(location: 0, length: nsText.length)
+        )
+        var occurrenceCounts: [String: Int] = [:]
+
+        return regexMatches.compactMap { match in
+            let matchedText = nsText.substring(with: match.range)
+            guard let entry = entry(forMatchedText: matchedText) else {
+                return nil
+            }
+
+            let occurrenceIndex = occurrenceCounts[entry.id, default: 0]
+            occurrenceCounts[entry.id] = occurrenceIndex + 1
+            return MatchedOccurrence(
+                range: match.range,
+                text: matchedText,
+                entry: entry,
+                occurrenceIndex: occurrenceIndex
+            )
+        }
+    }
+
     private static func appendMatchedText(
         _ text: String,
+        entry: ClinicalAbbreviationEntry,
+        occurrence: AbbreviationSelection?,
+        isInline: Bool,
         baseColor: Color,
         abbreviationColor: Color,
         to result: inout AttributedString
     ) {
-        guard
-            let entry = entry(forMatchedText: text),
-            let url = URL(string: "\(urlScheme)://\(entry.id)")
-        else {
+        guard let url = linkURL(for: entry, occurrence: occurrence) else {
             append(text, color: baseColor, to: &result)
             return
         }
@@ -451,7 +597,31 @@ enum ClinicalAbbreviationGlossary {
         var fragment = AttributedString(text)
         fragment.foregroundColor = abbreviationColor
         fragment.link = url
+        if isInline {
+            fragment.underlineStyle = .single
+        }
         result += fragment
+    }
+
+    private static func linkURL(
+        for entry: ClinicalAbbreviationEntry,
+        occurrence: AbbreviationSelection?
+    ) -> URL? {
+        guard let occurrence else {
+            return URL(string: "\(urlScheme)://\(entry.id)")
+        }
+
+        var components = URLComponents()
+        components.scheme = urlScheme
+        components.host = entry.id
+        components.queryItems = [
+            URLQueryItem(name: "textID", value: occurrence.textID),
+            URLQueryItem(
+                name: "occurrence",
+                value: String(occurrence.occurrenceIndex)
+            )
+        ]
+        return components.url
     }
 
     private static func append(
@@ -478,6 +648,46 @@ enum ClinicalAbbreviationGlossary {
     private struct GlossaryDefinition {
         let entry: ClinicalAbbreviationEntry
         let aliases: [String]
+    }
+
+    private struct MatchedOccurrence {
+        let range: NSRange
+        let text: String
+        let entry: ClinicalAbbreviationEntry
+        let occurrenceIndex: Int
+    }
+
+    private enum Presentation {
+        case legacy
+        case inline(textID: String, selection: AbbreviationSelection?)
+
+        var isInline: Bool {
+            if case .inline = self {
+                return true
+            }
+            return false
+        }
+
+        var selectedOccurrence: AbbreviationSelection? {
+            guard case .inline(_, let selection) = self else {
+                return nil
+            }
+            return selection
+        }
+
+        func selection(
+            entryID: String,
+            occurrenceIndex: Int
+        ) -> AbbreviationSelection? {
+            guard case .inline(let textID, _) = self else {
+                return nil
+            }
+            return AbbreviationSelection(
+                textID: textID,
+                glossaryEntryID: entryID,
+                occurrenceIndex: occurrenceIndex
+            )
+        }
     }
 }
 
