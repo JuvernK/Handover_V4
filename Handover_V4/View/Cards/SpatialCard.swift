@@ -19,6 +19,7 @@ import SwiftUI
 
 struct SpatialCardView: View {
     @Environment(AppModel.self) private var appModel
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// The POI name as authored in Reality Composer Pro.
     let poiName: String
@@ -41,23 +42,40 @@ struct SpatialCardView: View {
     private var cardContent: some View {
         switch PointOfInterestMapper.destination(for: poiName) {
         case .basicInformation:
-            if isExpanded(cardName: poiName) {
+            if isExpanded {
                 PatientHeaderView(patient: patient)
                     .glassBackgroundEffect(in: .rect(cornerRadius: 16))
                     .frame(width: basicInformationCardWidth)
+                    .spatialExpansionControl(
+                        isExpanded: true,
+                        isEnabled: !appModel.orbitState.isActive,
+                        action: toggleExpansion
+                    )
             } else {
                 CompactBasicInformationCard(patient: patient)
                     .frame(width: defaultCardWidth)
+                    .spatialExpansionControl(
+                        isExpanded: false,
+                        action: toggleExpansion
+                    )
             }
 
         case .section(let sectionID):
-            if isExpanded(sectionID) {
+            if isExpanded {
                 sectionID.view(for: patient)
                     .frame(width: expandedWidth(for: sectionID))
+                    .spatialExpansionControl(
+                        isExpanded: true,
+                        action: toggleExpansion
+                    )
                     .identityStyled(sectionID)
             } else {
                 CompactSpatialCard(sectionID: sectionID)
                     .frame(width: defaultCardWidth)
+                    .spatialExpansionControl(
+                        isExpanded: false,
+                        action: toggleExpansion
+                    )
                     .identityStyled(sectionID)
             }
 
@@ -67,29 +85,63 @@ struct SpatialCardView: View {
         }
     }
 
-    private func isExpanded(cardName: String) -> Bool {
+    private var isExpanded: Bool {
         if appModel.orbitState.isActive {
-            if PointOfInterestMapper.normalize(cardName) == "basic_information" {
+            if canonicalCardName == "basic_information" {
                 return true
             }
             return appModel.orbitState.expandedCardName
-                == PointOfInterestMapper.normalize(cardName)
+                == canonicalCardName
         }
-        return appModel.cardStates[cardName] ?? true
-    }
-
-    private func isExpanded(_ sectionID: SectionID) -> Bool {
-        if appModel.orbitState.isActive {
-            return appModel.orbitState.expandedCardName
-                == PointOfInterestMapper.normalize(poiName)
-        }
-        return appModel.cardStates[poiName]
-            ?? appModel.cardStates[sectionID.rawValue]
-            ?? true
+        return normalModeIsExpanded
     }
 
     private func expandedWidth(for sectionID: SectionID) -> CGFloat {
         sectionID == .systems ? systemsCardWidth : defaultCardWidth
+    }
+
+    private func toggleExpansion() {
+        let changes: () -> Void = {
+            if appModel.orbitState.isActive {
+                let canonicalName = PointOfInterestMapper.normalize(poiName)
+                if appModel.orbitState.focusedCardName == canonicalName {
+                    appModel.toggleFocusedOrbitCardExpansion()
+                } else {
+                    appModel.focusOrbitCard(named: canonicalName)
+                }
+                return
+            }
+
+            appModel.setCardState(
+                name: canonicalCardName,
+                isExpanded: !normalModeIsExpanded,
+                syncChanges: true
+            )
+        }
+
+        let animation: Animation? = reduceMotion
+            ? nil
+            : .spring(response: 0.5, dampingFraction: 0.8)
+        withAnimation(animation) {
+            changes()
+        }
+    }
+
+    private var normalModeIsExpanded: Bool {
+        appModel.cardStates[canonicalCardName]
+            ?? appModel.cardStates[poiName]
+            ?? true
+    }
+
+    private var canonicalCardName: String {
+        switch PointOfInterestMapper.destination(for: poiName) {
+        case .basicInformation:
+            return "basic_information"
+        case .section(let sectionID):
+            return sectionID.rawValue
+        case .unknown:
+            return PointOfInterestMapper.normalize(poiName)
+        }
     }
 }
 
@@ -114,10 +166,6 @@ private struct CompactBasicInformationCard: View {
             }
 
             Spacer(minLength: 8)
-
-            Image(systemName: "chevron.up.circle.fill")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(.secondary)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
@@ -142,10 +190,6 @@ private struct CompactSpatialCard: View {
                 .minimumScaleFactor(0.78)
 
             Spacer(minLength: 8)
-
-            Image(systemName: "chevron.up.circle.fill")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(.secondary)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
@@ -155,6 +199,34 @@ private struct CompactSpatialCard: View {
 }
 
 private extension View {
+    func spatialExpansionControl(
+        isExpanded: Bool,
+        isEnabled: Bool = true,
+        action: @escaping () -> Void
+    ) -> some View {
+        overlay(alignment: .topTrailing) {
+            if isEnabled {
+                Button(action: action) {
+                    Image(
+                        systemName: isExpanded
+                            ? "chevron.down.circle.fill"
+                            : "chevron.up.circle.fill"
+                    )
+                    .font(.system(size: 20, weight: .semibold))
+                    .frame(width: 36, height: 36)
+                    .contentShape(.circle)
+                }
+                .buttonStyle(.plain)
+                .hoverEffect(.highlight)
+                .accessibilityLabel(
+                    isExpanded ? "Collapse card" : "Expand card"
+                )
+                .padding(.top, 8)
+                .padding(.trailing, 10)
+            }
+        }
+    }
+
     /// Applies a card's Card Identity Colour to its border and tinted glyphs so
     /// the card reads as a matched pair with its highlighted Source. See
     /// CONTEXT.md and docs/adr/0001-source-coupling.md.

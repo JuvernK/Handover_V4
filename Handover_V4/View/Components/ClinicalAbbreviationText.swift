@@ -56,6 +56,8 @@ struct CardClinicalAbbreviationText: View {
 /// Legacy tooltip-compatible presentation retained temporarily for callers
 /// outside the migrated clinical cards.
 struct ClinicalAbbreviationText: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     let text: String
     let textID: String?
     let selection: AbbreviationSelection?
@@ -108,6 +110,10 @@ struct ClinicalAbbreviationText: View {
         Text(attributedText)
             .font(font)
             .fixedSize(horizontal: false, vertical: fixedVertical)
+            .animation(
+                reduceMotion ? nil : .easeInOut(duration: 0.2),
+                value: selection
+            )
             .environment(\.openURL, OpenURLAction { url in
                 if
                     let onSelection,
@@ -643,6 +649,8 @@ enum ClinicalAbbreviationGlossary {
 
         var fragment = AttributedString(text)
         fragment.foregroundColor = abbreviationColor
+        // A link attribute gives only this occurrence native visionOS
+        // gaze-and-pinch targeting and hover feedback.
         fragment.link = url
         if isInline {
             fragment.underlineStyle = .single

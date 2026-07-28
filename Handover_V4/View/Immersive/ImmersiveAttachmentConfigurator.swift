@@ -31,7 +31,7 @@ enum ImmersiveAttachmentConfigurator {
 
     static func regenerateCollisionShapes(for attachments: [Entity]) {
         for attachment in attachments {
-            attachment.generateCollisionShapes(recursive: true)
+            updateCollisionShape(for: attachment)
         }
     }
 
@@ -62,18 +62,34 @@ enum ImmersiveAttachmentConfigurator {
         for _ in 0..<ImmersiveConfiguration.collisionBoundsAttempts {
             try? await Task.sleep(for: ImmersiveConfiguration.collisionBoundsRetryDelay)
 
-            let bounds = attachment.visualBounds(relativeTo: nil)
-            guard bounds.extents.x > 0, bounds.extents.y > 0 else {
-                continue
+            if updateCollisionShape(for: attachment) {
+                return
             }
-
-            let shape = ShapeResource.generateBox(
-                width: bounds.extents.x,
-                height: bounds.extents.y,
-                depth: ImmersiveConfiguration.collisionDepth
-            )
-            attachment.components.set(CollisionComponent(shapes: [shape]))
-            return
         }
+    }
+
+    @discardableResult
+    private static func updateCollisionShape(for attachment: Entity) -> Bool {
+        // ViewAttachmentEntity has no mesh, so generateCollisionShapes has no
+        // geometry to derive a shape from. Build one from its rendered bounds.
+        let bounds = attachment.visualBounds(relativeTo: attachment)
+        guard bounds.extents.x > 0, bounds.extents.y > 0 else {
+            return false
+        }
+
+        let shape = ShapeResource.generateBox(
+            width: bounds.extents.x,
+            height: bounds.extents.y,
+            depth: ImmersiveConfiguration.collisionDepth
+        )
+        .offsetBy(
+            translation: SIMD3<Float>(
+                bounds.center.x,
+                bounds.center.y,
+                bounds.center.z
+            )
+        )
+        attachment.components.set(CollisionComponent(shapes: [shape]))
+        return true
     }
 }

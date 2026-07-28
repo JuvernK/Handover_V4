@@ -13,45 +13,7 @@ private struct SpatialCardGestureModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .gesture(expansionGesture)
             .gesture(movementGesture)
-    }
-
-    private var expansionGesture: some Gesture {
-        SpatialTapGesture()
-            .targetedToAnyEntity()
-            .onEnded { value in
-                if OrbitLayoutController.isRingEntity(value.entity) {
-                    return
-                }
-
-                guard let runtimeComponent = value.entity.components[
-                    PointOfInterestRuntimeComponent.self
-                ] else {
-                    return
-                }
-
-                let cardName = runtimeComponent.cardName
-                if appModel.orbitState.isActive {
-                    let canonicalName = PointOfInterestMapper.normalize(cardName)
-                    if appModel.orbitState.focusedCardName == canonicalName {
-                        appModel.toggleFocusedOrbitCardExpansion()
-                    } else {
-                        appModel.focusOrbitCard(named: canonicalName)
-                    }
-                    return
-                }
-
-                let isExpanded = appModel.cardStates[cardName] ?? true
-
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                    appModel.setCardState(
-                        name: cardName,
-                        isExpanded: !isExpanded,
-                        syncChanges: true
-                    )
-                }
-            }
     }
 
     private var movementGesture: some Gesture {

@@ -35,6 +35,7 @@ struct ImmersiveView: View {
     @State private var orbitRing: Entity?
     @State private var sceneRoot: Entity?
     @State private var sourceHighlightController = SourceHighlightController()
+    @State private var collisionResizeTask: Task<Void, Never>?
 
     var body: some View {
         RealityView { content, _ in
@@ -190,10 +191,12 @@ struct ImmersiveView: View {
     private func scheduleCollisionShapeRegeneration(
         reapplyLayout: Bool = false
     ) {
-        Task { @MainActor in
+        collisionResizeTask?.cancel()
+        collisionResizeTask = Task { @MainActor in
             try? await Task.sleep(
                 for: ImmersiveConfiguration.collisionResizeDelay
             )
+            guard !Task.isCancelled else { return }
             ImmersiveAttachmentConfigurator.regenerateCollisionShapes(
                 for: resolvedAttachmentEntities()
             )
