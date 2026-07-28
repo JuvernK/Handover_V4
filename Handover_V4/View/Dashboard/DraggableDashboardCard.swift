@@ -20,6 +20,7 @@ struct DraggableDashboardCard: View {
             .animation(.snappy(duration: 0.15), value: isTargeted)
             .draggable(sectionID) {
                 sectionID.view(for: patient)
+                    .environment(appModel)
                     .opacity(0.85)
                     .frame(maxWidth: 300)
             }

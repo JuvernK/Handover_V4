@@ -141,6 +141,7 @@ struct ImmersiveView: View {
             ForEach(attachmentsProvider.sortedTagViewPairs, id: \.tag) { pair in
                 Attachment(id: pair.tag) {
                     pair.view
+                        .environment(appModel)
                 }
             }
         }
