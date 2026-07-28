@@ -19,4 +19,8 @@ protocol SharePlayMessageTransport: AnyObject {
     func sendMessage(_ message: DashboardSyncMessage)
     func sendMessage(_ message: OrbitSyncMessage)
     func sendMessage(_ message: AbbreviationSyncMessage)
+    func sendMessage(
+        _ message: CatchUpMessage,
+        to participantIDs: Set<Participant.ID>
+    )
 }

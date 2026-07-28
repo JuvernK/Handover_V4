@@ -92,6 +92,7 @@ final class SharePlayCoordinator {
 
             sessionController = controller
             transport = controller
+            seedAbbreviationUpdateCountsIfNeeded()
             observeInvalidation(of: session)
         }
     }
@@ -428,6 +429,18 @@ final class SharePlayCoordinator {
         )
     }
 
+    private func seedAbbreviationUpdateCountsIfNeeded() {
+        guard let participantID = transport?.localParticipantID else { return }
+
+        for cardName in sharedCardState.abbreviationSelections.keys
+        where abbreviationUpdateCounts[cardName] == nil {
+            abbreviationUpdateCounts[cardName] = MessageUpdateCount(
+                count: 1,
+                participant: participantID
+            )
+        }
+    }
+
     // MARK: - Remote updates
 
     func handleRemoteCardMessage(_ message: CardSyncMessage) {
@@ -486,17 +499,26 @@ final class SharePlayCoordinator {
     }
 
     func applyCatchUpMessage(_ message: CatchUpMessage) {
+        let abbreviationSnapshot = mergedAbbreviationSnapshot(with: message)
         handoverViewModel.applyDashboardState(message.dashboardState)
         sharedCardState.replaceAll(
             expansionStates: message.allCardStates,
             positions: message.allCardPositions,
-            abbreviationSelections: message.abbreviationSelections,
+            abbreviationSelections: abbreviationSnapshot.selections,
             orbitState: message.orbitState
         )
         cardUpdateCounts = message.cardUpdateCounts
-        abbreviationUpdateCounts = message.abbreviationUpdateCounts
+        abbreviationUpdateCounts = abbreviationSnapshot.updateCounts
         orbitUpdateCount = message.orbitUpdateCount
         dashboardUpdateCount = message.dashboardUpdateCount
+    }
+
+    func sendCatchUp(to participantIDs: Set<Participant.ID>) {
+        guard !participantIDs.isEmpty else { return }
+        transport?.sendMessage(
+            makeCatchUpMessage(),
+            to: participantIDs
+        )
     }
 
     func makeCatchUpMessage() -> CatchUpMessage {
@@ -514,6 +536,28 @@ final class SharePlayCoordinator {
             ),
             dashboardUpdateCount: dashboardUpdateCount
         )
+    }
+
+    private func mergedAbbreviationSnapshot(
+        with message: CatchUpMessage
+    ) -> (
+        selections: [String: AbbreviationSelection],
+        updateCounts: [String: MessageUpdateCount]
+    ) {
+        var selections = sharedCardState.abbreviationSelections
+        var updateCounts = abbreviationUpdateCounts
+
+        for (cardName, incomingCount) in message.abbreviationUpdateCounts {
+            if let currentCount = updateCounts[cardName],
+               incomingCount <= currentCount {
+                continue
+            }
+
+            updateCounts[cardName] = incomingCount
+            selections[cardName] = message.abbreviationSelections[cardName]
+        }
+
+        return (selections, updateCounts)
     }
 
     private func selectPatientAndClearAbbreviations(id: String) {

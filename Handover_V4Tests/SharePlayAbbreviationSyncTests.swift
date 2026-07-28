@@ -132,9 +132,10 @@ struct SharePlayAbbreviationSyncTests {
 
         source.coordinator.toggleAbbreviationSelection(firstSelection, for: "plan")
         source.coordinator.toggleAbbreviationSelection(latestSelection, for: "plan")
-        lateJoiner.coordinator.applyCatchUpMessage(
-            source.coordinator.makeCatchUpMessage()
+        source.coordinator.sendCatchUp(
+            to: [lateJoiner.transport.localParticipantID]
         )
+        source.transport.deliverCatchUpMessages(to: lateJoiner.coordinator)
 
         #expect(
             lateJoiner.state.abbreviationSelections["plan"] == latestSelection
@@ -146,6 +147,60 @@ struct SharePlayAbbreviationSyncTests {
         )
         #expect(
             lateJoiner.transport.abbreviationMessages.last?.updateCount.count == 3
+        )
+    }
+
+    @Test
+    func conflictingCatchUpsConvergeRegardlessOfArrivalOrder() {
+        let firstSource = makeParticipant()
+        let secondSource = makeParticipant()
+        let firstLateJoiner = makeParticipant()
+        let secondLateJoiner = makeParticipant()
+        let firstSelection = makeSelection("af")
+        let secondSelection = makeSelection("crrt")
+
+        firstSource.coordinator.toggleAbbreviationSelection(
+            firstSelection,
+            for: "plan"
+        )
+        secondSource.coordinator.toggleAbbreviationSelection(
+            secondSelection,
+            for: "plan"
+        )
+        firstSource.coordinator.sendCatchUp(
+            to: [firstLateJoiner.transport.localParticipantID]
+        )
+        secondSource.coordinator.sendCatchUp(
+            to: [firstLateJoiner.transport.localParticipantID]
+        )
+
+        firstSource.transport.deliverCatchUpMessages(
+            to: firstLateJoiner.coordinator
+        )
+        secondSource.transport.deliverCatchUpMessages(
+            to: firstLateJoiner.coordinator
+        )
+        secondSource.transport.deliverCatchUpMessages(
+            to: secondLateJoiner.coordinator
+        )
+        firstSource.transport.deliverCatchUpMessages(
+            to: secondLateJoiner.coordinator
+        )
+
+        let firstMessage = try! #require(
+            firstSource.transport.abbreviationMessages.first
+        )
+        let secondMessage = try! #require(
+            secondSource.transport.abbreviationMessages.first
+        )
+        let expected = firstMessage.updateCount > secondMessage.updateCount
+            ? firstSelection
+            : secondSelection
+        #expect(
+            firstLateJoiner.state.abbreviationSelections["plan"] == expected
+        )
+        #expect(
+            secondLateJoiner.state.abbreviationSelections["plan"] == expected
         )
     }
 
@@ -226,6 +281,7 @@ private final class InMemorySharePlayTransport: SharePlayMessageTransport {
     let localParticipantID: UUID
     private(set) var cardMessages: [CardSyncMessage] = []
     private(set) var abbreviationMessages: [AbbreviationSyncMessage] = []
+    private(set) var catchUpMessages: [CatchUpMessage] = []
 
     init(localParticipantID: UUID) {
         self.localParticipantID = localParticipantID
@@ -245,9 +301,22 @@ private final class InMemorySharePlayTransport: SharePlayMessageTransport {
         abbreviationMessages.append(message)
     }
 
+    func sendMessage(
+        _ message: CatchUpMessage,
+        to participantIDs: Set<UUID>
+    ) {
+        catchUpMessages.append(message)
+    }
+
     func deliverAbbreviationMessages(to coordinator: SharePlayCoordinator) {
         for message in abbreviationMessages {
             coordinator.handleRemoteAbbreviationMessage(message)
+        }
+    }
+
+    func deliverCatchUpMessages(to coordinator: SharePlayCoordinator) {
+        for message in catchUpMessages {
+            coordinator.applyCatchUpMessage(message)
         }
     }
 }

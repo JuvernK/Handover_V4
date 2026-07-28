@@ -128,15 +128,9 @@ final class SessionController: SharePlayMessageTransport {
                     .subtracting(previousActiveParticipants)
 
                 if !newActiveParticipants.isEmpty, let coordinator {
-                    do {
-                        let catchUpMessage = coordinator.makeCatchUpMessage()
-                        try await messenger.send(
-                            catchUpMessage,
-                            to: .only(newActiveParticipants)
-                        )
-                    } catch {
-                        print("Failed to send catch-up message: \(error)")
-                    }
+                    coordinator.sendCatchUp(
+                        to: Set(newActiveParticipants.map(\.id))
+                    )
                 }
             }
         }
@@ -145,42 +139,43 @@ final class SessionController: SharePlayMessageTransport {
     // MARK: - Message transport
 
     func sendMessage(_ message: CardSyncMessage) {
-        Task {
-            do {
-                try await messenger.send(message)
-            } catch {
-                print("Failed to send card sync message: \(error)")
-            }
-        }
+        send(message, kind: "card")
     }
 
     func sendMessage(_ message: DashboardSyncMessage) {
-        Task {
-            do {
-                try await messenger.send(message)
-            } catch {
-                print("Failed to send dashboard sync message: \(error)")
-            }
-        }
+        send(message, kind: "dashboard")
     }
 
 
     func sendMessage(_ message: OrbitSyncMessage) {
-        Task {
-            do {
-                try await messenger.send(message)
-            } catch {
-                print("Failed to send orbit sync message: \(error)")
-            }
-        }
+        send(message, kind: "orbit")
     }
 
     func sendMessage(_ message: AbbreviationSyncMessage) {
+        send(message, kind: "abbreviation")
+    }
+
+    func sendMessage(
+        _ message: CatchUpMessage,
+        to participantIDs: Set<Participant.ID>
+    ) {
+        let participants = session.activeParticipants.filter {
+            participantIDs.contains($0.id)
+        }
+        guard !participants.isEmpty else { return }
+        send(message, to: .only(participants), kind: "catch-up")
+    }
+
+    private func send<Message: Codable>(
+        _ message: Message,
+        to participants: Participants = .all,
+        kind: String
+    ) {
         Task {
             do {
-                try await messenger.send(message)
+                try await messenger.send(message, to: participants)
             } catch {
-                print("Failed to send abbreviation sync message: \(error)")
+                print("Failed to send \(kind) sync message: \(error)")
             }
         }
     }
