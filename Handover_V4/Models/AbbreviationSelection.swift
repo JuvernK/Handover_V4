@@ -11,3 +11,8 @@ struct AbbreviationSelection: Codable, Hashable {
     let glossaryEntryID: String
     let occurrenceIndex: Int
 }
+
+/// A deterministic state transition for one card's selected abbreviation.
+enum AbbreviationAction: Codable, Equatable {
+    case set(AbbreviationSelection?)
+}

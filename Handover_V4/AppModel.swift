@@ -119,7 +119,7 @@ final class AppModel {
         _ selection: AbbreviationSelection,
         for cardID: ClinicalCardID
     ) {
-        sharedCardState.toggleAbbreviationSelection(
+        sharePlayCoordinator.toggleAbbreviationSelection(
             selection,
             for: cardID.canonicalName
         )

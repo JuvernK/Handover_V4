@@ -49,13 +49,24 @@ final class SharedCardState {
         positions[cardName] = position
     }
 
+    @discardableResult
     func toggleAbbreviationSelection(
         _ selection: AbbreviationSelection,
         for cardName: String
-    ) {
-        if abbreviationSelections[cardName] == selection {
-            abbreviationSelections.removeValue(forKey: cardName)
-        } else {
+    ) -> AbbreviationAction? {
+        guard isCardExpanded(cardName) else { return nil }
+
+        let action = AbbreviationAction.set(
+            abbreviationSelections[cardName] == selection ? nil : selection
+        )
+        apply(action, to: cardName)
+        return action
+    }
+
+    func apply(_ action: AbbreviationAction, to cardName: String) {
+        switch action {
+        case .set(let selection):
+            guard isCardExpanded(cardName) else { return }
             abbreviationSelections[cardName] = selection
         }
     }
@@ -89,13 +100,23 @@ final class SharedCardState {
     func replaceAll(
         expansionStates: [String: Bool],
         positions: [String: SIMD3<Float>],
+        abbreviationSelections: [String: AbbreviationSelection],
         orbitState: OrbitState
     ) {
         self.expansionStates = expansionStates
         self.positions = positions
-        abbreviationSelections = abbreviationSelections.filter {
-            expansionStates[$0.key] != false
-        }
+        self.abbreviationSelections = [:]
         setOrbitState(orbitState, animationDuration: 0.35)
+        self.abbreviationSelections = abbreviationSelections.filter {
+            isCardExpanded($0.key)
+        }
+    }
+
+    private func isCardExpanded(_ cardName: String) -> Bool {
+        if orbitState.isActive {
+            return cardName == "basic_information"
+                || orbitState.expandedCardName == cardName
+        }
+        return expansionStates[cardName] ?? true
     }
 }
