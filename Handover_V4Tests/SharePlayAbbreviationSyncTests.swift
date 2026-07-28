@@ -205,6 +205,135 @@ struct SharePlayAbbreviationSyncTests {
     }
 
     @Test
+    func preSessionSelectionIsAnnouncedAndConvergesOnJoin() {
+        let existingParticipant = makeParticipant()
+        let existingSelection = makeSelection("crrt")
+        existingParticipant.coordinator.toggleAbbreviationSelection(
+            existingSelection,
+            for: "plan"
+        )
+
+        let joiningState = SharedCardState()
+        let joiningSelection = makeSelection("af")
+        joiningState.toggleAbbreviationSelection(
+            joiningSelection,
+            for: "plan"
+        )
+        let joiningTransport = InMemorySharePlayTransport(
+            localParticipantID: UUID()
+        )
+        let joiningCoordinator = makeCoordinator(
+            state: joiningState,
+            transport: joiningTransport
+        )
+
+        joiningTransport.deliverAbbreviationMessages(
+            to: existingParticipant.coordinator
+        )
+        existingParticipant.coordinator.sendCatchUp(
+            to: [joiningTransport.localParticipantID]
+        )
+        existingParticipant.transport.deliverCatchUpMessages(
+            to: joiningCoordinator
+        )
+
+        #expect(joiningTransport.abbreviationMessages.count == 1)
+        #expect(
+            joiningState.abbreviationSelections["plan"]
+                == existingParticipant.state.abbreviationSelections["plan"]
+        )
+    }
+
+    @Test
+    func cardCollapseCatchUpsConvergeRegardlessOfArrivalOrder() {
+        let collapsedSource = makeParticipant()
+        let expandedSource = makeParticipant()
+        let firstLateJoiner = makeParticipant()
+        let secondLateJoiner = makeParticipant()
+        let expandedSelection = makeSelection("crrt")
+
+        collapsedSource.coordinator.toggleAbbreviationSelection(
+            makeSelection("af"),
+            for: "plan"
+        )
+        collapsedSource.coordinator.setCardState(
+            name: "plan",
+            isExpanded: false,
+            syncChanges: true
+        )
+        expandedSource.coordinator.setCardState(
+            name: "plan",
+            isExpanded: true,
+            syncChanges: true
+        )
+        expandedSource.coordinator.toggleAbbreviationSelection(
+            expandedSelection,
+            for: "plan"
+        )
+        collapsedSource.coordinator.sendCatchUp(
+            to: [firstLateJoiner.transport.localParticipantID]
+        )
+        expandedSource.coordinator.sendCatchUp(
+            to: [firstLateJoiner.transport.localParticipantID]
+        )
+
+        collapsedSource.transport.deliverCatchUpMessages(
+            to: firstLateJoiner.coordinator
+        )
+        expandedSource.transport.deliverCatchUpMessages(
+            to: firstLateJoiner.coordinator
+        )
+        expandedSource.transport.deliverCatchUpMessages(
+            to: secondLateJoiner.coordinator
+        )
+        collapsedSource.transport.deliverCatchUpMessages(
+            to: secondLateJoiner.coordinator
+        )
+
+        #expect(
+            firstLateJoiner.state.expansionStates["plan"]
+                == secondLateJoiner.state.expansionStates["plan"]
+        )
+        #expect(
+            firstLateJoiner.state.abbreviationSelections["plan"]
+                == secondLateJoiner.state.abbreviationSelections["plan"]
+        )
+    }
+
+    @Test
+    func patientChangingCatchUpDoesNotRestoreOldPatientSelection() {
+        let lateJoiner = makeParticipant(initialBedNumber: "BED-01")
+        let source = makeParticipant(initialBedNumber: "BED-02")
+        let incomingSelection = makeSelection("crrt")
+
+        lateJoiner.coordinator.toggleAbbreviationSelection(
+            makeSelection("af"),
+            for: "plan"
+        )
+        lateJoiner.coordinator.toggleAbbreviationSelection(
+            makeSelection("copd"),
+            for: "plan"
+        )
+        source.coordinator.toggleAbbreviationSelection(
+            incomingSelection,
+            for: "plan"
+        )
+        source.coordinator.sendCatchUp(
+            to: [lateJoiner.transport.localParticipantID]
+        )
+        source.transport.deliverCatchUpMessages(to: lateJoiner.coordinator)
+
+        #expect(
+            lateJoiner.handoverViewModel.patient?.id
+                == source.handoverViewModel.patient?.id
+        )
+        #expect(
+            lateJoiner.state.abbreviationSelections["plan"]
+                == incomingSelection
+        )
+    }
+
+    @Test
     func catchUpRejectsASelectionForACollapsedCard() {
         let lateJoiner = makeParticipant()
         let selection = makeSelection("crrt")
@@ -239,11 +368,21 @@ struct SharePlayAbbreviationSyncTests {
         #expect(lateJoiner.transport.abbreviationMessages.isEmpty)
     }
 
-    private func makeParticipant() -> TestParticipant {
+    private func makeParticipant(
+        initialBedNumber: String = "BED-01"
+    ) -> TestParticipant {
         let transport = InMemorySharePlayTransport(localParticipantID: UUID())
         let state = SharedCardState()
+        let handoverViewModel = HandoverViewModel(
+            initialBedNumber: initialBedNumber
+        )
         return TestParticipant(
-            coordinator: makeCoordinator(state: state, transport: transport),
+            coordinator: SharePlayCoordinator(
+                handoverViewModel: handoverViewModel,
+                sharedCardState: state,
+                transport: transport
+            ),
+            handoverViewModel: handoverViewModel,
             state: state,
             transport: transport
         )
@@ -272,6 +411,7 @@ struct SharePlayAbbreviationSyncTests {
 @MainActor
 private struct TestParticipant {
     let coordinator: SharePlayCoordinator
+    let handoverViewModel: HandoverViewModel
     let state: SharedCardState
     let transport: InMemorySharePlayTransport
 }

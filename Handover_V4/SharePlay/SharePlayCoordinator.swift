@@ -40,6 +40,7 @@ final class SharePlayCoordinator {
         self.handoverViewModel = handoverViewModel
         self.sharedCardState = sharedCardState
         self.transport = transport
+        synchronizeExistingAbbreviationSelections()
     }
 
     // MARK: - Session lifecycle
@@ -92,7 +93,7 @@ final class SharePlayCoordinator {
 
             sessionController = controller
             transport = controller
-            seedAbbreviationUpdateCountsIfNeeded()
+            synchronizeExistingAbbreviationSelections()
             observeInvalidation(of: session)
         }
     }
@@ -429,14 +430,22 @@ final class SharePlayCoordinator {
         )
     }
 
-    private func seedAbbreviationUpdateCountsIfNeeded() {
+    private func synchronizeExistingAbbreviationSelections() {
         guard let participantID = transport?.localParticipantID else { return }
 
-        for cardName in sharedCardState.abbreviationSelections.keys
+        for (cardName, selection) in sharedCardState.abbreviationSelections
         where abbreviationUpdateCounts[cardName] == nil {
-            abbreviationUpdateCounts[cardName] = MessageUpdateCount(
+            let updateCount = MessageUpdateCount(
                 count: 1,
                 participant: participantID
+            )
+            abbreviationUpdateCounts[cardName] = updateCount
+            transport?.sendMessage(
+                AbbreviationSyncMessage(
+                    cardName: cardName,
+                    action: .set(selection),
+                    updateCount: updateCount
+                )
             )
         }
     }
@@ -499,17 +508,25 @@ final class SharePlayCoordinator {
     }
 
     func applyCatchUpMessage(_ message: CatchUpMessage) {
-        let abbreviationSnapshot = mergedAbbreviationSnapshot(with: message)
+        let cardSnapshot = mergedCardSnapshot(with: message)
+        let orbitSnapshot = mergedOrbitSnapshot(with: message)
+        let changesPatient = message.dashboardState.selectedPatientID.map {
+            $0 != handoverViewModel.patient?.id
+        } ?? false
+        let abbreviationSnapshot = mergedAbbreviationSnapshot(
+            with: message,
+            preservingCurrentState: !changesPatient
+        )
         handoverViewModel.applyDashboardState(message.dashboardState)
         sharedCardState.replaceAll(
-            expansionStates: message.allCardStates,
-            positions: message.allCardPositions,
+            expansionStates: cardSnapshot.expansionStates,
+            positions: cardSnapshot.positions,
             abbreviationSelections: abbreviationSnapshot.selections,
-            orbitState: message.orbitState
+            orbitState: orbitSnapshot.state
         )
-        cardUpdateCounts = message.cardUpdateCounts
+        cardUpdateCounts = cardSnapshot.updateCounts
         abbreviationUpdateCounts = abbreviationSnapshot.updateCounts
-        orbitUpdateCount = message.orbitUpdateCount
+        orbitUpdateCount = orbitSnapshot.updateCount
         dashboardUpdateCount = message.dashboardUpdateCount
     }
 
@@ -539,13 +556,18 @@ final class SharePlayCoordinator {
     }
 
     private func mergedAbbreviationSnapshot(
-        with message: CatchUpMessage
+        with message: CatchUpMessage,
+        preservingCurrentState: Bool
     ) -> (
         selections: [String: AbbreviationSelection],
         updateCounts: [String: MessageUpdateCount]
     ) {
-        var selections = sharedCardState.abbreviationSelections
-        var updateCounts = abbreviationUpdateCounts
+        var selections = preservingCurrentState
+            ? sharedCardState.abbreviationSelections
+            : [:]
+        var updateCounts = preservingCurrentState
+            ? abbreviationUpdateCounts
+            : [:]
 
         for (cardName, incomingCount) in message.abbreviationUpdateCounts {
             if let currentCount = updateCounts[cardName],
@@ -558,6 +580,57 @@ final class SharePlayCoordinator {
         }
 
         return (selections, updateCounts)
+    }
+
+    private func mergedCardSnapshot(
+        with message: CatchUpMessage
+    ) -> (
+        expansionStates: [String: Bool],
+        positions: [String: SIMD3<Float>],
+        updateCounts: [String: MessageUpdateCount]
+    ) {
+        var expansionStates = sharedCardState.expansionStates
+        var positions = sharedCardState.positions
+        var updateCounts = cardUpdateCounts
+
+        for (cardName, incomingCount) in message.cardUpdateCounts {
+            if let currentCount = updateCounts[cardName],
+               incomingCount <= currentCount {
+                continue
+            }
+
+            updateCounts[cardName] = incomingCount
+            expansionStates[cardName] = message.allCardStates[cardName]
+            positions[cardName] = message.allCardPositions[cardName]
+        }
+
+        for (cardName, isExpanded) in message.allCardStates
+        where updateCounts[cardName] == nil
+            && expansionStates[cardName] == nil {
+            expansionStates[cardName] = isExpanded
+        }
+        for (cardName, position) in message.allCardPositions
+        where updateCounts[cardName] == nil
+            && positions[cardName] == nil {
+            positions[cardName] = position
+        }
+
+        return (expansionStates, positions, updateCounts)
+    }
+
+    private func mergedOrbitSnapshot(
+        with message: CatchUpMessage
+    ) -> (state: OrbitState, updateCount: MessageUpdateCount?) {
+        guard let incomingCount = message.orbitUpdateCount else {
+            return orbitUpdateCount == nil
+                ? (message.orbitState, nil)
+                : (sharedCardState.orbitState, orbitUpdateCount)
+        }
+        if let currentCount = orbitUpdateCount,
+           incomingCount <= currentCount {
+            return (sharedCardState.orbitState, orbitUpdateCount)
+        }
+        return (message.orbitState, incomingCount)
     }
 
     private func selectPatientAndClearAbbreviations(id: String) {
