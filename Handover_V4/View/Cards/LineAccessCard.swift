@@ -43,6 +43,8 @@ struct LinesAccessCard: View {
 
 private struct LineRow: View {
     let line: LineAccess
+
+    private let cardID = ClinicalCardID.section(.lines)
     
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -50,16 +52,26 @@ private struct LineRow: View {
                 .font(.system(size: 6))
                 .foregroundStyle(.secondary)
             
-            ClinicalAbbreviationText(
+            CardClinicalAbbreviationText(
                 line.type,
+                textID: .itemField(
+                    "type",
+                    itemID: line.id,
+                    in: cardID
+                ),
                 font: .system(size: 14, weight: .medium),
                 foregroundColor: .primary
             )
             
             Spacer(minLength: 12)
             
-            ClinicalAbbreviationText(
+            CardClinicalAbbreviationText(
                 line.location,
+                textID: .itemField(
+                    "location",
+                    itemID: line.id,
+                    in: cardID
+                ),
                 font: .system(size: 13),
                 foregroundColor: .secondary
             )
@@ -116,6 +128,7 @@ extension Patient {
 
 #Preview("Lines — Ahmad") {
     LinesAccessCard(patient: .mockLines_Ahmad)
+        .environment(AppModel())
         .frame(width: 360)
         .padding()
 }

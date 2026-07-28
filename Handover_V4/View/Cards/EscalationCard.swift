@@ -32,7 +32,9 @@ struct EscalationCard: View {
             VStack(alignment: .leading, spacing: 16) {
                 // Main concerns
                 if !escalation.mainConcerns.isEmpty {
-                    ConcernsSection(concerns: escalation.mainConcerns)
+                    ConcernsSection(
+                        concerns: escalation.mainConcerns
+                    )
                 }
 
                 // Call X if...
@@ -54,20 +56,27 @@ struct EscalationCard: View {
 private struct ConcernsSection: View {
     let concerns: [String]
 
+    private let cardID = ClinicalCardID.section(.escalation)
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             SectionLabel(text: "Main concerns")
 
             VStack(alignment: .leading, spacing: 6) {
-                ForEach(concerns, id: \.self) { concern in
+                ForEach(Array(concerns.enumerated()), id: \.offset) { index, concern in
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(.orange)
                             .padding(.top, 3)
 
-                        ClinicalAbbreviationText(
+                        CardClinicalAbbreviationText(
                             concern,
+                            textID: .sourceItemField(
+                                "main_concern",
+                                sourceIndex: index,
+                                in: cardID
+                            ),
                             font: .system(size: 13),
                             foregroundColor: .primary
                         )
@@ -84,20 +93,27 @@ private struct TriggersSection: View {
     let escalateTo: String
     let triggers: [String]
 
+    private let cardID = ClinicalCardID.section(.escalation)
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             SectionLabel(text: "Call \(escalateTo) if:")
 
             VStack(alignment: .leading, spacing: 6) {
-                ForEach(triggers, id: \.self) { trigger in
+                ForEach(Array(triggers.enumerated()), id: \.offset) { index, trigger in
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "phone.fill")
                             .font(.system(size: 10, weight: .semibold))
                             .foregroundStyle(.red)
                             .padding(.top, 4)
 
-                        ClinicalAbbreviationText(
+                        CardClinicalAbbreviationText(
                             trigger,
+                            textID: .sourceItemField(
+                                "trigger",
+                                sourceIndex: index,
+                                in: cardID
+                            ),
                             font: .system(size: 13),
                             foregroundColor: .primary
                         )
@@ -181,12 +197,14 @@ extension Patient {
 
 #Preview("Escalation — Ahmad (stable)") {
     EscalationCard(patient: .mockEscalation_Ahmad)
+        .environment(AppModel())
         .frame(width: 420)
         .padding()
 }
 
 #Preview("Escalation — Siti (critical)") {
     EscalationCard(patient: .mockEscalation_Siti)
+        .environment(AppModel())
         .frame(width: 420)
         .padding()
 }

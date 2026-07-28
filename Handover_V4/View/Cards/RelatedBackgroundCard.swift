@@ -15,6 +15,8 @@ import SwiftUI
 struct RelatedBackgroundCard: View {
     let patient: Patient
 
+    private let cardID = ClinicalCardID.section(.relatedBackground)
+
     private var background: RelatedBackground {
         patient.relatedBackground
     }
@@ -41,8 +43,12 @@ struct RelatedBackgroundCard: View {
                             title: "Presenting complaint",
                             systemImage: "doc.text.magnifyingglass"
                         ) {
-                            ClinicalAbbreviationText(
+                            CardClinicalAbbreviationText(
                                 background.presentingComplaint,
+                                textID: .field(
+                                    "presenting_complaint",
+                                    in: cardID
+                                ),
                                 font: .system(size: 13),
                                 foregroundColor: .primary
                             )
@@ -54,7 +60,11 @@ struct RelatedBackgroundCard: View {
                             title: "Past medical history",
                             systemImage: "cross.case.fill"
                         ) {
-                            BulletList(items: background.pastMedicalHistory)
+                            BulletList(
+                                items: background.pastMedicalHistory,
+                                fieldName: "past_medical_history",
+                                cardID: cardID
+                            )
                         }
                     }
 
@@ -63,7 +73,11 @@ struct RelatedBackgroundCard: View {
                             title: "Social history",
                             systemImage: "house.and.flag.fill"
                         ) {
-                            BulletList(items: background.socialHistory)
+                            BulletList(
+                                items: background.socialHistory,
+                                fieldName: "social_history",
+                                cardID: cardID
+                            )
                         }
                     }
                 }
@@ -102,18 +116,25 @@ private struct BackgroundSection<Content: View>: View {
 
 private struct BulletList: View {
     let items: [String]
+    let fieldName: String
+    let cardID: ClinicalCardID
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            ForEach(items, id: \.self) { item in
+            ForEach(Array(items.enumerated()), id: \.offset) { index, item in
                 HStack(alignment: .top, spacing: 8) {
                     Circle()
                         .fill(.secondary.opacity(0.5))
                         .frame(width: 5, height: 5)
                         .padding(.top, 6)
 
-                    ClinicalAbbreviationText(
+                    CardClinicalAbbreviationText(
                         item,
+                        textID: .sourceItemField(
+                            fieldName,
+                            sourceIndex: index,
+                            in: cardID
+                        ),
                         font: .system(size: 13),
                         foregroundColor: .primary
                     )
@@ -175,6 +196,7 @@ extension Patient {
 
 #Preview("Related Background — Ahmad") {
     RelatedBackgroundCard(patient: .mockRelatedBackground_Ahmad)
+        .environment(AppModel())
         .frame(width: 420)
         .padding()
 }

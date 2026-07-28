@@ -40,6 +40,9 @@ final class SharedCardState {
 
     func setExpansionState(_ isExpanded: Bool, for cardName: String) {
         expansionStates[cardName] = isExpanded
+        if !isExpanded {
+            abbreviationSelections.removeValue(forKey: cardName)
+        }
     }
 
     func setPosition(_ position: SIMD3<Float>, for cardName: String) {
@@ -57,7 +60,19 @@ final class SharedCardState {
         }
     }
 
+    func clearAbbreviationSelections() {
+        abbreviationSelections.removeAll()
+    }
+
     func setOrbitState(_ state: OrbitState, animationDuration: TimeInterval) {
+        if state.isActive && !orbitState.isActive {
+            abbreviationSelections.removeAll()
+        } else if
+            let previouslyExpandedCard = orbitState.expandedCardName,
+            state.expandedCardName != previouslyExpandedCard
+        {
+            abbreviationSelections.removeValue(forKey: previouslyExpandedCard)
+        }
         orbitAnimationDuration = animationDuration
         orbitState = state
     }
@@ -78,6 +93,9 @@ final class SharedCardState {
     ) {
         self.expansionStates = expansionStates
         self.positions = positions
+        abbreviationSelections = abbreviationSelections.filter {
+            expansionStates[$0.key] != false
+        }
         setOrbitState(orbitState, animationDuration: 0.35)
     }
 }

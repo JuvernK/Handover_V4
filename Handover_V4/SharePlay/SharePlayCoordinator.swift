@@ -361,7 +361,7 @@ final class SharePlayCoordinator {
     }
 
     func selectPatient(id: String, syncChanges: Bool) {
-        handoverViewModel.selectPatient(byID: id)
+        selectPatientAndClearAbbreviations(id: id)
 
         if syncChanges {
             broadcastDashboardAction(.selectedPatient(id: id))
@@ -434,15 +434,18 @@ final class SharePlayCoordinator {
 
         switch message.action {
         case .state(let dashboardState):
+            let previousPatientID = handoverViewModel.patient?.id
             handoverViewModel.applyDashboardState(dashboardState)
+            clearAbbreviationsIfPatientChanged(from: previousPatientID)
         case .selectedPatient(let id):
-            handoverViewModel.selectPatient(byID: id)
+            selectPatientAndClearAbbreviations(id: id)
         case .sectionOrder(let sectionOrder):
             handoverViewModel.applySectionOrder(sectionOrder)
         }
     }
 
     func applyCatchUpMessage(_ message: CatchUpMessage) {
+        let previousPatientID = handoverViewModel.patient?.id
         sharedCardState.replaceAll(
             expansionStates: message.allCardStates,
             positions: message.allCardPositions,
@@ -452,6 +455,7 @@ final class SharePlayCoordinator {
         orbitUpdateCount = message.orbitUpdateCount
         dashboardUpdateCount = message.dashboardUpdateCount
         handoverViewModel.applyDashboardState(message.dashboardState)
+        clearAbbreviationsIfPatientChanged(from: previousPatientID)
     }
 
     func makeCatchUpMessage() -> CatchUpMessage {
@@ -467,5 +471,19 @@ final class SharePlayCoordinator {
             ),
             dashboardUpdateCount: dashboardUpdateCount
         )
+    }
+
+    private func selectPatientAndClearAbbreviations(id: String) {
+        let previousPatientID = handoverViewModel.patient?.id
+        handoverViewModel.selectPatient(byID: id)
+        clearAbbreviationsIfPatientChanged(from: previousPatientID)
+    }
+
+    private func clearAbbreviationsIfPatientChanged(
+        from previousPatientID: String?
+    ) {
+        if handoverViewModel.patient?.id != previousPatientID {
+            sharedCardState.clearAbbreviationSelections()
+        }
     }
 }

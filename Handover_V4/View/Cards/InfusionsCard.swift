@@ -47,6 +47,8 @@ struct InfusionsCard: View {
 
 private struct InfusionRow: View {
     let infusion: Infusion
+
+    private let cardID = ClinicalCardID.section(.infusions)
     
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -66,22 +68,37 @@ private struct InfusionRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 // Top line: drug name + dose
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    ClinicalAbbreviationText(
+                    CardClinicalAbbreviationText(
                         infusion.drugName,
+                        textID: .itemField(
+                            "drug_name",
+                            itemID: infusion.id,
+                            in: cardID
+                        ),
                         font: .system(size: 14, weight: .semibold),
                         foregroundColor: .primary
                     )
                     
-                    ClinicalAbbreviationText(
+                    CardClinicalAbbreviationText(
                         infusion.dose,
+                        textID: .itemField(
+                            "dose",
+                            itemID: infusion.id,
+                            in: cardID
+                        ),
                         font: .system(size: 13, weight: .medium, design: .rounded),
                         foregroundColor: .primary
                     )
                     
                     Spacer(minLength: 8)
                     
-                    ClinicalAbbreviationText(
+                    CardClinicalAbbreviationText(
                         infusion.route,
+                        textID: .itemField(
+                            "route",
+                            itemID: infusion.id,
+                            in: cardID
+                        ),
                         font: .system(size: 11),
                         foregroundColor: .secondary
                     )
@@ -89,12 +106,16 @@ private struct InfusionRow: View {
                 
                 // Purpose (optional, smaller, secondary)
                 if !infusion.purpose.isEmpty {
-                    ClinicalAbbreviationText(
+                    CardClinicalAbbreviationText(
                         infusion.purpose,
+                        textID: .itemField(
+                            "purpose",
+                            itemID: infusion.id,
+                            in: cardID
+                        ),
                         font: .system(size: 12),
                         foregroundColor: .secondary
                     )
-                        .lineLimit(2)
                 }
             }
         }
@@ -178,12 +199,14 @@ extension Patient {
 
 #Preview("Infusions — Ahmad (3 drugs, all high-alert)") {
     InfusionsCard(patient: .mockInfusions_Ahmad)
+        .environment(AppModel())
         .frame(width: 380)
         .padding()
 }
 
 #Preview("Infusions — Siti (7 drugs, mixed)") {
     InfusionsCard(patient: .mockInfusions_Siti)
+        .environment(AppModel())
         .frame(width: 380)
         .padding()
 }

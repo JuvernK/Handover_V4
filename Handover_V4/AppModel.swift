@@ -77,8 +77,10 @@ final class AppModel {
         sharedCardState.abbreviationSelections
     }
 
-    func abbreviationSelection(for section: SectionID) -> AbbreviationSelection? {
-        abbreviationSelections[section.rawValue]
+    func abbreviationSelection(
+        for cardID: ClinicalCardID
+    ) -> AbbreviationSelection? {
+        abbreviationSelections[cardID.canonicalName]
     }
 
     var orbitState: OrbitState {
@@ -115,11 +117,11 @@ final class AppModel {
 
     func toggleAbbreviationSelection(
         _ selection: AbbreviationSelection,
-        for section: SectionID
+        for cardID: ClinicalCardID
     ) {
         sharedCardState.toggleAbbreviationSelection(
             selection,
-            for: section.rawValue
+            for: cardID.canonicalName
         )
     }
 

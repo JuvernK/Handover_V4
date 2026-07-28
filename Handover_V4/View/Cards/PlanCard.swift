@@ -47,15 +47,9 @@ struct PlanCard: View {
 // MARK: - Single plan item row
 
 private struct PlanRow: View {
-    @Environment(AppModel.self) private var appModel
-
     let item: PlanItem
 
-    private let section = SectionID.plan
-
-    private var textID: String {
-        "\(section.rawValue).item.\(item.id).task"
-    }
+    private let cardID = ClinicalCardID.section(.plan)
     
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -65,18 +59,16 @@ private struct PlanRow: View {
                 .frame(width: 14)
             
             // Task text
-            ClinicalAbbreviationText(
+            CardClinicalAbbreviationText(
                 item.task,
-                textID: textID,
-                selection: appModel.abbreviationSelection(for: section),
+                textID: .itemField(
+                    "task",
+                    itemID: item.id,
+                    in: cardID
+                ),
                 font: .system(size: 14),
                 foregroundColor: .primary
-            ) { selection in
-                appModel.toggleAbbreviationSelection(
-                    selection,
-                    for: section
-                )
-            }
+            )
             
             Spacer(minLength: 8)
             

@@ -8,6 +8,53 @@
 import Foundation
 import SwiftUI
 
+/// Card-aware inline presentation used by every production clinical field.
+struct CardClinicalAbbreviationText: View {
+    @Environment(AppModel.self) private var appModel
+
+    let text: String
+    let textID: ClinicalTextID
+    let font: Font
+    let foregroundColor: Color
+    let abbreviationColor: Color
+    let fixedVertical: Bool
+
+    init(
+        _ text: String,
+        textID: ClinicalTextID,
+        font: Font = .body,
+        foregroundColor: Color = .primary,
+        abbreviationColor: Color = .accentColor,
+        fixedVertical: Bool = true
+    ) {
+        self.text = text
+        self.textID = textID
+        self.font = font
+        self.foregroundColor = foregroundColor
+        self.abbreviationColor = abbreviationColor
+        self.fixedVertical = fixedVertical
+    }
+
+    var body: some View {
+        ClinicalAbbreviationText(
+            text,
+            textID: textID.rawValue,
+            selection: appModel.abbreviationSelection(for: textID.cardID),
+            font: font,
+            foregroundColor: foregroundColor,
+            abbreviationColor: abbreviationColor,
+            fixedVertical: fixedVertical
+        ) { selection in
+            appModel.toggleAbbreviationSelection(
+                selection,
+                for: textID.cardID
+            )
+        }
+    }
+}
+
+/// Legacy tooltip-compatible presentation retained temporarily for callers
+/// outside the migrated clinical cards.
 struct ClinicalAbbreviationText: View {
     let text: String
     let textID: String?

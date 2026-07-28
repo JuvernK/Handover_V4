@@ -23,6 +23,7 @@ This project is a visionOS SwiftUI + RealityKit ICU handover prototype. It prese
 - `SharedState/SharedCardState.swift` owns spatial-card presentation state independently of SharePlay.
   - Expanded/collapsed state for each card.
   - 3D position for each card.
+  - Zero-or-one inline clinical abbreviation selection for each card.
   - Transient synchronized orbit mode, rotation, focus, and focus expansion.
   - Applying and replacing card state without knowing how it is transported.
 
@@ -36,6 +37,9 @@ This project is a visionOS SwiftUI + RealityKit ICU handover prototype. It prese
 - `Data/PatientData.json` is the static ICU patient dataset.
   - Decoded by `Data/PatientDataLoader.swift`, the production implementation of `PatientLoading`.
   - Modelled by `Models/Patient.swift` and related enums.
+
+- `Models/ClinicalTextIdentity.swift` defines canonical clinical-card names and
+  stable semantic text identities shared by every inline abbreviation field.
 
 ## Main Folder Structure
 
