@@ -116,7 +116,7 @@ struct ClinicalAbbreviationText: View {
     }
 }
 
-struct ClinicalAbbreviationEntry: Identifiable, Hashable {
+struct ClinicalAbbreviationEntry {
     let id: String
     let term: String
     let expansion: String
