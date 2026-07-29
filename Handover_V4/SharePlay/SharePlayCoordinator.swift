@@ -19,6 +19,7 @@ final class SharePlayCoordinator {
     private var transport: (any SharePlayMessageTransport)?
     private var cardUpdateCounts: [String: MessageUpdateCount] = [:]
     private var abbreviationUpdateCounts: [String: MessageUpdateCount] = [:]
+    private var disconnectedAbbreviationChanges: Set<String> = []
     private var orbitUpdateCount: MessageUpdateCount?
     private var dashboardUpdateCount: MessageUpdateCount?
     private var lastOrbitBroadcastTime = Date.distantPast
@@ -92,8 +93,7 @@ final class SharePlayCoordinator {
             }
 
             sessionController = controller
-            transport = controller
-            synchronizeExistingAbbreviationSelections()
+            attachTransport(controller)
             observeInvalidation(of: session)
         }
     }
@@ -108,7 +108,7 @@ final class SharePlayCoordinator {
                 }
                 if case .invalidated = state {
                     sessionController = nil
-                    transport = nil
+                    detachTransport()
                     return
                 }
             }
@@ -118,7 +118,9 @@ final class SharePlayCoordinator {
     // MARK: - Local card updates
 
     func setCardState(name: String, isExpanded: Bool, syncChanges: Bool) {
+        let previousSelections = sharedCardState.abbreviationSelections
         sharedCardState.setExpansionState(isExpanded, for: name)
+        recordDisconnectedAbbreviationChanges(from: previousSelections)
 
         if syncChanges {
             broadcastCardAction(
@@ -167,6 +169,11 @@ final class SharePlayCoordinator {
             selection,
             for: cardName
         ) else {
+            return
+        }
+
+        guard transport != nil else {
+            disconnectedAbbreviationChanges.insert(cardName)
             return
         }
 
@@ -324,7 +331,9 @@ final class SharePlayCoordinator {
         animationDuration: TimeInterval,
         isFinal: Bool
     ) {
+        let previousSelections = sharedCardState.abbreviationSelections
         sharedCardState.setOrbitState(state, animationDuration: animationDuration)
+        recordDisconnectedAbbreviationChanges(from: previousSelections)
 
         let now = Date()
         guard isFinal || now.timeIntervalSince(lastOrbitBroadcastTime) >= 0.05 else {
@@ -394,7 +403,9 @@ final class SharePlayCoordinator {
     }
 
     func selectPatient(id: String, syncChanges: Bool) {
+        let previousSelections = sharedCardState.abbreviationSelections
         selectPatientAndClearAbbreviations(id: id)
+        recordDisconnectedAbbreviationChanges(from: previousSelections)
 
         if syncChanges {
             broadcastDashboardAction(.selectedPatient(id: id))
@@ -430,23 +441,57 @@ final class SharePlayCoordinator {
         )
     }
 
+    func attachTransport(_ transport: any SharePlayMessageTransport) {
+        self.transport = transport
+        synchronizeExistingAbbreviationSelections()
+    }
+
+    func detachTransport() {
+        transport = nil
+    }
+
     private func synchronizeExistingAbbreviationSelections() {
         guard let participantID = transport?.localParticipantID else { return }
 
-        for (cardName, selection) in sharedCardState.abbreviationSelections
-        where abbreviationUpdateCounts[cardName] == nil {
+        let cardNames = Set(sharedCardState.abbreviationSelections.keys)
+            .union(disconnectedAbbreviationChanges)
+        for cardName in cardNames {
+            let wasChangedWhileDisconnected =
+                disconnectedAbbreviationChanges.contains(cardName)
+            guard wasChangedWhileDisconnected
+                    || abbreviationUpdateCounts[cardName] == nil else {
+                continue
+            }
+
             let updateCount = MessageUpdateCount(
-                count: 1,
+                count: (abbreviationUpdateCounts[cardName]?.count ?? 0) + 1,
                 participant: participantID
             )
             abbreviationUpdateCounts[cardName] = updateCount
             transport?.sendMessage(
                 AbbreviationSyncMessage(
                     cardName: cardName,
-                    action: .set(selection),
+                    action: .set(
+                        sharedCardState.abbreviationSelections[cardName]
+                    ),
                     updateCount: updateCount
                 )
             )
+            disconnectedAbbreviationChanges.remove(cardName)
+        }
+    }
+
+    private func recordDisconnectedAbbreviationChanges(
+        from previousSelections: [String: AbbreviationSelection]
+    ) {
+        guard transport == nil else { return }
+
+        let cardNames = Set(previousSelections.keys)
+            .union(sharedCardState.abbreviationSelections.keys)
+        for cardName in cardNames
+        where previousSelections[cardName]
+            != sharedCardState.abbreviationSelections[cardName] {
+            disconnectedAbbreviationChanges.insert(cardName)
         }
     }
 

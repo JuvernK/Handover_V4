@@ -245,6 +245,62 @@ struct SharePlayAbbreviationSyncTests {
     }
 
     @Test
+    func disconnectedReplacementAndCollapseAreAnnouncedOnRejoin() {
+        let participant = makeParticipant()
+        let peer = makeParticipant()
+        let replacement = makeSelection("crrt")
+
+        participant.coordinator.toggleAbbreviationSelection(
+            makeSelection("af"),
+            for: "plan"
+        )
+        participant.transport.deliverAbbreviationMessages(
+            to: peer.coordinator
+        )
+
+        participant.coordinator.detachTransport()
+        participant.coordinator.toggleAbbreviationSelection(
+            replacement,
+            for: "plan"
+        )
+        let replacementTransport = InMemorySharePlayTransport(
+            localParticipantID: UUID()
+        )
+        participant.coordinator.attachTransport(replacementTransport)
+        replacementTransport.deliverAbbreviationMessages(to: peer.coordinator)
+
+        #expect(
+            replacementTransport.abbreviationMessages.first?.action
+                == .set(replacement)
+        )
+        #expect(
+            replacementTransport.abbreviationMessages.first?.updateCount.count
+                == 2
+        )
+        #expect(peer.state.abbreviationSelections["plan"] == replacement)
+
+        participant.coordinator.detachTransport()
+        participant.coordinator.setCardState(
+            name: "plan",
+            isExpanded: false,
+            syncChanges: true
+        )
+        let collapseTransport = InMemorySharePlayTransport(
+            localParticipantID: UUID()
+        )
+        participant.coordinator.attachTransport(collapseTransport)
+        collapseTransport.deliverAbbreviationMessages(to: peer.coordinator)
+
+        #expect(
+            collapseTransport.abbreviationMessages.first?.action == .set(nil)
+        )
+        #expect(
+            collapseTransport.abbreviationMessages.first?.updateCount.count == 3
+        )
+        #expect(peer.state.abbreviationSelections["plan"] == nil)
+    }
+
+    @Test
     func cardCollapseCatchUpsConvergeRegardlessOfArrivalOrder() {
         let collapsedSource = makeParticipant()
         let expandedSource = makeParticipant()
