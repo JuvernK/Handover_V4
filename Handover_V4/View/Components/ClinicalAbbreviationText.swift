@@ -53,38 +53,18 @@ struct CardClinicalAbbreviationText: View {
     }
 }
 
-/// Legacy tooltip-compatible presentation retained temporarily for callers
-/// outside the migrated clinical cards.
+/// Selectable inline presentation for Approved Abbreviations.
 struct ClinicalAbbreviationText: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     let text: String
-    let textID: String?
+    let textID: String
     let selection: AbbreviationSelection?
     let font: Font
     let foregroundColor: Color
     let abbreviationColor: Color
     let fixedVertical: Bool
-    let onSelection: ((AbbreviationSelection) -> Void)?
-
-    @State private var selectedEntry: ClinicalAbbreviationEntry?
-
-    init(
-        _ text: String,
-        font: Font = .body,
-        foregroundColor: Color = .primary,
-        abbreviationColor: Color = .accentColor,
-        fixedVertical: Bool = true
-    ) {
-        self.text = text
-        self.textID = nil
-        self.selection = nil
-        self.font = font
-        self.foregroundColor = foregroundColor
-        self.abbreviationColor = abbreviationColor
-        self.fixedVertical = fixedVertical
-        self.onSelection = nil
-    }
+    let onSelection: (AbbreviationSelection) -> Void
 
     init(
         _ text: String,
@@ -115,71 +95,24 @@ struct ClinicalAbbreviationText: View {
                 value: selection
             )
             .environment(\.openURL, OpenURLAction { url in
-                if
-                    let onSelection,
-                    let occurrence = ClinicalAbbreviationGlossary.selection(from: url)
-                {
-                    onSelection(occurrence)
-                    return .handled
-                }
-
-                guard
-                    url.scheme == ClinicalAbbreviationGlossary.urlScheme,
-                    let id = url.host,
-                    let entry = ClinicalAbbreviationGlossary.entry(id: id)
-                else {
+                guard let occurrence =
+                    ClinicalAbbreviationGlossary.selection(from: url) else {
                     return .systemAction
                 }
 
-                selectedEntry = entry
+                onSelection(occurrence)
                 return .handled
             })
-            .popover(item: $selectedEntry) { entry in
-                ClinicalAbbreviationPopover(entry: entry)
-            }
     }
 
     private var attributedText: AttributedString {
-        guard let textID else {
-            return ClinicalAbbreviationGlossary.attributedString(
-                for: text,
-                baseColor: foregroundColor,
-                abbreviationColor: abbreviationColor
-            )
-        }
-
-        return ClinicalAbbreviationGlossary.attributedString(
+        ClinicalAbbreviationGlossary.attributedString(
             for: text,
             textID: textID,
             selection: selection,
             baseColor: foregroundColor,
             abbreviationColor: abbreviationColor
         )
-    }
-}
-
-private struct ClinicalAbbreviationPopover: View {
-    let entry: ClinicalAbbreviationEntry
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(entry.term)
-                .font(.headline)
-                .foregroundStyle(.primary)
-
-            Text(entry.expansion)
-                .font(.subheadline)
-                .foregroundStyle(.primary)
-
-            if let note = entry.note {
-                Text(note)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .padding(16)
-        .frame(width: 280, alignment: .leading)
     }
 }
 
@@ -481,10 +414,6 @@ enum ClinicalAbbreviationGlossary {
         return try! NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
     }()
 
-    static func entry(id: String) -> ClinicalAbbreviationEntry? {
-        entriesByID[id]
-    }
-
     static func selection(from url: URL) -> AbbreviationSelection? {
         guard
             url.scheme == urlScheme,
@@ -523,35 +452,8 @@ enum ClinicalAbbreviationGlossary {
 
     static func attributedString(
         for text: String,
-        baseColor: Color,
-        abbreviationColor: Color
-    ) -> AttributedString {
-        attributedString(
-            for: text,
-            presentation: .legacy,
-            baseColor: baseColor,
-            abbreviationColor: abbreviationColor
-        )
-    }
-
-    static func attributedString(
-        for text: String,
         textID: String,
         selection: AbbreviationSelection?,
-        baseColor: Color,
-        abbreviationColor: Color
-    ) -> AttributedString {
-        attributedString(
-            for: text,
-            presentation: .inline(textID: textID, selection: selection),
-            baseColor: baseColor,
-            abbreviationColor: abbreviationColor
-        )
-    }
-
-    private static func attributedString(
-        for text: String,
-        presentation: Presentation,
         baseColor: Color,
         abbreviationColor: Color
     ) -> AttributedString {
@@ -570,8 +472,9 @@ enum ClinicalAbbreviationGlossary {
                 )
             }
 
-            let occurrence = presentation.selection(
-                entryID: match.entry.id,
+            let occurrence = AbbreviationSelection(
+                textID: textID,
+                glossaryEntryID: match.entry.id,
                 occurrenceIndex: match.occurrenceIndex
             )
 
@@ -579,13 +482,12 @@ enum ClinicalAbbreviationGlossary {
                 match.text,
                 entry: match.entry,
                 occurrence: occurrence,
-                isInline: presentation.isInline,
                 baseColor: baseColor,
                 abbreviationColor: abbreviationColor,
                 to: &result
             )
 
-            if occurrence == presentation.selectedOccurrence {
+            if occurrence == selection {
                 append(
                     " (\(match.entry.expansion))",
                     color: baseColor,
@@ -636,8 +538,7 @@ enum ClinicalAbbreviationGlossary {
     private static func appendMatchedText(
         _ text: String,
         entry: ClinicalAbbreviationEntry,
-        occurrence: AbbreviationSelection?,
-        isInline: Bool,
+        occurrence: AbbreviationSelection,
         baseColor: Color,
         abbreviationColor: Color,
         to result: inout AttributedString
@@ -652,20 +553,14 @@ enum ClinicalAbbreviationGlossary {
         // A link attribute gives only this occurrence native visionOS
         // gaze-and-pinch targeting and hover feedback.
         fragment.link = url
-        if isInline {
-            fragment.underlineStyle = .single
-        }
+        fragment.underlineStyle = .single
         result += fragment
     }
 
     private static func linkURL(
         for entry: ClinicalAbbreviationEntry,
-        occurrence: AbbreviationSelection?
+        occurrence: AbbreviationSelection
     ) -> URL? {
-        guard let occurrence else {
-            return URL(string: "\(urlScheme)://\(entry.id)")
-        }
-
         var components = URLComponents()
         components.scheme = urlScheme
         components.host = entry.id
@@ -712,51 +607,23 @@ enum ClinicalAbbreviationGlossary {
         let occurrenceIndex: Int
     }
 
-    private enum Presentation {
-        case legacy
-        case inline(textID: String, selection: AbbreviationSelection?)
-
-        var isInline: Bool {
-            if case .inline = self {
-                return true
-            }
-            return false
-        }
-
-        var selectedOccurrence: AbbreviationSelection? {
-            guard case .inline(_, let selection) = self else {
-                return nil
-            }
-            return selection
-        }
-
-        func selection(
-            entryID: String,
-            occurrenceIndex: Int
-        ) -> AbbreviationSelection? {
-            guard case .inline(let textID, _) = self else {
-                return nil
-            }
-            return AbbreviationSelection(
-                textID: textID,
-                glossaryEntryID: entryID,
-                occurrenceIndex: occurrenceIndex
-            )
-        }
-    }
 }
 
 #Preview {
     VStack(alignment: .leading, spacing: 12) {
         ClinicalAbbreviationText(
             "Morphine PCA via IV (CVC). RASS -2. CXR: RLL consolidation. Continue CRRT (CVVHDF).",
+            textID: "preview.clinical-abbreviations",
+            selection: nil,
             font: .system(size: 14)
-        )
+        ) { _ in }
 
         ClinicalAbbreviationText(
             "Vitals labels such as MAP, HR, RR, BP and SpO2 stay plain.",
+            textID: "preview.excluded-vital-labels",
+            selection: nil,
             font: .system(size: 14)
-        )
+        ) { _ in }
     }
     .padding()
 }
