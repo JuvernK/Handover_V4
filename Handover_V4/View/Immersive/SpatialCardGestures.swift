@@ -9,7 +9,7 @@ import RealityKit
 private struct SpatialCardGestureModifier: ViewModifier {
     @Environment(AppModel.self) private var appModel
     @State private var dragStartPosition: SIMD3<Float>?
-    @State private var orbitLastAngle: Float?
+    @State private var orbitDragInterpreter = OrbitDragInterpreter()
 
     func body(content: Content) -> some View {
         content
@@ -21,37 +21,44 @@ private struct SpatialCardGestureModifier: ViewModifier {
             .targetedToAnyEntity()
             .onChanged { value in
                 if appModel.orbitState.isActive {
+                    let startPoint = value.convert(
+                        value.startLocation3D,
+                        from: .local,
+                        to: .scene
+                    )
                     let point = value.convert(
                         value.location3D,
                         from: .local,
                         to: .scene
                     )
-                    let localPoint = appModel.orbitGestureWorldToLocal * SIMD4<Float>(
-                        Float(point.x),
-                        Float(point.y),
-                        Float(point.z),
-                        1
-                    )
+                    let localStartPoint = appModel.orbitGestureWorldToLocal
+                        * SIMD4<Float>(
+                            Float(startPoint.x),
+                            Float(startPoint.y),
+                            Float(startPoint.z),
+                            1
+                        )
+                    let localPoint = appModel.orbitGestureWorldToLocal
+                        * SIMD4<Float>(
+                            Float(point.x),
+                            Float(point.y),
+                            Float(point.z),
+                            1
+                        )
                     let angle = atan2(
                         localPoint.z,
                         localPoint.x
                     )
-                    if let orbitLastAngle {
-                        let delta = OrbitLayoutController.normalizedAngle(
-                            angle - orbitLastAngle
-                        )
+                    orbitDragInterpreter.begin(
+                        angle: atan2(localStartPoint.z, localStartPoint.x),
+                        rotation: appModel.orbitState.rotation
+                    )
+                    if let rotation = orbitDragInterpreter.update(angle: angle) {
                         appModel.updateOrbitRotation(
-                            appModel.orbitState.rotation + delta,
-                            isFinal: false
-                        )
-                    } else {
-                        // Collapse the focused card as soon as orbit motion begins.
-                        appModel.updateOrbitRotation(
-                            appModel.orbitState.rotation,
+                            rotation,
                             isFinal: false
                         )
                     }
-                    orbitLastAngle = angle
                     return
                 }
 
@@ -74,14 +81,16 @@ private struct SpatialCardGestureModifier: ViewModifier {
             }
             .onEnded { value in
                 if appModel.orbitState.isActive {
-                    orbitLastAngle = nil
-                    appModel.updateOrbitRotation(
-                        appModel.orbitState.rotation,
-                        isFinal: true
-                    )
+                    if let rotation = orbitDragInterpreter.end() {
+                        appModel.updateOrbitRotation(
+                            rotation,
+                            isFinal: true
+                        )
+                    }
                     return
                 }
 
+                orbitDragInterpreter.reset()
                 dragStartPosition = nil
 
                 guard let runtimeComponent = value.entity.components[
