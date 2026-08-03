@@ -73,6 +73,16 @@ final class AppModel {
         sharedCardState.positions
     }
 
+    var abbreviationSelections: [String: AbbreviationSelection] {
+        sharedCardState.abbreviationSelections
+    }
+
+    func abbreviationSelection(
+        for cardID: ClinicalCardID
+    ) -> AbbreviationSelection? {
+        abbreviationSelections[cardID.canonicalName]
+    }
+
     var orbitState: OrbitState {
         sharedCardState.orbitState
     }
@@ -102,6 +112,16 @@ final class AppModel {
             name: name,
             position: position,
             syncChanges: syncChanges
+        )
+    }
+
+    func toggleAbbreviationSelection(
+        _ selection: AbbreviationSelection,
+        for cardID: ClinicalCardID
+    ) {
+        sharePlayCoordinator.toggleAbbreviationSelection(
+            selection,
+            for: cardID.canonicalName
         )
     }
 

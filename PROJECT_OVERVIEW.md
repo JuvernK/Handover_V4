@@ -23,6 +23,7 @@ This project is a visionOS SwiftUI + RealityKit ICU handover prototype. It prese
 - `SharedState/SharedCardState.swift` owns spatial-card presentation state independently of SharePlay.
   - Expanded/collapsed state for each card.
   - 3D position for each card.
+  - Zero-or-one inline clinical abbreviation selection for each card.
   - Transient synchronized orbit mode, rotation, focus, and focus expansion.
   - Applying and replacing card state without knowing how it is transported.
 
@@ -36,6 +37,9 @@ This project is a visionOS SwiftUI + RealityKit ICU handover prototype. It prese
 - `Data/PatientData.json` is the static ICU patient dataset.
   - Decoded by `Data/PatientDataLoader.swift`, the production implementation of `PatientLoading`.
   - Modelled by `Models/Patient.swift` and related enums.
+
+- `Models/ClinicalTextIdentity.swift` defines canonical clinical-card names and
+  stable semantic text identities shared by every inline abbreviation field.
 
 ## Main Folder Structure
 
@@ -60,7 +64,9 @@ This project is a visionOS SwiftUI + RealityKit ICU handover prototype. It prese
   - `ImmersiveAttachmentFactory.swift` creates SwiftUI card attachments for discovered points of interest.
   - `ImmersiveAttachmentConfigurator.swift` configures RealityKit attachment entities, collision shapes, and synchronized positions.
   - `AttachmentsProvider.swift` stores the SwiftUI views exposed to RealityKit as attachments.
-  - `SpatialCardGestures.swift` handles tap-to-expand and 3D card dragging.
+  - `SpatialCardGestures.swift` handles whole-card 3D dragging and Orbit
+    rotation. Spatial Card expansion is controlled by an explicit chevron in
+    `SpatialCardView` so interactive card content owns its own selection.
   - `OrbitLayoutController.swift` builds the interactive ring and lays cards out in the focused carousel.
   - `PointOfInterestMapper.swift` normalizes authored POI names and maps them to dashboard sections.
   - `ImmersiveConfiguration.swift` contains shared scene, collision, timing, and movement constants.
@@ -200,5 +206,7 @@ SharePlay sync is centered in `SharePlayCoordinator` and `SessionController`.
 - `ToggleImmersiveSpaceButton.swift` handles opening/closing the immersive space and swaps between the dashboard and controls windows.
 - Dashboard and controls windows use stable `AppWindow` values; ID-only `openWindow` calls would create additional `WindowGroup` instances.
 - `ImmersiveView` adds SwiftUI attachments to the root RealityView content so they avoid inherited scene scaling.
-- Spatial card collision shapes are regenerated after expand/collapse because the SwiftUI attachment size changes.
+- Spatial card collision shapes are regenerated from rendered attachment
+  bounds after card expand/collapse or inline-abbreviation reflow because the
+  SwiftUI attachment size changes.
 - The project currently targets visionOS through the Xcode project and uses the local `RealityKitContent` package.

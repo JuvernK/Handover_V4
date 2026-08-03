@@ -40,6 +40,12 @@ struct CardSyncMessage: Codable {
     let updateCount: MessageUpdateCount
 }
 
+struct AbbreviationSyncMessage: Codable {
+    let cardName: String
+    let action: AbbreviationAction
+    let updateCount: MessageUpdateCount
+}
+
 struct OrbitSyncMessage: Codable {
     let state: OrbitState
     let updateCount: MessageUpdateCount
@@ -69,6 +75,8 @@ struct CatchUpMessage: Codable {
     let allCardStates: [String: Bool]
     let allCardPositions: [String: SIMD3<Float>]
     let cardUpdateCounts: [String: MessageUpdateCount]
+    let abbreviationSelections: [String: AbbreviationSelection]
+    let abbreviationUpdateCounts: [String: MessageUpdateCount]
     let orbitState: OrbitState
     let orbitUpdateCount: MessageUpdateCount?
     let dashboardState: DashboardState

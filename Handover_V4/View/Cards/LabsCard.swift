@@ -53,6 +53,8 @@ struct LabsCard: View {
 
 private struct LabRow: View {
     let lab: LabResult
+
+    private let cardID = ClinicalCardID.section(.labs)
     
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -62,8 +64,13 @@ private struct LabRow: View {
                 .frame(width: 8, height: 8)
             
             // Lab name
-            ClinicalAbbreviationText(
+            CardClinicalAbbreviationText(
                 lab.name,
+                textID: .itemField(
+                    "name",
+                    itemID: lab.id,
+                    in: cardID
+                ),
                 font: .system(size: 14, weight: .medium),
                 foregroundColor: .primary
             )
@@ -203,18 +210,21 @@ extension Patient {
 
 #Preview("Mixed — Ahmad") {
     LabsCard(patient: .mockLabs_Ahmad)
+        .environment(AppModel())
         .frame(width: 360)
         .padding()
 }
 
 #Preview("Critical — Siti") {
     LabsCard(patient: .mockLabs_Siti)
+        .environment(AppModel())
         .frame(width: 360)
         .padding()
 }
 
 #Preview("All normal") {
     LabsCard(patient: .mockLabs_AllNormal)
+        .environment(AppModel())
         .frame(width: 360)
         .padding()
 }

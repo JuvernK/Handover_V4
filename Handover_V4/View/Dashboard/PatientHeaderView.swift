@@ -31,8 +31,12 @@ struct PatientHeaderView: View {
                     
                     // Diagnosis + LOS pill
                     HStack(spacing: 8) {
-                        ClinicalAbbreviationText(
+                        CardClinicalAbbreviationText(
                             patient.diagnosis,
+                            textID: .field(
+                                "diagnosis",
+                                in: .basicInformation
+                            ),
                             font: .system(size: 18, weight: .semibold),
                             foregroundColor: .primary
                         )
@@ -422,4 +426,5 @@ extension Patient {
             Text("No patients loaded")
         }
     }
+    .environment(AppModel())
 }

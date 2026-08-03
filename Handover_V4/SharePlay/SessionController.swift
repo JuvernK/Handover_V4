@@ -11,7 +11,7 @@ import Combine
 
 /// Controls the SharePlay session for real-time card state synchronization.
 @MainActor
-final class SessionController {
+final class SessionController: SharePlayMessageTransport {
     /// The active SharePlay group session.
     let session: GroupSession<SharePlayTogether>
 
@@ -39,6 +39,7 @@ final class SessionController {
         self.coordinator = coordinator
 
         observeCardMessages()
+        observeAbbreviationMessages()
         observeOrbitMessages()
         observeDashboardMessages()
         observeCatchUpMessages()
@@ -53,6 +54,10 @@ final class SessionController {
     func endSession() {
         session.end()
     }
+
+    var localParticipantID: Participant.ID {
+        session.localParticipant.id
+    }
     // MARK: - Message observation
 
     private func observeCardMessages() {
@@ -60,6 +65,17 @@ final class SessionController {
             for await (message, _) in messenger.messages(of: CardSyncMessage.self) {
                 guard let coordinator else { return }
                 coordinator.handleRemoteCardMessage(message)
+            }
+        }
+    }
+
+    private func observeAbbreviationMessages() {
+        Task.immediate(name: "abbreviation message observation") {
+            for await (message, _) in messenger.messages(
+                of: AbbreviationSyncMessage.self
+            ) {
+                guard let coordinator else { return }
+                coordinator.handleRemoteAbbreviationMessage(message)
             }
         }
     }
@@ -112,15 +128,9 @@ final class SessionController {
                     .subtracting(previousActiveParticipants)
 
                 if !newActiveParticipants.isEmpty, let coordinator {
-                    do {
-                        let catchUpMessage = coordinator.makeCatchUpMessage()
-                        try await messenger.send(
-                            catchUpMessage,
-                            to: .only(newActiveParticipants)
-                        )
-                    } catch {
-                        print("Failed to send catch-up message: \(error)")
-                    }
+                    coordinator.sendCatchUp(
+                        to: Set(newActiveParticipants.map(\.id))
+                    )
                 }
             }
         }
@@ -128,28 +138,45 @@ final class SessionController {
 
     // MARK: - Message transport
 
-    func sendMessage(_ message: CardSyncMessage) async {
-        do {
-            try await messenger.send(message)
-        } catch {
-            print("Failed to send card sync message: \(error)")
-        }
+    func sendMessage(_ message: CardSyncMessage) {
+        send(message, kind: "card")
     }
 
-    func sendMessage(_ message: DashboardSyncMessage) async {
-        do {
-            try await messenger.send(message)
-        } catch {
-            print("Failed to send dashboard sync message: \(error)")
-        }
+    func sendMessage(_ message: DashboardSyncMessage) {
+        send(message, kind: "dashboard")
     }
 
 
-    func sendMessage(_ message: OrbitSyncMessage) async {
-        do {
-            try await messenger.send(message)
-        } catch {
-            print("Failed to send orbit sync message: \(error)")
+    func sendMessage(_ message: OrbitSyncMessage) {
+        send(message, kind: "orbit")
+    }
+
+    func sendMessage(_ message: AbbreviationSyncMessage) {
+        send(message, kind: "abbreviation")
+    }
+
+    func sendMessage(
+        _ message: CatchUpMessage,
+        to participantIDs: Set<Participant.ID>
+    ) {
+        let participants = session.activeParticipants.filter {
+            participantIDs.contains($0.id)
+        }
+        guard !participants.isEmpty else { return }
+        send(message, to: .only(participants), kind: "catch-up")
+    }
+
+    private func send<Message: Codable>(
+        _ message: Message,
+        to participants: Participants = .all,
+        kind: String
+    ) {
+        Task {
+            do {
+                try await messenger.send(message, to: participants)
+            } catch {
+                print("Failed to send \(kind) sync message: \(error)")
+            }
         }
     }
 }

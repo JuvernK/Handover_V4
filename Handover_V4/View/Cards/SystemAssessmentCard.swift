@@ -53,6 +53,8 @@ struct SystemsAssessmentCard: View {
 
 private struct SystemRow: View {
     let assessment: SystemAssessment
+
+    private let cardID = ClinicalCardID.section(.systems)
     
     var body: some View {
         HStack(alignment: .top, spacing: 14) {
@@ -70,8 +72,13 @@ private struct SystemRow: View {
                     .foregroundStyle(.primary)
                 
                 // Summary text
-                ClinicalAbbreviationText(
+                CardClinicalAbbreviationText(
                     assessment.summary,
+                    textID: .itemField(
+                        "summary",
+                        itemID: assessment.id,
+                        in: cardID
+                    ),
                     font: .system(size: 13),
                     foregroundColor: .primary.opacity(0.85)
                 )
@@ -79,15 +86,24 @@ private struct SystemRow: View {
                 // Concerns (if any)
                 if !assessment.concerns.isEmpty {
                     VStack(alignment: .leading, spacing: 4) {
-                        ForEach(assessment.concerns, id: \.self) { concern in
+                        ForEach(
+                            Array(assessment.concerns.enumerated()),
+                            id: \.offset
+                        ) { index, concern in
                             HStack(alignment: .top, spacing: 6) {
                                 Image(systemName: "exclamationmark.triangle.fill")
                                     .font(.system(size: 9, weight: .semibold))
                                     .foregroundStyle(.orange)
                                     .padding(.top, 3)
                                 
-                                ClinicalAbbreviationText(
+                                CardClinicalAbbreviationText(
                                     concern,
+                                    textID: .sourceItemField(
+                                        "concern",
+                                        sourceIndex: index,
+                                        parentID: assessment.id,
+                                        in: cardID
+                                    ),
                                     font: .system(size: 12),
                                     foregroundColor: .secondary
                                 )
@@ -228,12 +244,14 @@ extension Patient {
 
 #Preview("Systems — Ahmad (6 systems)") {
     SystemsAssessmentCard(patient: .mockSystems_Ahmad)
+        .environment(AppModel())
         .frame(width: 600)
         .padding()
 }
 
 #Preview("Systems — Siti (7 systems)") {
     SystemsAssessmentCard(patient: .mockSystems_Siti)
+        .environment(AppModel())
         .frame(width: 600)
         .padding()
 }

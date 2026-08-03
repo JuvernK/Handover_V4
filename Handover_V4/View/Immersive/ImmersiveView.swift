@@ -35,6 +35,7 @@ struct ImmersiveView: View {
     @State private var orbitRing: Entity?
     @State private var sceneRoot: Entity?
     @State private var sourceHighlightController = SourceHighlightController()
+    @State private var collisionResizeTask: Task<Void, Never>?
 
     var body: some View {
         RealityView { content, _ in
@@ -141,18 +142,17 @@ struct ImmersiveView: View {
             ForEach(attachmentsProvider.sortedTagViewPairs, id: \.tag) { pair in
                 Attachment(id: pair.tag) {
                     pair.view
+                        .environment(appModel)
                 }
             }
         }
         .spatialCardGestures()
         .onChange(of: appModel.cardStates) { _, _ in
             updateSourceHighlights()
-            Task { @MainActor in
-                try? await Task.sleep(for: ImmersiveConfiguration.collisionResizeDelay)
-                ImmersiveAttachmentConfigurator.regenerateCollisionShapes(
-                    for: resolvedAttachmentEntities()
-                )
-            }
+            scheduleCollisionShapeRegeneration()
+        }
+        .onChange(of: appModel.abbreviationSelections) { _, _ in
+            scheduleCollisionShapeRegeneration()
         }
         .onChange(of: appModel.cardPositions) { _, newPositions in
             if appModel.orbitState.isActive {
@@ -183,13 +183,25 @@ struct ImmersiveView: View {
 
             if oldState.interactionMode != newState.interactionMode
                 || oldState.expandedCardName != newState.expandedCardName {
-                Task { @MainActor in
-                    try? await Task.sleep(for: ImmersiveConfiguration.collisionResizeDelay)
-                    ImmersiveAttachmentConfigurator.regenerateCollisionShapes(
-                        for: resolvedAttachmentEntities()
-                    )
-                    applyCurrentLayout()
-                }
+                scheduleCollisionShapeRegeneration(reapplyLayout: true)
+            }
+        }
+    }
+
+    private func scheduleCollisionShapeRegeneration(
+        reapplyLayout: Bool = false
+    ) {
+        collisionResizeTask?.cancel()
+        collisionResizeTask = Task { @MainActor in
+            try? await Task.sleep(
+                for: ImmersiveConfiguration.collisionResizeDelay
+            )
+            guard !Task.isCancelled else { return }
+            ImmersiveAttachmentConfigurator.regenerateCollisionShapes(
+                for: resolvedAttachmentEntities()
+            )
+            if reapplyLayout {
+                applyCurrentLayout()
             }
         }
     }

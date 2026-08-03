@@ -48,6 +48,8 @@ struct PlanCard: View {
 
 private struct PlanRow: View {
     let item: PlanItem
+
+    private let cardID = ClinicalCardID.section(.plan)
     
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -57,8 +59,13 @@ private struct PlanRow: View {
                 .frame(width: 14)
             
             // Task text
-            ClinicalAbbreviationText(
+            CardClinicalAbbreviationText(
                 item.task,
+                textID: .itemField(
+                    "task",
+                    itemID: item.id,
+                    in: cardID
+                ),
                 font: .system(size: 14),
                 foregroundColor: .primary
             )
@@ -159,7 +166,9 @@ extension Patient {
 #endif
 
 #Preview("Plan — Ahmad") {
+    let appModel = AppModel()
     PlanCard(patient: .mockPlan_Ahmad)
+        .environment(appModel)
         .frame(width: 420)
         .padding()
 }
