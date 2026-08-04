@@ -7,7 +7,7 @@ struct OrbitDragInterpreter {
     private var startRotation: Float?
     private var previousAngle: Float?
     private var accumulatedMovement: Float = 0
-    private var isActive = false
+    private var hasActivatedDrag = false
 
     mutating func begin(angle: Float, rotation: Float) {
         guard previousAngle == nil else { return }
@@ -28,17 +28,17 @@ struct OrbitDragInterpreter {
 
         let reachedIntentThreshold = abs(accumulatedMovement)
             >= ImmersiveConfiguration.orbitDragIntentThreshold
-        guard isActive || reachedIntentThreshold else {
+        guard hasActivatedDrag || reachedIntentThreshold else {
             return nil
         }
 
-        isActive = true
+        hasActivatedDrag = true
         return startRotation.map { $0 + accumulatedMovement }
     }
 
     mutating func end() -> Float? {
         defer { reset() }
-        guard isActive else { return nil }
+        guard hasActivatedDrag else { return nil }
         return startRotation.map { $0 + accumulatedMovement }
     }
 
@@ -46,6 +46,6 @@ struct OrbitDragInterpreter {
         startRotation = nil
         previousAngle = nil
         accumulatedMovement = 0
-        isActive = false
+        hasActivatedDrag = false
     }
 }

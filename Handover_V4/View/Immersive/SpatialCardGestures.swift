@@ -31,29 +31,13 @@ private struct SpatialCardGestureModifier: ViewModifier {
                         from: .local,
                         to: .scene
                     )
-                    let localStartPoint = appModel.orbitGestureWorldToLocal
-                        * SIMD4<Float>(
-                            Float(startPoint.x),
-                            Float(startPoint.y),
-                            Float(startPoint.z),
-                            1
-                        )
-                    let localPoint = appModel.orbitGestureWorldToLocal
-                        * SIMD4<Float>(
-                            Float(point.x),
-                            Float(point.y),
-                            Float(point.z),
-                            1
-                        )
-                    let angle = atan2(
-                        localPoint.z,
-                        localPoint.x
-                    )
                     orbitDragInterpreter.begin(
-                        angle: atan2(localStartPoint.z, localStartPoint.x),
+                        angle: orbitAngle(for: startPoint),
                         rotation: appModel.orbitState.rotation
                     )
-                    if let rotation = orbitDragInterpreter.update(angle: angle) {
+                    if let rotation = orbitDragInterpreter.update(
+                        angle: orbitAngle(for: point)
+                    ) {
                         appModel.updateOrbitRotation(
                             rotation,
                             isFinal: false
@@ -105,6 +89,16 @@ private struct SpatialCardGestureModifier: ViewModifier {
                     syncChanges: true
                 )
             }
+    }
+
+    private func orbitAngle(for point: SIMD3<Float>) -> Float {
+        let localPoint = appModel.orbitGestureWorldToLocal * SIMD4<Float>(
+            Float(point.x),
+            Float(point.y),
+            Float(point.z),
+            1
+        )
+        return atan2(localPoint.z, localPoint.x)
     }
 }
 
