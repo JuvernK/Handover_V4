@@ -25,6 +25,7 @@ enum ImmersiveConfiguration {
     static let orbitRingTubeRadius: Float = 0.008
     static let orbitCollisionWidth: Float = 0.12
     static let orbitDragIntentThreshold: Float = 5 * .pi / 180
+    static let orbitDragSensitivity: Float = 1.5
 
     static func orbitSlotEntityName(_ index: Int) -> String {
         "OrbitSlot_\(index)"

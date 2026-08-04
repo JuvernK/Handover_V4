@@ -33,13 +33,13 @@ struct OrbitDragInterpreter {
         }
 
         hasActivatedDrag = true
-        return startRotation.map { $0 + accumulatedMovement }
+        return interpretedRotation
     }
 
     mutating func end() -> Float? {
         defer { reset() }
         guard hasActivatedDrag else { return nil }
-        return startRotation.map { $0 + accumulatedMovement }
+        return interpretedRotation
     }
 
     mutating func reset() {
@@ -47,5 +47,11 @@ struct OrbitDragInterpreter {
         previousAngle = nil
         accumulatedMovement = 0
         hasActivatedDrag = false
+    }
+
+    private var interpretedRotation: Float? {
+        startRotation.map {
+            $0 + accumulatedMovement * ImmersiveConfiguration.orbitDragSensitivity
+        }
     }
 }

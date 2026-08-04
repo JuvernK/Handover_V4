@@ -31,7 +31,19 @@ struct OrbitDragInterpreterTests {
         let interpretedRotation = interpreter.update(angle: 0.08726646)
         let update = try #require(interpretedRotation)
 
-        #expect(abs(update - 1.3372664) < 0.0001)
+        #expect(abs(update - 1.3808997) < 0.0001)
+    }
+
+    @Test
+    func sixDegreesOfDragProducesNineDegreesOfOrbitRotation() throws {
+        var interpreter = OrbitDragInterpreter()
+
+        interpreter.begin(angle: 0, rotation: 0.5)
+        let interpretedRotation = interpreter.update(angle: 0.10471976)
+
+        #expect(
+            abs(try #require(interpretedRotation) - 0.65707964) < 0.0001
+        )
     }
 
     @Test
@@ -46,9 +58,9 @@ struct OrbitDragInterpreterTests {
             angle: -0.10471976
         )
 
-        #expect(abs(try #require(clockwiseRotation) - 0.60471976) < 0.0001)
+        #expect(abs(try #require(clockwiseRotation) - 0.65707964) < 0.0001)
         #expect(
-            abs(try #require(counterclockwiseRotation) - 0.39528024) < 0.0001
+            abs(try #require(counterclockwiseRotation) - 0.34292036) < 0.0001
         )
     }
 
@@ -59,11 +71,21 @@ struct OrbitDragInterpreterTests {
         interpreter.begin(angle: 3.1241393, rotation: 0.25)
         let wrappedRotation = interpreter.update(angle: -3.054326)
 
-        #expect(abs(try #require(wrappedRotation) - 0.35471976) < 0.0001)
+        #expect(abs(try #require(wrappedRotation) - 0.40707964) < 0.0001)
     }
 
     @Test
-    func activatedMovementContinuesAndProducesAFinalRotation() throws {
+    func deliberateDragCanRotateAcrossMultipleCards() throws {
+        var interpreter = OrbitDragInterpreter()
+
+        interpreter.begin(angle: 0, rotation: 0.25)
+        let interpretedRotation = interpreter.update(angle: 2.4)
+
+        #expect(abs(try #require(interpretedRotation) - 3.85) < 0.0001)
+    }
+
+    @Test
+    func amplifiedMovementContinuesAndProducesAFinalRotation() throws {
         var interpreter = OrbitDragInterpreter()
 
         interpreter.begin(angle: 0, rotation: 1)
@@ -72,8 +94,8 @@ struct OrbitDragInterpreterTests {
         let continuedRotation = interpreter.update(angle: 0.13962634)
         let finalRotation = interpreter.end()
 
-        #expect(abs(try #require(continuedRotation) - 1.1396263) < 0.0001)
-        #expect(abs(try #require(finalRotation) - 1.1396263) < 0.0001)
+        #expect(abs(try #require(continuedRotation) - 1.2094395) < 0.0001)
+        #expect(abs(try #require(finalRotation) - 1.2094395) < 0.0001)
         interpreter.begin(angle: 0.5, rotation: 2)
         #expect(interpreter.update(angle: 0.5) == nil)
     }
