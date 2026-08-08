@@ -18,11 +18,10 @@ If a requirement is ambiguous or underspecified in a way that would change the d
 
 ## Project
 
-Handover V4 is a visionOS SwiftUI + RealityKit ICU handover prototype. A
-dashboard window presents structured patient handover information; an immersive
-space opens a full ICU scene with floating Spatial Cards anchored to Reality
-Composer Pro points of interest. Sessions can be synchronized across
-participants through SharePlay.
+Read `CONTEXT.md` first. It is the canonical source for project-specific domain
+language; do not redefine its terms in agent instructions or implementation
+documentation. Use `PROJECT_OVERVIEW.md` for the current implementation map and
+`docs/adr/` for durable architectural decisions.
 
 - Target platform: visionOS (`xros`, `xrsimulator`)
 - Deployment target: visionOS 26.2

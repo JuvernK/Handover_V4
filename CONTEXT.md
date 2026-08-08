@@ -47,3 +47,11 @@ The zero-or-one Abbreviation Occurrence currently expanded within a card. Select
 
 **Shared Abbreviation Selection**:
 An Abbreviation Selection synchronized through SharePlay. Any participant may change it, the last accepted abbreviation action for that card wins, and late joiners receive the current selections. A collapsed card cannot accept a selection, so collapse always clears or rejects hidden abbreviation state.
+
+## Shared Handover
+
+**Study Patient**:
+The single patient selected before a user-study run and kept fixed for that run. The Study Patient is not changed or synchronized by participants.
+
+**Shared Handover State**:
+The participant-visible handover choices and presentation state that must converge for everyone collaborating in the same session. It includes dashboard section arrangement, Spatial Card state, Orbit state, and Shared Abbreviation Selections; the Study Patient, local presentation effects, and connection status are excluded.
