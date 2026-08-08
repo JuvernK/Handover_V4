@@ -23,11 +23,13 @@ final class SessionController: SharePlayMessageTransport {
     
     /// The coordinator owns this controller and applies received messages.
     private weak var coordinator: SharePlayCoordinator?
+    private weak var replicator: SharedHandoverReplicator?
     
     /// Creates a session controller for the given group session.
     init?(
         _ groupSession: GroupSession<SharePlayTogether>,
-        coordinator: SharePlayCoordinator
+        coordinator: SharePlayCoordinator,
+        replicator: SharedHandoverReplicator
     ) async {
         guard let groupSystemCoordinator = await groupSession.systemCoordinator else {
             return nil
@@ -37,9 +39,10 @@ final class SessionController: SharePlayMessageTransport {
         messenger = GroupSessionMessenger(session: session, deliveryMode: .reliable)
         systemCoordinator = groupSystemCoordinator
         self.coordinator = coordinator
+        self.replicator = replicator
 
         observeCardMessages()
-        observeAbbreviationMessages()
+        observeReplicationMessages()
         observeOrbitMessages()
         observeDashboardMessages()
         observeCatchUpMessages()
@@ -69,13 +72,13 @@ final class SessionController: SharePlayMessageTransport {
         }
     }
 
-    private func observeAbbreviationMessages() {
-        Task.immediate(name: "abbreviation message observation") {
+    private func observeReplicationMessages() {
+        Task.immediate(name: "replication envelope observation") {
             for await (message, _) in messenger.messages(
-                of: AbbreviationSyncMessage.self
+                of: ReplicationEnvelope.self
             ) {
-                guard let coordinator else { return }
-                coordinator.handleRemoteAbbreviationMessage(message)
+                guard let replicator else { return }
+                replicator.receive(message)
             }
         }
     }
@@ -128,6 +131,9 @@ final class SessionController: SharePlayMessageTransport {
                     .subtracting(previousActiveParticipants)
 
                 if !newActiveParticipants.isEmpty, let coordinator {
+                    replicator?.sendCurrentState(
+                        to: Set(newActiveParticipants.map(\.id))
+                    )
                     coordinator.sendCatchUp(
                         to: Set(newActiveParticipants.map(\.id))
                     )
@@ -151,8 +157,19 @@ final class SessionController: SharePlayMessageTransport {
         send(message, kind: "orbit")
     }
 
-    func sendMessage(_ message: AbbreviationSyncMessage) {
-        send(message, kind: "abbreviation")
+    func send(_ envelope: ReplicationEnvelope) {
+        send(envelope, kind: "replication")
+    }
+
+    func send(
+        _ envelope: ReplicationEnvelope,
+        to participantIDs: Set<UUID>
+    ) {
+        let participants = session.activeParticipants.filter {
+            participantIDs.contains($0.id)
+        }
+        guard !participants.isEmpty else { return }
+        send(envelope, to: .only(participants), kind: "replication")
     }
 
     func sendMessage(

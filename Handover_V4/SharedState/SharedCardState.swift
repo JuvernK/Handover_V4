@@ -66,9 +66,19 @@ final class SharedCardState {
     func apply(_ action: AbbreviationAction, to cardID: ClinicalCardID) {
         switch action {
         case .set(let selection):
-            guard isCardExpanded(cardID) else { return }
-            abbreviationSelections[cardID] = selection
+            setAbbreviationSelection(selection, for: cardID)
         }
+    }
+
+    func setAbbreviationSelection(
+        _ selection: AbbreviationSelection?,
+        for cardID: ClinicalCardID
+    ) {
+        guard isCardExpanded(cardID) else {
+            abbreviationSelections.removeValue(forKey: cardID)
+            return
+        }
+        abbreviationSelections[cardID] = selection
     }
 
     func clearAbbreviationSelections() {
@@ -114,7 +124,7 @@ final class SharedCardState {
         }
     }
 
-    private func isCardExpanded(_ cardID: ClinicalCardID) -> Bool {
+    func isCardExpanded(_ cardID: ClinicalCardID) -> Bool {
         if orbitState.isActive {
             return cardID == .basicInformation
                 || orbitState.expandedCardName == cardID.canonicalName

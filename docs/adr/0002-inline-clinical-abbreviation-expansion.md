@@ -74,7 +74,11 @@ that identity before shared state or SharePlay handles the selection.
 
 Abbreviation selection is presentation state, not glossary data and not view-local state. It belongs beside the other shared card values in `SharedCardState`; `ClinicalAbbreviationText` renders that state but does not own an independent `@State` selection.
 
-`AppModel` exposes a small select/toggle API. `SharePlayCoordinator` applies the local change first and broadcasts it when a session is active. A dedicated abbreviation synchronization action/message and per-card `MessageUpdateCount` keep abbreviation conflicts independent from card movement and orbit updates.
+`AppModel` exposes a small select/toggle interface. Shared Abbreviation
+Selection converges as a versioned fact through `SharedHandoverReplicator`.
+The former dedicated message, counter, disconnected replay, and catch-up path
+have been removed; live, reconnect, and late-join delivery all use the same
+envelope merge while remaining independently ordered from other facts.
 
 Any participant may select or collapse an abbreviation. For concurrent abbreviation actions on the same card, the existing counter-plus-participant-tiebreak ordering provides deterministic last-action-wins behavior. Current selections and their update counts are included in `CatchUpMessage`, so a late joiner renders the same state.
 

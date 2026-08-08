@@ -22,6 +22,7 @@ final class AppModel {
 
     let handoverViewModel: HandoverViewModel
     let sharedCardState: SharedCardState
+    let sharedHandoverReplicator: SharedHandoverReplicator
     let sharePlayCoordinator: SharePlayCoordinator
     let orbitController: OrbitController
     var orbitGestureWorldToLocal = matrix_identity_float4x4
@@ -34,9 +35,14 @@ final class AppModel {
 
         self.handoverViewModel = handoverViewModel
         self.sharedCardState = sharedCardState
+        let sharedHandoverReplicator = SharedHandoverReplicator(
+            sharedCardState: sharedCardState
+        )
+        self.sharedHandoverReplicator = sharedHandoverReplicator
         let sharePlayCoordinator = SharePlayCoordinator(
             handoverViewModel: handoverViewModel,
-            sharedCardState: sharedCardState
+            sharedCardState: sharedCardState,
+            replicator: sharedHandoverReplicator
         )
         self.sharePlayCoordinator = sharePlayCoordinator
         orbitController = OrbitController(

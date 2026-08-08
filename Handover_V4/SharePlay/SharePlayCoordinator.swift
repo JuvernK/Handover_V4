@@ -14,12 +14,11 @@ import Combine
 final class SharePlayCoordinator {
     private let handoverViewModel: HandoverViewModel
     private let sharedCardState: SharedCardState
+    private let replicator: SharedHandoverReplicator
 
     private var sessionController: SessionController?
     private var transport: (any SharePlayMessageTransport)?
     private var cardUpdateCounts: [ClinicalCardID: MessageUpdateCount] = [:]
-    private var abbreviationUpdateCounts: [ClinicalCardID: MessageUpdateCount] = [:]
-    private var disconnectedAbbreviationChanges: Set<ClinicalCardID> = []
     private var orbitUpdateCount: MessageUpdateCount?
     private var dashboardUpdateCount: MessageUpdateCount?
     private var lastOrbitBroadcastTime = Date.distantPast
@@ -35,12 +34,16 @@ final class SharePlayCoordinator {
     init(
         handoverViewModel: HandoverViewModel,
         sharedCardState: SharedCardState,
+        replicator: SharedHandoverReplicator,
         transport: (any SharePlayMessageTransport)? = nil
     ) {
         self.handoverViewModel = handoverViewModel
         self.sharedCardState = sharedCardState
+        self.replicator = replicator
         self.transport = transport
-        synchronizeExistingAbbreviationSelections()
+        if let transport {
+            replicator.attach(transport)
+        }
     }
 
     // MARK: - Session lifecycle
@@ -86,7 +89,8 @@ final class SharePlayCoordinator {
         for await session in SharePlayTogether.sessions() {
             guard let controller = await SessionController(
                 session,
-                coordinator: self
+                coordinator: self,
+                replicator: replicator
             ) else {
                 continue
             }
@@ -121,15 +125,12 @@ final class SharePlayCoordinator {
         isExpanded: Bool,
         syncChanges: Bool
     ) {
-        let previousSelections = sharedCardState.abbreviationSelections
-        sharedCardState.setExpansionState(isExpanded, for: cardID)
-        recordDisconnectedAbbreviationChanges(from: previousSelections)
-
         if syncChanges {
-            broadcastCardAction(
-                .toggle(isExpanded: isExpanded),
-                for: cardID
+            replicator.transact(
+                .setCardExpansion(cardID, isExpanded: isExpanded)
             )
+        } else {
+            sharedCardState.setExpansionState(isExpanded, for: cardID)
         }
     }
 
@@ -171,32 +172,7 @@ final class SharePlayCoordinator {
         _ selection: AbbreviationSelection,
         for cardID: ClinicalCardID
     ) {
-        guard let action = sharedCardState.toggleAbbreviationSelection(
-            selection,
-            for: cardID
-        ) else {
-            return
-        }
-
-        guard transport != nil else {
-            disconnectedAbbreviationChanges.insert(cardID)
-            return
-        }
-
-        guard let updateCount = nextUpdateCount(
-            after: abbreviationUpdateCounts[cardID]
-        ) else {
-            return
-        }
-
-        abbreviationUpdateCounts[cardID] = updateCount
-        transport?.sendMessage(
-            AbbreviationSyncMessage(
-                cardID: cardID,
-                action: action,
-                updateCount: updateCount
-            )
-        )
+        replicator.transact(.toggleAbbreviation(selection, in: cardID))
     }
 
     // MARK: - Local orbit updates
@@ -207,7 +183,7 @@ final class SharePlayCoordinator {
             transition.state,
             animationDuration: transition.animationDuration
         )
-        recordDisconnectedAbbreviationChanges(from: previousSelections)
+        recordClearedAbbreviations(from: previousSelections)
 
         let now = Date()
         guard transition.isFinal
@@ -259,9 +235,7 @@ final class SharePlayCoordinator {
     }
 
     func selectPatient(id: String, syncChanges: Bool) {
-        let previousSelections = sharedCardState.abbreviationSelections
         selectPatientAndClearAbbreviations(id: id)
-        recordDisconnectedAbbreviationChanges(from: previousSelections)
 
         if syncChanges {
             broadcastDashboardAction(.selectedPatient(id: id))
@@ -299,56 +273,21 @@ final class SharePlayCoordinator {
 
     func attachTransport(_ transport: any SharePlayMessageTransport) {
         self.transport = transport
-        synchronizeExistingAbbreviationSelections()
+        replicator.attach(transport)
     }
 
     func detachTransport() {
         transport = nil
+        replicator.detach()
     }
 
-    private func synchronizeExistingAbbreviationSelections() {
-        guard let participantID = transport?.localParticipantID else { return }
-
-        let cardIDs = Set(sharedCardState.abbreviationSelections.keys)
-            .union(disconnectedAbbreviationChanges)
-        for cardID in cardIDs {
-            let wasChangedWhileDisconnected =
-                disconnectedAbbreviationChanges.contains(cardID)
-            guard wasChangedWhileDisconnected
-                    || abbreviationUpdateCounts[cardID] == nil else {
-                continue
-            }
-
-            let updateCount = MessageUpdateCount(
-                count: (abbreviationUpdateCounts[cardID]?.count ?? 0) + 1,
-                participant: participantID
-            )
-            abbreviationUpdateCounts[cardID] = updateCount
-            transport?.sendMessage(
-                AbbreviationSyncMessage(
-                    cardID: cardID,
-                    action: .set(
-                        sharedCardState.abbreviationSelections[cardID]
-                    ),
-                    updateCount: updateCount
-                )
-            )
-            disconnectedAbbreviationChanges.remove(cardID)
-        }
-    }
-
-    private func recordDisconnectedAbbreviationChanges(
+    private func recordClearedAbbreviations(
         from previousSelections: [ClinicalCardID: AbbreviationSelection]
     ) {
-        guard transport == nil else { return }
-
-        let cardIDs = Set(previousSelections.keys)
-            .union(sharedCardState.abbreviationSelections.keys)
-        for cardID in cardIDs
-        where previousSelections[cardID]
-            != sharedCardState.abbreviationSelections[cardID] {
-            disconnectedAbbreviationChanges.insert(cardID)
-        }
+        let clearedCardIDs = Set(previousSelections.keys).subtracting(
+            sharedCardState.abbreviationSelections.keys
+        )
+        replicator.transact(.clearAbbreviations(clearedCardIDs))
     }
 
     // MARK: - Remote updates
@@ -363,18 +302,6 @@ final class SharePlayCoordinator {
         sharedCardState.apply(message.action, to: message.cardID)
     }
 
-    func handleRemoteAbbreviationMessage(
-        _ message: AbbreviationSyncMessage
-    ) {
-        if let existingCount = abbreviationUpdateCounts[message.cardID],
-           message.updateCount <= existingCount {
-            return
-        }
-
-        abbreviationUpdateCounts[message.cardID] = message.updateCount
-        sharedCardState.apply(message.action, to: message.cardID)
-    }
-
     func handleRemoteOrbitMessage(_ message: OrbitSyncMessage) {
         if let existingCount = orbitUpdateCount,
            message.updateCount <= existingCount {
@@ -382,10 +309,12 @@ final class SharePlayCoordinator {
         }
 
         orbitUpdateCount = message.updateCount
+        let previousSelections = sharedCardState.abbreviationSelections
         sharedCardState.setOrbitState(
             message.state,
             animationDuration: message.isFinal ? 0.22 : 0.08
         )
+        recordClearedAbbreviations(from: previousSelections)
     }
 
     func handleRemoteDashboardMessage(_ message: DashboardSyncMessage) {
@@ -399,8 +328,10 @@ final class SharePlayCoordinator {
         switch message.action {
         case .state(let dashboardState):
             let previousPatientID = handoverViewModel.patient?.id
+            let previousSelections = sharedCardState.abbreviationSelections
             handoverViewModel.applyDashboardState(dashboardState)
             clearAbbreviationsIfPatientChanged(from: previousPatientID)
+            recordClearedAbbreviations(from: previousSelections)
         case .selectedPatient(let id):
             selectPatientAndClearAbbreviations(id: id)
         case .sectionOrder(let sectionOrder):
@@ -414,19 +345,19 @@ final class SharePlayCoordinator {
         let changesPatient = message.dashboardState.selectedPatientID.map {
             $0 != handoverViewModel.patient?.id
         } ?? false
-        let abbreviationSnapshot = mergedAbbreviationSnapshot(
-            with: message,
-            preservingCurrentState: !changesPatient
-        )
+        let previousSelections = sharedCardState.abbreviationSelections
         handoverViewModel.applyDashboardState(message.dashboardState)
         sharedCardState.replaceAll(
             expansionStates: cardSnapshot.expansionStates,
             positions: cardSnapshot.positions,
-            abbreviationSelections: abbreviationSnapshot.selections,
+            abbreviationSelections: sharedCardState.abbreviationSelections,
             orbitState: orbitSnapshot.state
         )
+        if changesPatient {
+            sharedCardState.clearAbbreviationSelections()
+        }
+        recordClearedAbbreviations(from: previousSelections)
         cardUpdateCounts = cardSnapshot.updateCounts
-        abbreviationUpdateCounts = abbreviationSnapshot.updateCounts
         orbitUpdateCount = orbitSnapshot.updateCount
         dashboardUpdateCount = message.dashboardUpdateCount
     }
@@ -444,8 +375,6 @@ final class SharePlayCoordinator {
             allCardStates: sharedCardState.expansionStates,
             allCardPositions: sharedCardState.positions,
             cardUpdateCounts: cardUpdateCounts,
-            abbreviationSelections: sharedCardState.abbreviationSelections,
-            abbreviationUpdateCounts: abbreviationUpdateCounts,
             orbitState: sharedCardState.orbitState,
             orbitUpdateCount: orbitUpdateCount,
             dashboardState: DashboardState(
@@ -454,33 +383,6 @@ final class SharePlayCoordinator {
             ),
             dashboardUpdateCount: dashboardUpdateCount
         )
-    }
-
-    private func mergedAbbreviationSnapshot(
-        with message: CatchUpMessage,
-        preservingCurrentState: Bool
-    ) -> (
-        selections: [ClinicalCardID: AbbreviationSelection],
-        updateCounts: [ClinicalCardID: MessageUpdateCount]
-    ) {
-        var selections = preservingCurrentState
-            ? sharedCardState.abbreviationSelections
-            : [:]
-        var updateCounts = preservingCurrentState
-            ? abbreviationUpdateCounts
-            : [:]
-
-        for (cardID, incomingCount) in message.abbreviationUpdateCounts {
-            if let currentCount = updateCounts[cardID],
-               incomingCount <= currentCount {
-                continue
-            }
-
-            updateCounts[cardID] = incomingCount
-            selections[cardID] = message.abbreviationSelections[cardID]
-        }
-
-        return (selections, updateCounts)
     }
 
     private func mergedCardSnapshot(
@@ -536,8 +438,10 @@ final class SharePlayCoordinator {
 
     private func selectPatientAndClearAbbreviations(id: String) {
         let previousPatientID = handoverViewModel.patient?.id
+        let previousSelections = sharedCardState.abbreviationSelections
         handoverViewModel.selectPatient(byID: id)
         clearAbbreviationsIfPatientChanged(from: previousPatientID)
+        recordClearedAbbreviations(from: previousSelections)
     }
 
     private func clearAbbreviationsIfPatientChanged(

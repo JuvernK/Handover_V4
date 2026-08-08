@@ -24,13 +24,17 @@ Build and agent-working instructions belong in `AGENTS.md`.
   - `SharePlayCoordinator` for synchronized updates.
 
 - `SharedState/SharedCardState.swift` owns spatial-card presentation state independently of SharePlay.
-- `SharedState/OrbitController.swift` owns Orbit enablement, focus, snapping,
-  navigation, and delayed expansion behind one intent-driven interface.
   - Expanded/collapsed state for each card.
   - 3D position for each card.
   - Zero-or-one inline clinical abbreviation selection for each card.
   - Transient synchronized orbit mode, rotation, focus, and focus expansion.
   - Applying and replacing card state without knowing how it is transported.
+- `SharedState/OrbitController.swift` owns Orbit enablement, focus, snapping,
+  navigation, and delayed expansion behind one intent-driven interface.
+- `SharedState/SharedHandoverReplicator.swift` owns versioned Shared Handover
+  State facts, disconnected replay, and the merge policy. Card expansion and
+  Shared Abbreviation Selection already use its transaction interface; the
+  remaining synchronized facts migrate in the dependent tickets.
 
 - `ViewModels/HandoverViewModel.swift` is the dashboard data source.
   - Loads patients through an injected `PatientLoading` dependency.
