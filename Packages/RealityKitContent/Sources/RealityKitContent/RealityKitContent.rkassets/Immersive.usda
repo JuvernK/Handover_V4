@@ -36,7 +36,7 @@ def Xform "Root"
         {
             quatf xformOp:orient = (1, 0, 6.9280863e-16, 0)
             float3 xformOp:scale = (100, 100, 100)
-            float3 xformOp:translate = (-130.65706, 218.78696, -170.33586)
+            float3 xformOp:translate = (-105.70846, 171.36824, -188.08473)
             uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
             def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
@@ -233,7 +233,7 @@ def Xform "Root"
         {
             quatf xformOp:orient = (4.371139e-8, 0, 1, 0)
             float3 xformOp:scale = (100, 100, 100)
-            float3 xformOp:translate = (96.68772, 151.33803, -224.5849)
+            float3 xformOp:translate = (-142.46327, 151.33623, -224.5829)
             uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
             def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
@@ -255,7 +255,7 @@ def Xform "Root"
             int ui:nodegraph:node:stackingOrder = 1
             quatf xformOp:orient = (4.371139e-8, 0, 1, 0)
             float3 xformOp:scale = (5662.4595, 5662.4595, 5662.4595)
-            float3 xformOp:translate = (-96.03342, 179.69327, -145.97688)
+            float3 xformOp:translate = (69.197624, 165.3596, -145.97688)
             uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
             def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
@@ -277,7 +277,7 @@ def Xform "Root"
             int ui:nodegraph:node:stackingOrder = 2
             quatf xformOp:orient = (4.3711395e-8, 0, 1, 0)
             float3 xformOp:scale = (5662.4585, 5662.4585, 5662.4585)
-            float3 xformOp:translate = (34.42374, 135.16136, -290.31903)
+            float3 xformOp:translate = (74.91253, 148.80464, -290.31903)
             uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
             def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
@@ -299,7 +299,7 @@ def Xform "Root"
             int ui:nodegraph:node:stackingOrder = 2
             quatf xformOp:orient = (4.3711395e-8, 0, 1, 0)
             float3 xformOp:scale = (5662.4585, 5662.4585, 5662.4585)
-            float3 xformOp:translate = (20.419317, 157.97827, -137.6871)
+            float3 xformOp:translate = (161.03096, 157.97714, -283.07547)
             uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
             def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
@@ -321,7 +321,7 @@ def Xform "Root"
             int ui:nodegraph:node:stackingOrder = 2
             quatf xformOp:orient = (4.3711395e-8, 0, 1, 0)
             float3 xformOp:scale = (5662.4585, 5662.4585, 5662.4585)
-            float3 xformOp:translate = (-7.0798025, 137.43462, -226.28363)
+            float3 xformOp:translate = (-36.41374, 137.43385, -286.56943)
             uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
             def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
@@ -338,7 +338,7 @@ def Xform "Root"
         {
             quatf xformOp:orient = (4.371139e-8, 0, 1, 0)
             float3 xformOp:scale = (100, 100, 100)
-            float3 xformOp:translate = (-17.834776, 187.94939, -129.7528)
+            float3 xformOp:translate = (43.13197, 170.57036, -164.56676)
             uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
             def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
@@ -354,7 +354,7 @@ def Xform "Root"
         {
             quatf xformOp:orient = (4.371139e-8, 0, 1, 0)
             float3 xformOp:scale = (100, 100, 100)
-            float3 xformOp:translate = (-48.768402, 147.44582, -130.74901)
+            float3 xformOp:translate = (52.38399, 147.44426, -191.08876)
             uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
             def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"
@@ -374,7 +374,7 @@ def Xform "Root"
             reorder nameChildren = ["Escalation", "RealityKitContent_PointOfInterestComponent", "System"]
             quatf xformOp:orient = (4.371139e-8, 0, 1, 0)
             float3 xformOp:scale = (5662.4604, 5662.4604, 5662.4604)
-            float3 xformOp:translate = (107.15855, 212.17563, -154.54726)
+            float3 xformOp:translate = (109.48433, 198.46733, -225.28653)
             uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
 
             def RealityKitCustomComponent "RealityKitContent_PointOfInterestComponent"

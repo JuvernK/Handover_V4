@@ -3,6 +3,19 @@
 Canonical guidance for Codex and other coding agents working in this
 repository.
 
+Do not preserve backward compatibility. Remove obsolete paths instead of adding compatibility layers, fallbacks, or migrations.
+Choose the simplest implementation that fully meets the current requirements. Avoid speculative abstractions, configuration, and indirection.
+Grow the system in layers. Start from the smallest version that works end to end, and add each new capability on top of a product that already works. Never trade a working product for unfinished complexity.
+Keep components modular and concerns clearly separated.
+Prefer established, well-maintained libraries when they reduce overall complexity or improve reliability. Do not reimplement common functionality without a clear reason.
+Lean on the dependencies already in the project before writing your own implementation or adding packages. Do not assume a library lacks a capability without checking its documentation and types.
+Fix the actual cause of a problem, not its symptoms. Do not hack around an issue to make it appear solved, and do not leave a known-broken path in place with a comment saying it'll be fixed later.
+Before declaring a task complete, verify it: run the tests, run the build, or actually execute the code path you changed. Do not report something as done based on the diff looking correct.
+Touch only the code required for the task at hand. Do not refactor, rename, or "clean up" unrelated code in the same change.
+If a requirement is ambiguous or underspecified in a way that would change the design, ask before building. Do not guess silently and produce something that has to be redone.
+
+
+
 ## Project
 
 Handover V4 is a visionOS SwiftUI + RealityKit ICU handover prototype. A

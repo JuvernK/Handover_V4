@@ -46,7 +46,7 @@ final class SessionController: SharePlayMessageTransport {
         observeActiveRemoteParticipants()
 
         systemCoordinator.configuration.supportsGroupImmersiveSpace = true
-        systemCoordinator.configuration.spatialTemplatePreference = .none
+        systemCoordinator.configuration.spatialTemplatePreference = .conversational
         session.join()
     }
     
