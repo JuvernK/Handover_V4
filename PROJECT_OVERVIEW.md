@@ -41,8 +41,9 @@ Build and agent-working instructions belong in `AGENTS.md`.
   - Decoded by `Data/PatientDataLoader.swift`, the production implementation of `PatientLoading`.
   - Modelled by `Models/Patient.swift` and related enums.
 
-- `Models/ClinicalTextIdentity.swift` defines canonical clinical-card names and
-  stable semantic text identities shared by every inline abbreviation field.
+- `Models/ClinicalTextIdentity.swift` defines the typed `ClinicalCardID` used
+  from immersive POI discovery through shared state and SharePlay, plus stable
+  semantic text identities for inline abbreviation fields.
 
 ## Main Folder Structure
 
@@ -71,7 +72,9 @@ Build and agent-working instructions belong in `AGENTS.md`.
     rotation. Spatial Card expansion is controlled by an explicit chevron in
     `SpatialCardView` so interactive card content owns its own selection.
   - `OrbitLayoutController.swift` builds the interactive ring and lays cards out in the focused carousel.
-  - `PointOfInterestMapper.swift` normalizes authored POI names and maps them to dashboard sections.
+  - `PointOfInterestMapper.swift` resolves each authored POI name once to a
+    canonical `ClinicalCardID`; unknown debug POIs remain local and are not
+    synchronized.
   - `ImmersiveConfiguration.swift` contains shared scene, collision, timing, and movement constants.
 
 - `Handover_V4/SharePlay/`
@@ -201,6 +204,8 @@ is centered in `SharePlayCoordinator` and `SessionController`.
   - 3D card position.
   - Shared Abbreviation Selections and independent per-card update counts.
   - Orbit activation, rotation, focused card, and transient focus expansion.
+  - Card state and messages are keyed by `ClinicalCardID`, so authored Reality
+    Composer Pro names never cross the synchronization seam.
 
 - Conflict handling:
   - `MessageUpdateCount` compares update count first, then participant ID as a deterministic tiebreaker.

@@ -6,7 +6,7 @@
 import Foundation
 
 /// Stable identity for a clinical card that can own one abbreviation selection.
-enum ClinicalCardID: Hashable {
+enum ClinicalCardID: Hashable, Codable {
     case basicInformation
     case section(SectionID)
 
@@ -17,6 +17,33 @@ enum ClinicalCardID: Hashable {
         case .section(let section):
             return section.rawValue
         }
+    }
+
+    init?(canonicalName: String) {
+        if canonicalName == "basic_information" {
+            self = .basicInformation
+        } else if let section = SectionID(rawValue: canonicalName) {
+            self = .section(section)
+        } else {
+            return nil
+        }
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let canonicalName = try container.decode(String.self)
+        guard let cardID = ClinicalCardID(canonicalName: canonicalName) else {
+            throw DecodingError.dataCorruptedError(
+                in: container,
+                debugDescription: "Unknown clinical card identity: \(canonicalName)"
+            )
+        }
+        self = cardID
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(canonicalName)
     }
 }
 

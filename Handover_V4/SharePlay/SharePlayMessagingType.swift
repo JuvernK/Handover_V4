@@ -35,13 +35,13 @@ enum CardAction: Codable {
 
 /// Model to store message data of a person taps a card (toggle) or moves a card (drag).
 struct CardSyncMessage: Codable {
-    let cardName: String
+    let cardID: ClinicalCardID
     let action: CardAction
     let updateCount: MessageUpdateCount
 }
 
 struct AbbreviationSyncMessage: Codable {
-    let cardName: String
+    let cardID: ClinicalCardID
     let action: AbbreviationAction
     let updateCount: MessageUpdateCount
 }
@@ -72,11 +72,11 @@ struct DashboardSyncMessage: Codable {
 /// Message sent to late joiners containing the complete current state
 struct CatchUpMessage: Codable {
     // A dictionary storing the state of every card/
-    let allCardStates: [String: Bool]
-    let allCardPositions: [String: SIMD3<Float>]
-    let cardUpdateCounts: [String: MessageUpdateCount]
-    let abbreviationSelections: [String: AbbreviationSelection]
-    let abbreviationUpdateCounts: [String: MessageUpdateCount]
+    let allCardStates: [ClinicalCardID: Bool]
+    let allCardPositions: [ClinicalCardID: SIMD3<Float>]
+    let cardUpdateCounts: [ClinicalCardID: MessageUpdateCount]
+    let abbreviationSelections: [ClinicalCardID: AbbreviationSelection]
+    let abbreviationUpdateCounts: [ClinicalCardID: MessageUpdateCount]
     let orbitState: OrbitState
     let orbitUpdateCount: MessageUpdateCount?
     let dashboardState: DashboardState

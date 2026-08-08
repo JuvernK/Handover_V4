@@ -13,8 +13,8 @@ import RealityKitContent
 /// `RealityView.update` closure is executing.
 private final class ImmersiveAttachmentRegistry {
     var entities: [Entity] = []
-    var homePositions: [String: SIMD3<Float>] = [:]
-    var baseScales: [String: SIMD3<Float>] = [:]
+    var homePositions: [ObjectIdentifier: SIMD3<Float>] = [:]
+    var baseScales: [ObjectIdentifier: SIMD3<Float>] = [:]
 
     @discardableResult
     func register(_ entity: Entity) -> Bool {
@@ -98,9 +98,9 @@ struct ImmersiveView: View {
                     continue
                 }
 
-                attachmentRegistry.homePositions[runtimeComponent.cardName] =
+                attachmentRegistry.homePositions[runtimeComponent.attachmentTag] =
                     pointOfInterest.position(relativeTo: nil)
-                attachmentRegistry.baseScales[runtimeComponent.cardName] = .one
+                attachmentRegistry.baseScales[runtimeComponent.attachmentTag] = .one
 
                 // Always recover the live attachment reference, even after it
                 // has already been parented to the RealityView root.
@@ -108,7 +108,7 @@ struct ImmersiveView: View {
 #if DEBUG
                     let parentName = attachment.parent?.name ?? "nil"
                     print(
-                        "[OrbitDebug] Registered card \(runtimeComponent.cardName); "
+                        "[OrbitDebug] Registered card \(runtimeComponent.diagnosticName); "
                             + "parent=\(parentName), "
                             + "total=\(attachmentRegistry.entities.count)"
                     )
@@ -123,14 +123,18 @@ struct ImmersiveView: View {
                     attachment,
                     anchoredAt: pointOfInterest,
                     runtimeComponent: runtimeComponent,
-                    syncedPosition: appModel.cardPositions[runtimeComponent.cardName]
+                    syncedPosition: runtimeComponent.cardID.flatMap {
+                        appModel.cardPositions[$0]
+                    }
                 )
 
 #if DEBUG
                 let homePosition =
-                    attachmentRegistry.homePositions[runtimeComponent.cardName] ?? .zero
+                    attachmentRegistry.homePositions[
+                        runtimeComponent.attachmentTag
+                    ] ?? .zero
                 print(
-                    "[OrbitDebug] Configured card \(runtimeComponent.cardName); "
+                    "[OrbitDebug] Configured card \(runtimeComponent.diagnosticName); "
                         + "home=\(homePosition)"
                 )
 #endif
@@ -239,10 +243,8 @@ struct ImmersiveView: View {
         // Cards default to expanded (SpatialCardView uses `?? true`), so treat
         // every section as active unless it has been explicitly collapsed.
         var sections = Set(SectionID.allCases)
-        for (cardName, isExpanded) in appModel.cardStates where !isExpanded {
-            if let section = SectionID(
-                rawValue: PointOfInterestMapper.normalize(cardName)
-            ) {
+        for (cardID, isExpanded) in appModel.cardStates where !isExpanded {
+            if case .section(let section) = cardID {
                 sections.remove(section)
             }
         }

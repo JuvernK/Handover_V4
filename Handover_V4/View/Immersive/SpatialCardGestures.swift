@@ -83,8 +83,11 @@ private struct SpatialCardGestureModifier: ViewModifier {
                     return
                 }
 
+                // Unknown debug POIs can still be moved locally, but have no
+                // canonical identity and therefore never cross the sync seam.
+                guard let cardID = runtimeComponent.cardID else { return }
                 appModel.setCardPosition(
-                    name: runtimeComponent.cardName,
+                    cardID,
                     position: value.entity.position,
                     syncChanges: true
                 )

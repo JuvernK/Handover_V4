@@ -21,8 +21,8 @@ struct SpatialCardView: View {
     @Environment(AppModel.self) private var appModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    /// The POI name as authored in Reality Composer Pro.
-    let poiName: String
+    let destination: PointOfInterestDestination
+    let unknownPOIName: String?
     
     let patient: Patient
     
@@ -40,7 +40,7 @@ struct SpatialCardView: View {
     
     @ViewBuilder
     private var cardContent: some View {
-        switch PointOfInterestMapper.destination(for: poiName) {
+        switch destination {
         case .basicInformation:
             if isExpanded {
                 PatientHeaderView(patient: patient)
@@ -80,18 +80,18 @@ struct SpatialCardView: View {
             }
 
         case .unknown:
-            UnknownPOIView(poiName: poiName)
+            UnknownPOIView(poiName: unknownPOIName ?? "Unknown")
                 .frame(width: defaultCardWidth)
         }
     }
 
     private var isExpanded: Bool {
         if appModel.orbitState.isActive {
-            if canonicalCardName == "basic_information" {
+            if cardID == .basicInformation {
                 return true
             }
             return appModel.orbitState.expandedCardName
-                == canonicalCardName
+                == cardID?.canonicalName
         }
         return normalModeIsExpanded
     }
@@ -101,9 +101,10 @@ struct SpatialCardView: View {
     }
 
     private func toggleExpansion() {
+        guard let cardID else { return }
         let changes: () -> Void = {
             if appModel.orbitState.isActive {
-                let canonicalName = PointOfInterestMapper.normalize(poiName)
+                let canonicalName = cardID.canonicalName
                 if appModel.orbitState.focusedCardName == canonicalName {
                     appModel.toggleFocusedOrbitCardExpansion()
                 } else {
@@ -113,7 +114,7 @@ struct SpatialCardView: View {
             }
 
             appModel.setCardState(
-                name: canonicalCardName,
+                cardID,
                 isExpanded: !normalModeIsExpanded,
                 syncChanges: true
             )
@@ -128,20 +129,12 @@ struct SpatialCardView: View {
     }
 
     private var normalModeIsExpanded: Bool {
-        appModel.cardStates[canonicalCardName]
-            ?? appModel.cardStates[poiName]
-            ?? true
+        guard let cardID else { return true }
+        return appModel.cardStates[cardID] ?? true
     }
 
-    private var canonicalCardName: String {
-        switch PointOfInterestMapper.destination(for: poiName) {
-        case .basicInformation:
-            return "basic_information"
-        case .section(let sectionID):
-            return sectionID.rawValue
-        case .unknown:
-            return PointOfInterestMapper.normalize(poiName)
-        }
+    private var cardID: ClinicalCardID? {
+        destination.cardID
     }
 }
 

@@ -164,9 +164,9 @@ enum OrbitLayoutController {
         geometry: OrbitGeometry,
         orderedCardNames: [String],
         attachments: [Entity],
-        homePositions: [String: SIMD3<Float>],
-        savedPositions: [String: SIMD3<Float>],
-        baseScales: [String: SIMD3<Float>],
+        homePositions: [ObjectIdentifier: SIMD3<Float>],
+        savedPositions: [ClinicalCardID: SIMD3<Float>],
+        baseScales: [ObjectIdentifier: SIMD3<Float>],
         ring: Entity?,
         animationDuration: TimeInterval
     ) {
@@ -196,7 +196,7 @@ enum OrbitLayoutController {
         )
         if animationDuration >= 0.4 {
             let discoveredNames = attachments.compactMap {
-                $0.components[PointOfInterestRuntimeComponent.self]?.cardName
+                $0.components[PointOfInterestRuntimeComponent.self]?.diagnosticName
             }
             orbitDebug(
                 "Applying Orbit entry: state=\(state.interactionMode), "
@@ -214,7 +214,8 @@ enum OrbitLayoutController {
                 PointOfInterestRuntimeComponent.self
             ] else { continue }
 
-            let canonicalName = PointOfInterestMapper.normalize(runtimeComponent.cardName)
+            guard let cardID = runtimeComponent.cardID else { continue }
+            let canonicalName = cardID.canonicalName
             let angleFromFocus = normalizedAngle(
                 state.rotation + Float(index) * slotAngle
             )
@@ -228,14 +229,16 @@ enum OrbitLayoutController {
                 )
 
             if animationDuration >= 0.4 {
-                let homePosition = homePositions[runtimeComponent.cardName] ?? .zero
+                let homePosition = homePositions[
+                    runtimeComponent.attachmentTag
+                ] ?? .zero
                 orbitDebug(
-                    "Card \(runtimeComponent.cardName): index=\(index), "
+                    "Card \(runtimeComponent.diagnosticName): index=\(index), "
                         + "target=\(position), home=\(homePosition)"
                 )
             }
 
-            let baseScale = baseScales[runtimeComponent.cardName] ?? .one
+            let baseScale = baseScales[runtimeComponent.attachmentTag] ?? .one
             let distanceFromFocus = abs(angleFromFocus) / Float.pi
             let prominence = isFocused ? 1.06 : max(0.68, 1 - 0.32 * distanceFromFocus)
             let opacity: Float = state.expandedCardName == nil || isExpanded
@@ -256,15 +259,14 @@ enum OrbitLayoutController {
     private static func positionPatientInformation(
         in attachments: [Entity],
         at position: SIMD3<Float>,
-        baseScales: [String: SIMD3<Float>],
+        baseScales: [ObjectIdentifier: SIMD3<Float>],
         animationDuration: TimeInterval
     ) {
         guard let attachment = attachments.first(where: { entity in
             guard let component = entity.components[
                 PointOfInterestRuntimeComponent.self
             ] else { return false }
-            return PointOfInterestMapper.normalize(component.cardName)
-                == "basic_information"
+            return component.cardID == .basicInformation
         }), let component = attachment.components[
             PointOfInterestRuntimeComponent.self
         ] else { return }
@@ -274,7 +276,7 @@ enum OrbitLayoutController {
         move(
             attachment,
             to: position,
-            scale: baseScales[component.cardName] ?? .one,
+            scale: baseScales[component.attachmentTag] ?? .one,
             duration: animationDuration
         )
     }
@@ -284,34 +286,40 @@ enum OrbitLayoutController {
         orderedCardNames: [String]
     ) -> [Entity] {
         let byName = Dictionary(uniqueKeysWithValues: attachments.compactMap { entity in
-            entity.components[PointOfInterestRuntimeComponent.self].map {
-                (PointOfInterestMapper.normalize($0.cardName), entity)
+            entity.components[PointOfInterestRuntimeComponent.self].flatMap {
+                $0.cardID.map { ($0.canonicalName, entity) }
             }
         })
-        return orderedCardNames.compactMap { byName[PointOfInterestMapper.normalize($0)] }
+        return orderedCardNames.compactMap { byName[$0] }
     }
 
     private static func restoreNormalLayout(
         attachments: [Entity],
-        homePositions: [String: SIMD3<Float>],
-        savedPositions: [String: SIMD3<Float>],
-        baseScales: [String: SIMD3<Float>],
+        homePositions: [ObjectIdentifier: SIMD3<Float>],
+        savedPositions: [ClinicalCardID: SIMD3<Float>],
+        baseScales: [ObjectIdentifier: SIMD3<Float>],
         animationDuration: TimeInterval
     ) {
         for attachment in attachments {
             guard let runtimeComponent = attachment.components[
                 PointOfInterestRuntimeComponent.self
-            ], let position = savedPositions[runtimeComponent.cardName]
-                ?? homePositions[runtimeComponent.cardName] else {
+            ] else {
                 continue
             }
+            let position = if let cardID = runtimeComponent.cardID {
+                savedPositions[cardID]
+                    ?? homePositions[runtimeComponent.attachmentTag]
+            } else {
+                attachment.position(relativeTo: nil)
+            }
+            guard let position else { continue }
 
             attachment.components.set(OpacityComponent(opacity: 1))
             setInputEnabled(true, for: attachment)
             move(
                 attachment,
                 to: position,
-                scale: baseScales[runtimeComponent.cardName] ?? .one,
+                scale: baseScales[runtimeComponent.attachmentTag] ?? .one,
                 duration: animationDuration
             )
         }

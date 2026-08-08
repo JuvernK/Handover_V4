@@ -65,22 +65,22 @@ final class AppModel {
 
     // MARK: - Shared card state
 
-    var cardStates: [String: Bool] {
+    var cardStates: [ClinicalCardID: Bool] {
         sharedCardState.expansionStates
     }
 
-    var cardPositions: [String: SIMD3<Float>] {
+    var cardPositions: [ClinicalCardID: SIMD3<Float>] {
         sharedCardState.positions
     }
 
-    var abbreviationSelections: [String: AbbreviationSelection] {
+    var abbreviationSelections: [ClinicalCardID: AbbreviationSelection] {
         sharedCardState.abbreviationSelections
     }
 
     func abbreviationSelection(
         for cardID: ClinicalCardID
     ) -> AbbreviationSelection? {
-        abbreviationSelections[cardID.canonicalName]
+        abbreviationSelections[cardID]
     }
 
     var orbitState: OrbitState {
@@ -95,21 +95,25 @@ final class AppModel {
         handoverViewModel.sectionOrder.map(\.rawValue)
     }
 
-    func setCardState(name: String, isExpanded: Bool, syncChanges: Bool) {
+    func setCardState(
+        _ cardID: ClinicalCardID,
+        isExpanded: Bool,
+        syncChanges: Bool
+    ) {
         sharePlayCoordinator.setCardState(
-            name: name,
+            cardID,
             isExpanded: isExpanded,
             syncChanges: syncChanges
         )
     }
 
     func setCardPosition(
-        name: String,
+        _ cardID: ClinicalCardID,
         position: SIMD3<Float>,
         syncChanges: Bool
     ) {
         sharePlayCoordinator.setCardPosition(
-            name: name,
+            cardID,
             position: position,
             syncChanges: syncChanges
         )
@@ -121,7 +125,7 @@ final class AppModel {
     ) {
         sharePlayCoordinator.toggleAbbreviationSelection(
             selection,
-            for: cardID.canonicalName
+            for: cardID
         )
     }
 

@@ -29,45 +29,45 @@ struct OrbitState: Codable, Equatable {
 @Observable
 @MainActor
 final class SharedCardState {
-    private(set) var expansionStates: [String: Bool] = [:]
-    private(set) var positions: [String: SIMD3<Float>] = [:]
-    private(set) var abbreviationSelections: [String: AbbreviationSelection] = [:]
+    private(set) var expansionStates: [ClinicalCardID: Bool] = [:]
+    private(set) var positions: [ClinicalCardID: SIMD3<Float>] = [:]
+    private(set) var abbreviationSelections: [ClinicalCardID: AbbreviationSelection] = [:]
     private(set) var orbitState = OrbitState.inactive
 
     /// Controls how RealityKit presents the latest orbit state. This is local
     /// presentation metadata rather than synchronized application state.
     private(set) var orbitAnimationDuration: TimeInterval = 0
 
-    func setExpansionState(_ isExpanded: Bool, for cardName: String) {
-        expansionStates[cardName] = isExpanded
+    func setExpansionState(_ isExpanded: Bool, for cardID: ClinicalCardID) {
+        expansionStates[cardID] = isExpanded
         if !isExpanded {
-            abbreviationSelections.removeValue(forKey: cardName)
+            abbreviationSelections.removeValue(forKey: cardID)
         }
     }
 
-    func setPosition(_ position: SIMD3<Float>, for cardName: String) {
-        positions[cardName] = position
+    func setPosition(_ position: SIMD3<Float>, for cardID: ClinicalCardID) {
+        positions[cardID] = position
     }
 
     @discardableResult
     func toggleAbbreviationSelection(
         _ selection: AbbreviationSelection,
-        for cardName: String
+        for cardID: ClinicalCardID
     ) -> AbbreviationAction? {
-        guard isCardExpanded(cardName) else { return nil }
+        guard isCardExpanded(cardID) else { return nil }
 
         let action = AbbreviationAction.set(
-            abbreviationSelections[cardName] == selection ? nil : selection
+            abbreviationSelections[cardID] == selection ? nil : selection
         )
-        apply(action, to: cardName)
+        apply(action, to: cardID)
         return action
     }
 
-    func apply(_ action: AbbreviationAction, to cardName: String) {
+    func apply(_ action: AbbreviationAction, to cardID: ClinicalCardID) {
         switch action {
         case .set(let selection):
-            guard isCardExpanded(cardName) else { return }
-            abbreviationSelections[cardName] = selection
+            guard isCardExpanded(cardID) else { return }
+            abbreviationSelections[cardID] = selection
         }
     }
 
@@ -82,25 +82,27 @@ final class SharedCardState {
             let previouslyExpandedCard = orbitState.expandedCardName,
             state.expandedCardName != previouslyExpandedCard
         {
-            abbreviationSelections.removeValue(forKey: previouslyExpandedCard)
+            if let cardID = ClinicalCardID(canonicalName: previouslyExpandedCard) {
+                abbreviationSelections.removeValue(forKey: cardID)
+            }
         }
         orbitAnimationDuration = animationDuration
         orbitState = state
     }
 
-    func apply(_ action: CardAction, to cardName: String) {
+    func apply(_ action: CardAction, to cardID: ClinicalCardID) {
         switch action {
         case .toggle(let isExpanded):
-            setExpansionState(isExpanded, for: cardName)
+            setExpansionState(isExpanded, for: cardID)
         case .move(let position):
-            setPosition(position, for: cardName)
+            setPosition(position, for: cardID)
         }
     }
 
     func replaceAll(
-        expansionStates: [String: Bool],
-        positions: [String: SIMD3<Float>],
-        abbreviationSelections: [String: AbbreviationSelection],
+        expansionStates: [ClinicalCardID: Bool],
+        positions: [ClinicalCardID: SIMD3<Float>],
+        abbreviationSelections: [ClinicalCardID: AbbreviationSelection],
         orbitState: OrbitState
     ) {
         self.expansionStates = expansionStates
@@ -112,11 +114,11 @@ final class SharedCardState {
         }
     }
 
-    private func isCardExpanded(_ cardName: String) -> Bool {
+    private func isCardExpanded(_ cardID: ClinicalCardID) -> Bool {
         if orbitState.isActive {
-            return cardName == "basic_information"
-                || orbitState.expandedCardName == cardName
+            return cardID == .basicInformation
+                || orbitState.expandedCardName == cardID.canonicalName
         }
-        return expansionStates[cardName] ?? true
+        return expansionStates[cardID] ?? true
     }
 }

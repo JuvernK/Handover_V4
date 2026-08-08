@@ -36,13 +36,14 @@ enum ImmersiveAttachmentConfigurator {
     }
 
     static func applySyncedPositions(
-        _ positions: [String: SIMD3<Float>],
+        _ positions: [ClinicalCardID: SIMD3<Float>],
         to attachments: [Entity]
     ) {
         for attachment in attachments {
             guard let runtimeComponent = attachment.components[
                 PointOfInterestRuntimeComponent.self
-            ], let position = positions[runtimeComponent.cardName] else {
+            ], let cardID = runtimeComponent.cardID,
+               let position = positions[cardID] else {
                 continue
             }
 

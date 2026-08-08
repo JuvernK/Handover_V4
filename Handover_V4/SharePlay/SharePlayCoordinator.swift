@@ -17,9 +17,9 @@ final class SharePlayCoordinator {
 
     private var sessionController: SessionController?
     private var transport: (any SharePlayMessageTransport)?
-    private var cardUpdateCounts: [String: MessageUpdateCount] = [:]
-    private var abbreviationUpdateCounts: [String: MessageUpdateCount] = [:]
-    private var disconnectedAbbreviationChanges: Set<String> = []
+    private var cardUpdateCounts: [ClinicalCardID: MessageUpdateCount] = [:]
+    private var abbreviationUpdateCounts: [ClinicalCardID: MessageUpdateCount] = [:]
+    private var disconnectedAbbreviationChanges: Set<ClinicalCardID> = []
     private var orbitUpdateCount: MessageUpdateCount?
     private var dashboardUpdateCount: MessageUpdateCount?
     private var lastOrbitBroadcastTime = Date.distantPast
@@ -117,41 +117,48 @@ final class SharePlayCoordinator {
 
     // MARK: - Local card updates
 
-    func setCardState(name: String, isExpanded: Bool, syncChanges: Bool) {
+    func setCardState(
+        _ cardID: ClinicalCardID,
+        isExpanded: Bool,
+        syncChanges: Bool
+    ) {
         let previousSelections = sharedCardState.abbreviationSelections
-        sharedCardState.setExpansionState(isExpanded, for: name)
+        sharedCardState.setExpansionState(isExpanded, for: cardID)
         recordDisconnectedAbbreviationChanges(from: previousSelections)
 
         if syncChanges {
             broadcastCardAction(
                 .toggle(isExpanded: isExpanded),
-                for: name
+                for: cardID
             )
         }
     }
 
     func setCardPosition(
-        name: String,
+        _ cardID: ClinicalCardID,
         position: SIMD3<Float>,
         syncChanges: Bool
     ) {
-        sharedCardState.setPosition(position, for: name)
+        sharedCardState.setPosition(position, for: cardID)
 
         if syncChanges {
-            broadcastCardAction(.move(position: position), for: name)
+            broadcastCardAction(.move(position: position), for: cardID)
         }
     }
 
-    private func broadcastCardAction(_ action: CardAction, for cardName: String) {
+    private func broadcastCardAction(
+        _ action: CardAction,
+        for cardID: ClinicalCardID
+    ) {
         guard let updateCount = nextUpdateCount(
-            after: cardUpdateCounts[cardName]
+            after: cardUpdateCounts[cardID]
         ) else {
             return
         }
 
-        cardUpdateCounts[cardName] = updateCount
+        cardUpdateCounts[cardID] = updateCount
         let message = CardSyncMessage(
-            cardName: cardName,
+            cardID: cardID,
             action: action,
             updateCount: updateCount
         )
@@ -163,30 +170,30 @@ final class SharePlayCoordinator {
 
     func toggleAbbreviationSelection(
         _ selection: AbbreviationSelection,
-        for cardName: String
+        for cardID: ClinicalCardID
     ) {
         guard let action = sharedCardState.toggleAbbreviationSelection(
             selection,
-            for: cardName
+            for: cardID
         ) else {
             return
         }
 
         guard transport != nil else {
-            disconnectedAbbreviationChanges.insert(cardName)
+            disconnectedAbbreviationChanges.insert(cardID)
             return
         }
 
         guard let updateCount = nextUpdateCount(
-            after: abbreviationUpdateCounts[cardName]
+            after: abbreviationUpdateCounts[cardID]
         ) else {
             return
         }
 
-        abbreviationUpdateCounts[cardName] = updateCount
+        abbreviationUpdateCounts[cardID] = updateCount
         transport?.sendMessage(
             AbbreviationSyncMessage(
-                cardName: cardName,
+                cardID: cardID,
                 action: action,
                 updateCount: updateCount
             )
@@ -453,70 +460,70 @@ final class SharePlayCoordinator {
     private func synchronizeExistingAbbreviationSelections() {
         guard let participantID = transport?.localParticipantID else { return }
 
-        let cardNames = Set(sharedCardState.abbreviationSelections.keys)
+        let cardIDs = Set(sharedCardState.abbreviationSelections.keys)
             .union(disconnectedAbbreviationChanges)
-        for cardName in cardNames {
+        for cardID in cardIDs {
             let wasChangedWhileDisconnected =
-                disconnectedAbbreviationChanges.contains(cardName)
+                disconnectedAbbreviationChanges.contains(cardID)
             guard wasChangedWhileDisconnected
-                    || abbreviationUpdateCounts[cardName] == nil else {
+                    || abbreviationUpdateCounts[cardID] == nil else {
                 continue
             }
 
             let updateCount = MessageUpdateCount(
-                count: (abbreviationUpdateCounts[cardName]?.count ?? 0) + 1,
+                count: (abbreviationUpdateCounts[cardID]?.count ?? 0) + 1,
                 participant: participantID
             )
-            abbreviationUpdateCounts[cardName] = updateCount
+            abbreviationUpdateCounts[cardID] = updateCount
             transport?.sendMessage(
                 AbbreviationSyncMessage(
-                    cardName: cardName,
+                    cardID: cardID,
                     action: .set(
-                        sharedCardState.abbreviationSelections[cardName]
+                        sharedCardState.abbreviationSelections[cardID]
                     ),
                     updateCount: updateCount
                 )
             )
-            disconnectedAbbreviationChanges.remove(cardName)
+            disconnectedAbbreviationChanges.remove(cardID)
         }
     }
 
     private func recordDisconnectedAbbreviationChanges(
-        from previousSelections: [String: AbbreviationSelection]
+        from previousSelections: [ClinicalCardID: AbbreviationSelection]
     ) {
         guard transport == nil else { return }
 
-        let cardNames = Set(previousSelections.keys)
+        let cardIDs = Set(previousSelections.keys)
             .union(sharedCardState.abbreviationSelections.keys)
-        for cardName in cardNames
-        where previousSelections[cardName]
-            != sharedCardState.abbreviationSelections[cardName] {
-            disconnectedAbbreviationChanges.insert(cardName)
+        for cardID in cardIDs
+        where previousSelections[cardID]
+            != sharedCardState.abbreviationSelections[cardID] {
+            disconnectedAbbreviationChanges.insert(cardID)
         }
     }
 
     // MARK: - Remote updates
 
     func handleRemoteCardMessage(_ message: CardSyncMessage) {
-        if let existingCount = cardUpdateCounts[message.cardName],
+        if let existingCount = cardUpdateCounts[message.cardID],
            message.updateCount <= existingCount {
             return
         }
 
-        cardUpdateCounts[message.cardName] = message.updateCount
-        sharedCardState.apply(message.action, to: message.cardName)
+        cardUpdateCounts[message.cardID] = message.updateCount
+        sharedCardState.apply(message.action, to: message.cardID)
     }
 
     func handleRemoteAbbreviationMessage(
         _ message: AbbreviationSyncMessage
     ) {
-        if let existingCount = abbreviationUpdateCounts[message.cardName],
+        if let existingCount = abbreviationUpdateCounts[message.cardID],
            message.updateCount <= existingCount {
             return
         }
 
-        abbreviationUpdateCounts[message.cardName] = message.updateCount
-        sharedCardState.apply(message.action, to: message.cardName)
+        abbreviationUpdateCounts[message.cardID] = message.updateCount
+        sharedCardState.apply(message.action, to: message.cardID)
     }
 
     func handleRemoteOrbitMessage(_ message: OrbitSyncMessage) {
@@ -604,8 +611,8 @@ final class SharePlayCoordinator {
         with message: CatchUpMessage,
         preservingCurrentState: Bool
     ) -> (
-        selections: [String: AbbreviationSelection],
-        updateCounts: [String: MessageUpdateCount]
+        selections: [ClinicalCardID: AbbreviationSelection],
+        updateCounts: [ClinicalCardID: MessageUpdateCount]
     ) {
         var selections = preservingCurrentState
             ? sharedCardState.abbreviationSelections
@@ -614,14 +621,14 @@ final class SharePlayCoordinator {
             ? abbreviationUpdateCounts
             : [:]
 
-        for (cardName, incomingCount) in message.abbreviationUpdateCounts {
-            if let currentCount = updateCounts[cardName],
+        for (cardID, incomingCount) in message.abbreviationUpdateCounts {
+            if let currentCount = updateCounts[cardID],
                incomingCount <= currentCount {
                 continue
             }
 
-            updateCounts[cardName] = incomingCount
-            selections[cardName] = message.abbreviationSelections[cardName]
+            updateCounts[cardID] = incomingCount
+            selections[cardID] = message.abbreviationSelections[cardID]
         }
 
         return (selections, updateCounts)
@@ -630,34 +637,34 @@ final class SharePlayCoordinator {
     private func mergedCardSnapshot(
         with message: CatchUpMessage
     ) -> (
-        expansionStates: [String: Bool],
-        positions: [String: SIMD3<Float>],
-        updateCounts: [String: MessageUpdateCount]
+        expansionStates: [ClinicalCardID: Bool],
+        positions: [ClinicalCardID: SIMD3<Float>],
+        updateCounts: [ClinicalCardID: MessageUpdateCount]
     ) {
         var expansionStates = sharedCardState.expansionStates
         var positions = sharedCardState.positions
         var updateCounts = cardUpdateCounts
 
-        for (cardName, incomingCount) in message.cardUpdateCounts {
-            if let currentCount = updateCounts[cardName],
+        for (cardID, incomingCount) in message.cardUpdateCounts {
+            if let currentCount = updateCounts[cardID],
                incomingCount <= currentCount {
                 continue
             }
 
-            updateCounts[cardName] = incomingCount
-            expansionStates[cardName] = message.allCardStates[cardName]
-            positions[cardName] = message.allCardPositions[cardName]
+            updateCounts[cardID] = incomingCount
+            expansionStates[cardID] = message.allCardStates[cardID]
+            positions[cardID] = message.allCardPositions[cardID]
         }
 
-        for (cardName, isExpanded) in message.allCardStates
-        where updateCounts[cardName] == nil
-            && expansionStates[cardName] == nil {
-            expansionStates[cardName] = isExpanded
+        for (cardID, isExpanded) in message.allCardStates
+        where updateCounts[cardID] == nil
+            && expansionStates[cardID] == nil {
+            expansionStates[cardID] = isExpanded
         }
-        for (cardName, position) in message.allCardPositions
-        where updateCounts[cardName] == nil
-            && positions[cardName] == nil {
-            positions[cardName] = position
+        for (cardID, position) in message.allCardPositions
+        where updateCounts[cardID] == nil
+            && positions[cardID] == nil {
+            positions[cardID] = position
         }
 
         return (expansionStates, positions, updateCounts)

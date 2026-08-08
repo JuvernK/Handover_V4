@@ -10,5 +10,10 @@ import RealityKit
 
 struct PointOfInterestRuntimeComponent: Component {
     let attachmentTag: ObjectIdentifier
-    let cardName: String
+    let cardID: ClinicalCardID?
+    let unknownPOIName: String?
+
+    var diagnosticName: String {
+        cardID?.canonicalName ?? unknownPOIName ?? "unknown"
+    }
 }

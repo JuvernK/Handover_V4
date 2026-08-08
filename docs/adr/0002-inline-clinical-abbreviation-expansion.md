@@ -57,15 +57,18 @@ struct AbbreviationSelection: Codable, Hashable {
 }
 ```
 
-The owning dictionary is keyed by canonical card name:
+The owning dictionary is keyed by canonical typed card identity:
 
 ```swift
-var abbreviationSelections: [String: AbbreviationSelection]
+var abbreviationSelections: [ClinicalCardID: AbbreviationSelection]
 ```
 
 `textID` is a stable semantic identifier supplied by the card/field, such as a model field or model-item identity. It must not be derived from a random UUID, Swift's `hashValue`, the current view order, or translated/displayed text. `occurrenceIndex` is assigned in deterministic source-text order among matches for the same glossary entry in that field.
 
-Keeping the card name as the dictionary key makes `AbbreviationSelection` the smallest robust identity while enforcing the zero-or-one selection invariant per card.
+Keeping `ClinicalCardID` as the dictionary key makes
+`AbbreviationSelection` the smallest robust identity while enforcing the
+zero-or-one selection invariant per card. Authored POI names are resolved to
+that identity before shared state or SharePlay handles the selection.
 
 ### State ownership and SharePlay
 

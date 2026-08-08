@@ -24,16 +24,28 @@ enum ImmersiveAttachmentFactory {
             return
         }
 
+        let destination = PointOfInterestMapper.destination(
+            for: pointOfInterest.name
+        )
         let tag: ObjectIdentifier = entity.id
         let view = AnyView(
-            SpatialCardView(poiName: pointOfInterest.name, patient: patient)
+            SpatialCardView(
+                destination: destination,
+                unknownPOIName: destination.cardID == nil
+                    ? pointOfInterest.name
+                    : nil,
+                patient: patient
+            )
                 .tag(tag)
         )
 
         entity.components[PointOfInterestRuntimeComponent.self] =
             PointOfInterestRuntimeComponent(
                 attachmentTag: tag,
-                cardName: pointOfInterest.name
+                cardID: destination.cardID,
+                unknownPOIName: destination.cardID == nil
+                    ? pointOfInterest.name
+                    : nil
             )
         provider.attachments[tag] = view
     }

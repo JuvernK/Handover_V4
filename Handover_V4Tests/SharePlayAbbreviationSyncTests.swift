@@ -14,9 +14,9 @@ struct SharePlayAbbreviationSyncTests {
         let coordinator = makeCoordinator(state: state, transport: transport)
         let selection = makeSelection("crrt")
 
-        coordinator.toggleAbbreviationSelection(selection, for: "plan")
+        coordinator.toggleAbbreviationSelection(selection, for: .section(.plan))
 
-        #expect(state.abbreviationSelections["plan"] == selection)
+        #expect(state.abbreviationSelections[.section(.plan)] == selection)
         #expect(transport.abbreviationMessages.count == 1)
         #expect(transport.abbreviationMessages.first?.updateCount.count == 1)
         #expect(
@@ -31,9 +31,9 @@ struct SharePlayAbbreviationSyncTests {
         let coordinator = makeCoordinator(state: state)
         let selection = makeSelection("crrt")
 
-        coordinator.toggleAbbreviationSelection(selection, for: "plan")
+        coordinator.toggleAbbreviationSelection(selection, for: .section(.plan))
 
-        #expect(state.abbreviationSelections["plan"] == selection)
+        #expect(state.abbreviationSelections[.section(.plan)] == selection)
     }
 
     @Test
@@ -43,8 +43,8 @@ struct SharePlayAbbreviationSyncTests {
         let firstSelection = makeSelection("af")
         let secondSelection = makeSelection("crrt")
 
-        first.coordinator.toggleAbbreviationSelection(firstSelection, for: "plan")
-        second.coordinator.toggleAbbreviationSelection(secondSelection, for: "plan")
+        first.coordinator.toggleAbbreviationSelection(firstSelection, for: .section(.plan))
+        second.coordinator.toggleAbbreviationSelection(secondSelection, for: .section(.plan))
 
         let firstMessage = try! #require(first.transport.abbreviationMessages.first)
         let secondMessage = try! #require(second.transport.abbreviationMessages.first)
@@ -54,8 +54,8 @@ struct SharePlayAbbreviationSyncTests {
         let expected = firstMessage.updateCount > secondMessage.updateCount
             ? firstSelection
             : secondSelection
-        #expect(first.state.abbreviationSelections["plan"] == expected)
-        #expect(second.state.abbreviationSelections["plan"] == expected)
+        #expect(first.state.abbreviationSelections[.section(.plan)] == expected)
+        #expect(second.state.abbreviationSelections[.section(.plan)] == expected)
     }
 
     @Test
@@ -64,7 +64,7 @@ struct SharePlayAbbreviationSyncTests {
         let selection = makeSelection("crrt")
 
         participant.coordinator.setCardPosition(
-            name: "plan",
+            .section(.plan),
             position: .init(1, 2, 3),
             syncChanges: true
         )
@@ -83,14 +83,14 @@ struct SharePlayAbbreviationSyncTests {
                 isFinal: true
             )
         )
-        participant.coordinator.toggleAbbreviationSelection(selection, for: "plan")
+        participant.coordinator.toggleAbbreviationSelection(selection, for: .section(.plan))
 
         #expect(participant.transport.cardMessages.first?.updateCount.count == 1)
         #expect(
             participant.transport.abbreviationMessages.first?.updateCount.count
                 == 1
         )
-        #expect(participant.state.abbreviationSelections["plan"] == selection)
+        #expect(participant.state.abbreviationSelections[.section(.plan)] == selection)
     }
 
     @Test
@@ -98,15 +98,15 @@ struct SharePlayAbbreviationSyncTests {
         let participant = makeParticipant()
         let selection = makeSelection("crrt")
 
-        participant.coordinator.toggleAbbreviationSelection(selection, for: "plan")
+        participant.coordinator.toggleAbbreviationSelection(selection, for: .section(.plan))
         participant.coordinator.setCardState(
-            name: "plan",
+            .section(.plan),
             isExpanded: false,
             syncChanges: false
         )
         participant.coordinator.handleRemoteAbbreviationMessage(
             AbbreviationSyncMessage(
-                cardName: "plan",
+                cardID: .section(.plan),
                 action: .set(selection),
                 updateCount: MessageUpdateCount(
                     count: 2,
@@ -116,10 +116,10 @@ struct SharePlayAbbreviationSyncTests {
         )
         participant.coordinator.toggleAbbreviationSelection(
             makeSelection("af"),
-            for: "plan"
+            for: .section(.plan)
         )
 
-        #expect(participant.state.abbreviationSelections["plan"] == nil)
+        #expect(participant.state.abbreviationSelections[.section(.plan)] == nil)
         #expect(participant.transport.abbreviationMessages.count == 1)
     }
 
@@ -130,20 +130,20 @@ struct SharePlayAbbreviationSyncTests {
         let firstSelection = makeSelection("af")
         let latestSelection = makeSelection("crrt")
 
-        source.coordinator.toggleAbbreviationSelection(firstSelection, for: "plan")
-        source.coordinator.toggleAbbreviationSelection(latestSelection, for: "plan")
+        source.coordinator.toggleAbbreviationSelection(firstSelection, for: .section(.plan))
+        source.coordinator.toggleAbbreviationSelection(latestSelection, for: .section(.plan))
         source.coordinator.sendCatchUp(
             to: [lateJoiner.transport.localParticipantID]
         )
         source.transport.deliverCatchUpMessages(to: lateJoiner.coordinator)
 
         #expect(
-            lateJoiner.state.abbreviationSelections["plan"] == latestSelection
+            lateJoiner.state.abbreviationSelections[.section(.plan)] == latestSelection
         )
 
         lateJoiner.coordinator.toggleAbbreviationSelection(
             makeSelection("copd"),
-            for: "plan"
+            for: .section(.plan)
         )
         #expect(
             lateJoiner.transport.abbreviationMessages.last?.updateCount.count == 3
@@ -161,11 +161,11 @@ struct SharePlayAbbreviationSyncTests {
 
         firstSource.coordinator.toggleAbbreviationSelection(
             firstSelection,
-            for: "plan"
+            for: .section(.plan)
         )
         secondSource.coordinator.toggleAbbreviationSelection(
             secondSelection,
-            for: "plan"
+            for: .section(.plan)
         )
         firstSource.coordinator.sendCatchUp(
             to: [firstLateJoiner.transport.localParticipantID]
@@ -197,10 +197,10 @@ struct SharePlayAbbreviationSyncTests {
             ? firstSelection
             : secondSelection
         #expect(
-            firstLateJoiner.state.abbreviationSelections["plan"] == expected
+            firstLateJoiner.state.abbreviationSelections[.section(.plan)] == expected
         )
         #expect(
-            secondLateJoiner.state.abbreviationSelections["plan"] == expected
+            secondLateJoiner.state.abbreviationSelections[.section(.plan)] == expected
         )
     }
 
@@ -210,14 +210,14 @@ struct SharePlayAbbreviationSyncTests {
         let existingSelection = makeSelection("crrt")
         existingParticipant.coordinator.toggleAbbreviationSelection(
             existingSelection,
-            for: "plan"
+            for: .section(.plan)
         )
 
         let joiningState = SharedCardState()
         let joiningSelection = makeSelection("af")
         joiningState.toggleAbbreviationSelection(
             joiningSelection,
-            for: "plan"
+            for: .section(.plan)
         )
         let joiningTransport = InMemorySharePlayTransport(
             localParticipantID: UUID()
@@ -239,8 +239,8 @@ struct SharePlayAbbreviationSyncTests {
 
         #expect(joiningTransport.abbreviationMessages.count == 1)
         #expect(
-            joiningState.abbreviationSelections["plan"]
-                == existingParticipant.state.abbreviationSelections["plan"]
+            joiningState.abbreviationSelections[.section(.plan)]
+                == existingParticipant.state.abbreviationSelections[.section(.plan)]
         )
     }
 
@@ -252,7 +252,7 @@ struct SharePlayAbbreviationSyncTests {
 
         participant.coordinator.toggleAbbreviationSelection(
             makeSelection("af"),
-            for: "plan"
+            for: .section(.plan)
         )
         participant.transport.deliverAbbreviationMessages(
             to: peer.coordinator
@@ -261,7 +261,7 @@ struct SharePlayAbbreviationSyncTests {
         participant.coordinator.detachTransport()
         participant.coordinator.toggleAbbreviationSelection(
             replacement,
-            for: "plan"
+            for: .section(.plan)
         )
         let replacementTransport = InMemorySharePlayTransport(
             localParticipantID: UUID()
@@ -277,11 +277,11 @@ struct SharePlayAbbreviationSyncTests {
             replacementTransport.abbreviationMessages.first?.updateCount.count
                 == 2
         )
-        #expect(peer.state.abbreviationSelections["plan"] == replacement)
+        #expect(peer.state.abbreviationSelections[.section(.plan)] == replacement)
 
         participant.coordinator.detachTransport()
         participant.coordinator.setCardState(
-            name: "plan",
+            .section(.plan),
             isExpanded: false,
             syncChanges: true
         )
@@ -297,7 +297,7 @@ struct SharePlayAbbreviationSyncTests {
         #expect(
             collapseTransport.abbreviationMessages.first?.updateCount.count == 3
         )
-        #expect(peer.state.abbreviationSelections["plan"] == nil)
+        #expect(peer.state.abbreviationSelections[.section(.plan)] == nil)
     }
 
     @Test
@@ -310,21 +310,21 @@ struct SharePlayAbbreviationSyncTests {
 
         collapsedSource.coordinator.toggleAbbreviationSelection(
             makeSelection("af"),
-            for: "plan"
+            for: .section(.plan)
         )
         collapsedSource.coordinator.setCardState(
-            name: "plan",
+            .section(.plan),
             isExpanded: false,
             syncChanges: true
         )
         expandedSource.coordinator.setCardState(
-            name: "plan",
+            .section(.plan),
             isExpanded: true,
             syncChanges: true
         )
         expandedSource.coordinator.toggleAbbreviationSelection(
             expandedSelection,
-            for: "plan"
+            for: .section(.plan)
         )
         collapsedSource.coordinator.sendCatchUp(
             to: [firstLateJoiner.transport.localParticipantID]
@@ -347,12 +347,12 @@ struct SharePlayAbbreviationSyncTests {
         )
 
         #expect(
-            firstLateJoiner.state.expansionStates["plan"]
-                == secondLateJoiner.state.expansionStates["plan"]
+            firstLateJoiner.state.expansionStates[.section(.plan)]
+                == secondLateJoiner.state.expansionStates[.section(.plan)]
         )
         #expect(
-            firstLateJoiner.state.abbreviationSelections["plan"]
-                == secondLateJoiner.state.abbreviationSelections["plan"]
+            firstLateJoiner.state.abbreviationSelections[.section(.plan)]
+                == secondLateJoiner.state.abbreviationSelections[.section(.plan)]
         )
     }
 
@@ -364,15 +364,15 @@ struct SharePlayAbbreviationSyncTests {
 
         lateJoiner.coordinator.toggleAbbreviationSelection(
             makeSelection("af"),
-            for: "plan"
+            for: .section(.plan)
         )
         lateJoiner.coordinator.toggleAbbreviationSelection(
             makeSelection("copd"),
-            for: "plan"
+            for: .section(.plan)
         )
         source.coordinator.toggleAbbreviationSelection(
             incomingSelection,
-            for: "plan"
+            for: .section(.plan)
         )
         source.coordinator.sendCatchUp(
             to: [lateJoiner.transport.localParticipantID]
@@ -384,7 +384,7 @@ struct SharePlayAbbreviationSyncTests {
                 == source.handoverViewModel.patient?.id
         )
         #expect(
-            lateJoiner.state.abbreviationSelections["plan"]
+            lateJoiner.state.abbreviationSelections[.section(.plan)]
                 == incomingSelection
         )
     }
@@ -396,12 +396,12 @@ struct SharePlayAbbreviationSyncTests {
 
         lateJoiner.coordinator.applyCatchUpMessage(
             CatchUpMessage(
-                allCardStates: ["plan": false],
+                allCardStates: [.section(.plan): false],
                 allCardPositions: [:],
                 cardUpdateCounts: [:],
-                abbreviationSelections: ["plan": selection],
+                abbreviationSelections: [.section(.plan): selection],
                 abbreviationUpdateCounts: [
-                    "plan": MessageUpdateCount(
+                    .section(.plan): MessageUpdateCount(
                         count: 4,
                         participant: UUID()
                     )
@@ -416,10 +416,10 @@ struct SharePlayAbbreviationSyncTests {
             )
         )
 
-        #expect(lateJoiner.state.abbreviationSelections["plan"] == nil)
+        #expect(lateJoiner.state.abbreviationSelections[.section(.plan)] == nil)
         lateJoiner.coordinator.toggleAbbreviationSelection(
             makeSelection("af"),
-            for: "plan"
+            for: .section(.plan)
         )
         #expect(lateJoiner.transport.abbreviationMessages.isEmpty)
     }

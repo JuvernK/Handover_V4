@@ -9,6 +9,17 @@ enum PointOfInterestDestination {
     case basicInformation
     case section(SectionID)
     case unknown
+
+    var cardID: ClinicalCardID? {
+        switch self {
+        case .basicInformation:
+            return .basicInformation
+        case .section(let sectionID):
+            return .section(sectionID)
+        case .unknown:
+            return nil
+        }
+    }
 }
 
 enum PointOfInterestMapper {

@@ -141,7 +141,7 @@ struct ClinicalAbbreviationExpansionTests {
     @Test
     func cardSelectionCanBeSelectedReplacedAndToggledOff() {
         let state = SharedCardState()
-        let cardName = "plan"
+        let cardID = ClinicalCardID.section(.plan)
         let first = AbbreviationSelection(
             textID: "plan.item.first.task",
             glossaryEntryID: "af",
@@ -153,13 +153,13 @@ struct ClinicalAbbreviationExpansionTests {
             occurrenceIndex: 0
         )
 
-        state.toggleAbbreviationSelection(first, for: cardName)
-        #expect(state.abbreviationSelections[cardName] == first)
+        state.toggleAbbreviationSelection(first, for: cardID)
+        #expect(state.abbreviationSelections[cardID] == first)
 
-        state.toggleAbbreviationSelection(second, for: cardName)
-        #expect(state.abbreviationSelections[cardName] == second)
+        state.toggleAbbreviationSelection(second, for: cardID)
+        #expect(state.abbreviationSelections[cardID] == second)
 
-        state.toggleAbbreviationSelection(second, for: cardName)
-        #expect(state.abbreviationSelections[cardName] == nil)
+        state.toggleAbbreviationSelection(second, for: cardID)
+        #expect(state.abbreviationSelections[cardID] == nil)
     }
 }
