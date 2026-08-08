@@ -1,6 +1,9 @@
 # Handover V4 Project Overview
 
-This project is a visionOS SwiftUI + RealityKit ICU handover prototype. It presents structured patient handover information in a dashboard window and can open a full immersive ICU scene with floating spatial cards anchored to Reality Composer Pro points of interest.
+This document maps the current implementation and its file responsibilities. It
+does not define domain language: `CONTEXT.md` is the canonical glossary for
+project-specific terms, and `docs/adr/` records durable architectural decisions.
+Build and agent-working instructions belong in `AGENTS.md`.
 
 ## App Spine
 
@@ -81,9 +84,11 @@ This project is a visionOS SwiftUI + RealityKit ICU handover prototype. It prese
   - Local Swift package containing RealityKit / Reality Composer Pro content.
   - Includes the `Immersive` scene asset and the design-time `PointOfInterestComponent`.
 
-## Dashboard Sections
+## Dashboard Implementation
 
-`Models/SectionID.swift` defines all dashboard sections and maps each section to its card view.
+`Models/SectionID.swift` defines the implemented dashboard sections and maps
+each section to its card view. Refer to `CONTEXT.md` for the meaning of
+project-specific card terminology.
 
 Default order:
 
@@ -101,7 +106,9 @@ The Systems Assessment card is special in `DashboardView`: it is kept in a fixed
 - `DashboardControls` starts or ends SharePlay and provides entry to the immersive space.
 - `HandoverViewModel.sectionOrder` remains the source of truth for dashboard ordering. `SharePlayCoordinator` synchronizes reorder operations with other participants.
 
-## Immersive POI Mapping
+## Immersive Implementation
+
+### POI mapping
 
 Reality Composer Pro POI names are normalized by lowercasing and replacing spaces/hyphens with underscores.
 
@@ -120,12 +127,12 @@ Known mappings:
 
 If a POI name does not match, `SpatialCardView` renders an unknown POI debug card.
 
-### Orbit authoring
+### Reality Composer Pro Orbit authoring
 
-Orbit is an eight-card, slot-snapping carousel. Patient Information remains
-stationary at the center while the eight clinical cards rotate together.
-Starting a rotation collapses the focused card; releasing snaps the carousel
-to the nearest slot and automatically expands the card at the front.
+Use the canonical `CONTEXT.md` definitions for Orbit and Focused Card. The
+runtime implementation keeps Patient Information stationary while the eight
+clinical cards rotate; starting a rotation collapses the focused card, and
+releasing snaps and expands the card at the front.
 
 The Reality Composer Pro hierarchy is:
 
@@ -174,9 +181,10 @@ OrbitSlot_7: ( 0.707r, Y,  0.707r)
 Debug builds emit `[OrbitDebug]` messages for slot discovery, attachment
 registration, Orbit state changes, and calculated card targets.
 
-## SharePlay Sync
+## Shared Handover State Implementation
 
-SharePlay sync is centered in `SharePlayCoordinator` and `SessionController`.
+`CONTEXT.md` defines Shared Handover State. Its current SharePlay implementation
+is centered in `SharePlayCoordinator` and `SessionController`.
 
 - Ownership:
   - `SharedCardState` owns spatial-card values without depending on GroupActivities.
@@ -191,13 +199,16 @@ SharePlay sync is centered in `SharePlayCoordinator` and `SessionController`.
 - Spatial card sync:
   - Expanded/collapsed state.
   - 3D card position.
+  - Shared Abbreviation Selections and independent per-card update counts.
   - Orbit activation, rotation, focused card, and transient focus expansion.
 
 - Conflict handling:
   - `MessageUpdateCount` compares update count first, then participant ID as a deterministic tiebreaker.
 
 - Late joiners:
-  - `CatchUpMessage` sends current card states, card positions, update counts, and dashboard state.
+  - `CatchUpMessage` sends current card states, card positions, Shared
+    Abbreviation Selections, Orbit state, dashboard state, and their update
+    counts.
 
 ## Useful Gotchas
 
