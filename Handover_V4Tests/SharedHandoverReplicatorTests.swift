@@ -231,6 +231,77 @@ struct SharedHandoverReplicatorTests {
         #expect(lateJoiner.state.positions[cardID] == latestPosition)
     }
 
+    @Test
+    func dashboardReorderConvergesAndRemainsIndependent() {
+        let first = ReplicationParticipant(id: UUID(), connected: true)
+        let second = ReplicationParticipant(id: UUID(), connected: true)
+        let receiver = ReplicationParticipant(id: UUID())
+        let position = SIMD3<Float>(0.4, 0.5, 0.6)
+
+        first.replicator.transact(
+            .moveDashboardSection(.vitals, toPositionOf: .labs)
+        )
+        second.replicator.transact(.moveCard(cardID, to: position))
+
+        receiver.replicator.receive(second.transport.envelopes[0])
+        receiver.replicator.receive(first.transport.envelopes[0])
+
+        #expect(receiver.viewModel.sectionOrder == first.viewModel.sectionOrder)
+        #expect(receiver.state.positions[cardID] == position)
+    }
+
+    @Test
+    func staleDuplicateAndReversedDashboardOrdersAreRejected() {
+        let participant = ReplicationParticipant(id: UUID())
+        let writerID = UUID()
+        let oldOrder = SectionID.defaultOrder
+        let latestOrder = Array(SectionID.defaultOrder.reversed())
+        let latest = envelope(
+            id: .dashboardOrder,
+            value: .dashboardOrder(latestOrder),
+            count: 2,
+            participantID: writerID
+        )
+
+        participant.replicator.receive(latest)
+        participant.replicator.receive(latest)
+        participant.replicator.receive(
+            envelope(
+                id: .dashboardOrder,
+                value: .dashboardOrder(oldOrder),
+                count: 1,
+                participantID: writerID
+            )
+        )
+
+        #expect(participant.viewModel.sectionOrder == latestOrder)
+    }
+
+    @Test
+    func reconnectAndLateJoinSendOnlyLatestDashboardOrder() throws {
+        let source = ReplicationParticipant(id: UUID())
+        let lateJoiner = ReplicationParticipant(id: UUID())
+
+        source.replicator.transact(
+            .moveDashboardSection(.vitals, toPositionOf: .labs)
+        )
+        source.replicator.transact(
+            .moveDashboardSection(.plan, toPositionOf: .infusions)
+        )
+        let latestOrder = source.viewModel.sectionOrder
+        source.replicator.attach(source.transport)
+
+        let reconnect = try #require(source.transport.envelopes.first)
+        #expect(reconnect.facts.count == 1)
+        #expect(reconnect.facts[0].value == .dashboardOrder(latestOrder))
+        #expect(reconnect.facts[0].version.count == 2)
+
+        source.replicator.sendCurrentState(to: [lateJoiner.id])
+        let snapshot = try #require(source.transport.targetedEnvelopes.first)
+        lateJoiner.replicator.receive(snapshot)
+        #expect(lateJoiner.viewModel.sectionOrder == latestOrder)
+    }
+
     private func makeSelection(
         _ glossaryEntryID: String
     ) -> AbbreviationSelection {
@@ -266,19 +337,30 @@ struct SharedHandoverReplicatorTests {
 private final class ReplicationParticipant {
     let id: UUID
     let state = SharedCardState()
+    let viewModel: HandoverViewModel
     let transport = RecordingReplicationTransport()
     let replicator: SharedHandoverReplicator
 
     init(id: UUID, connected: Bool = false) {
         self.id = id
+        let viewModel = HandoverViewModel(
+            initialBedNumber: "BED-03",
+            patientLoader: EmptyPatientLoader()
+        )
+        self.viewModel = viewModel
         replicator = SharedHandoverReplicator(
             participantID: id,
-            sharedCardState: state
+            sharedCardState: state,
+            handoverViewModel: viewModel
         )
         if connected {
             replicator.attach(transport)
         }
     }
+}
+
+private struct EmptyPatientLoader: PatientLoading {
+    func loadPatients() throws -> [Patient] { [] }
 }
 
 @MainActor

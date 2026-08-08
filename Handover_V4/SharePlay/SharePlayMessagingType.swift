@@ -32,27 +32,8 @@ struct OrbitSyncMessage: Codable {
     let isFinal: Bool
 }
 
-struct DashboardState: Codable {
-    let selectedPatientID: String?
-    let sectionOrder: [SectionID]
-}
-
-enum DashboardAction: Codable {
-    case state(DashboardState)
-    case selectedPatient(id: String)
-    case sectionOrder([SectionID])
-}
-
-struct DashboardSyncMessage: Codable {
-    let action: DashboardAction
-    let updateCount: MessageUpdateCount
-}
-
-
 /// Message sent to late joiners containing the complete current state
 struct CatchUpMessage: Codable {
     let orbitState: OrbitState
     let orbitUpdateCount: MessageUpdateCount?
-    let dashboardState: DashboardState
-    let dashboardUpdateCount: MessageUpdateCount?
 }

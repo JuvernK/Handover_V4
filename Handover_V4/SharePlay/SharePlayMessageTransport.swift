@@ -15,7 +15,6 @@ protocol SharePlayMessageTransport: ReplicationTransport {
     var localParticipantID: Participant.ID { get }
 
     func endSession()
-    func sendMessage(_ message: DashboardSyncMessage)
     func sendMessage(_ message: OrbitSyncMessage)
     func sendMessage(
         _ message: CatchUpMessage,

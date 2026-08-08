@@ -12,14 +12,12 @@ import Combine
 @Observable
 @MainActor
 final class SharePlayCoordinator {
-    private let handoverViewModel: HandoverViewModel
     private let sharedCardState: SharedCardState
     private let replicator: SharedHandoverReplicator
 
     private var sessionController: SessionController?
     private var transport: (any SharePlayMessageTransport)?
     private var orbitUpdateCount: MessageUpdateCount?
-    private var dashboardUpdateCount: MessageUpdateCount?
     private var lastOrbitBroadcastTime = Date.distantPast
     private var isObservingSessions = false
 
@@ -31,12 +29,10 @@ final class SharePlayCoordinator {
     }
 
     init(
-        handoverViewModel: HandoverViewModel,
         sharedCardState: SharedCardState,
         replicator: SharedHandoverReplicator,
         transport: (any SharePlayMessageTransport)? = nil
     ) {
-        self.handoverViewModel = handoverViewModel
         self.sharedCardState = sharedCardState
         self.replicator = replicator
         self.transport = transport
@@ -190,53 +186,6 @@ final class SharePlayCoordinator {
         transport?.sendMessage(message)
     }
 
-    // MARK: - Local dashboard updates
-
-    @discardableResult
-    func moveDashboardSection(
-        _ dragged: SectionID,
-        toPositionOf destination: SectionID,
-        syncChanges: Bool
-    ) -> Bool {
-        guard handoverViewModel.moveSection(
-            dragged,
-            toPositionOf: destination
-        ) else {
-            return false
-        }
-
-        if syncChanges {
-            broadcastDashboardAction(
-                .sectionOrder(handoverViewModel.sectionOrder)
-            )
-        }
-        return true
-    }
-
-    func selectPatient(id: String, syncChanges: Bool) {
-        selectPatientAndClearAbbreviations(id: id)
-
-        if syncChanges {
-            broadcastDashboardAction(.selectedPatient(id: id))
-        }
-    }
-
-    private func broadcastDashboardAction(_ action: DashboardAction) {
-        guard let updateCount = nextUpdateCount(
-            after: dashboardUpdateCount
-        ) else {
-            return
-        }
-
-        dashboardUpdateCount = updateCount
-        let message = DashboardSyncMessage(
-            action: action,
-            updateCount: updateCount
-        )
-
-        transport?.sendMessage(message)
-    }
-
     private func nextUpdateCount(
         after existingCount: MessageUpdateCount?
     ) -> MessageUpdateCount? {
@@ -286,45 +235,15 @@ final class SharePlayCoordinator {
         recordClearedAbbreviations(from: previousSelections)
     }
 
-    func handleRemoteDashboardMessage(_ message: DashboardSyncMessage) {
-        if let existingCount = dashboardUpdateCount,
-           message.updateCount <= existingCount {
-            return
-        }
-
-        dashboardUpdateCount = message.updateCount
-
-        switch message.action {
-        case .state(let dashboardState):
-            let previousPatientID = handoverViewModel.patient?.id
-            let previousSelections = sharedCardState.abbreviationSelections
-            handoverViewModel.applyDashboardState(dashboardState)
-            clearAbbreviationsIfPatientChanged(from: previousPatientID)
-            recordClearedAbbreviations(from: previousSelections)
-        case .selectedPatient(let id):
-            selectPatientAndClearAbbreviations(id: id)
-        case .sectionOrder(let sectionOrder):
-            handoverViewModel.applySectionOrder(sectionOrder)
-        }
-    }
-
     func applyCatchUpMessage(_ message: CatchUpMessage) {
         let orbitSnapshot = mergedOrbitSnapshot(with: message)
-        let changesPatient = message.dashboardState.selectedPatientID.map {
-            $0 != handoverViewModel.patient?.id
-        } ?? false
         let previousSelections = sharedCardState.abbreviationSelections
-        handoverViewModel.applyDashboardState(message.dashboardState)
         sharedCardState.setOrbitState(
             orbitSnapshot.state,
             animationDuration: 0.35
         )
-        if changesPatient {
-            sharedCardState.clearAbbreviationSelections()
-        }
         recordClearedAbbreviations(from: previousSelections)
         orbitUpdateCount = orbitSnapshot.updateCount
-        dashboardUpdateCount = message.dashboardUpdateCount
     }
 
     func sendCatchUp(to participantIDs: Set<Participant.ID>) {
@@ -338,12 +257,7 @@ final class SharePlayCoordinator {
     func makeCatchUpMessage() -> CatchUpMessage {
         CatchUpMessage(
             orbitState: sharedCardState.orbitState,
-            orbitUpdateCount: orbitUpdateCount,
-            dashboardState: DashboardState(
-                selectedPatientID: handoverViewModel.patient?.id,
-                sectionOrder: handoverViewModel.sectionOrder
-            ),
-            dashboardUpdateCount: dashboardUpdateCount
+            orbitUpdateCount: orbitUpdateCount
         )
     }
 
@@ -360,21 +274,5 @@ final class SharePlayCoordinator {
             return (sharedCardState.orbitState, orbitUpdateCount)
         }
         return (message.orbitState, incomingCount)
-    }
-
-    private func selectPatientAndClearAbbreviations(id: String) {
-        let previousPatientID = handoverViewModel.patient?.id
-        let previousSelections = sharedCardState.abbreviationSelections
-        handoverViewModel.selectPatient(byID: id)
-        clearAbbreviationsIfPatientChanged(from: previousPatientID)
-        recordClearedAbbreviations(from: previousSelections)
-    }
-
-    private func clearAbbreviationsIfPatientChanged(
-        from previousPatientID: String?
-    ) {
-        if handoverViewModel.patient?.id != previousPatientID {
-            sharedCardState.clearAbbreviationSelections()
-        }
     }
 }

@@ -36,11 +36,11 @@ final class AppModel {
         self.handoverViewModel = handoverViewModel
         self.sharedCardState = sharedCardState
         let sharedHandoverReplicator = SharedHandoverReplicator(
-            sharedCardState: sharedCardState
+            sharedCardState: sharedCardState,
+            handoverViewModel: handoverViewModel
         )
         self.sharedHandoverReplicator = sharedHandoverReplicator
         let sharePlayCoordinator = SharePlayCoordinator(
-            handoverViewModel: handoverViewModel,
             sharedCardState: sharedCardState,
             replicator: sharedHandoverReplicator
         )
@@ -171,20 +171,10 @@ final class AppModel {
     @discardableResult
     func moveDashboardSection(
         _ dragged: SectionID,
-        toPositionOf destination: SectionID,
-        syncChanges: Bool
+        toPositionOf destination: SectionID
     ) -> Bool {
-        sharePlayCoordinator.moveDashboardSection(
-            dragged,
-            toPositionOf: destination,
-            syncChanges: syncChanges
-        )
-    }
-
-    func selectPatient(id: String, syncChanges: Bool) {
-        sharePlayCoordinator.selectPatient(
-            id: id,
-            syncChanges: syncChanges
+        sharedHandoverReplicator.transact(
+            .moveDashboardSection(dragged, toPositionOf: destination)
         )
     }
 }

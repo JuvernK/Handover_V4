@@ -29,8 +29,7 @@ struct DraggableDashboardCard: View {
 
                 return appModel.moveDashboardSection(
                     draggedSection,
-                    toPositionOf: sectionID,
-                    syncChanges: true
+                    toPositionOf: sectionID
                 )
             } isTargeted: { isTargeted = $0 }
     }

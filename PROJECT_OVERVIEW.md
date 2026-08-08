@@ -21,7 +21,9 @@ Build and agent-working instructions belong in `AGENTS.md`.
   - Immersive space state.
   - `HandoverViewModel` for dashboard state.
   - `SharedCardState` for spatial-card state.
-  - `SharePlayCoordinator` for synchronized updates.
+  - `SharedHandoverReplicator` for synchronized Shared Handover State.
+  - `SharePlayCoordinator` for SharePlay lifecycle and the remaining Orbit
+    transport path.
 
 - `SharedState/SharedCardState.swift` owns spatial-card presentation state independently of SharePlay.
   - Expanded/collapsed state for each card.
@@ -32,16 +34,16 @@ Build and agent-working instructions belong in `AGENTS.md`.
 - `SharedState/OrbitController.swift` owns Orbit enablement, focus, snapping,
   navigation, and delayed expansion behind one intent-driven interface.
 - `SharedState/SharedHandoverReplicator.swift` owns versioned Shared Handover
-  State facts, disconnected replay, and the merge policy. Card expansion and
-  Shared Abbreviation Selection already use its transaction interface; the
-  remaining synchronized facts migrate in the dependent tickets.
+  State facts, disconnected replay, and the merge policy. Card expansion,
+  position, Shared Abbreviation Selection, and dashboard order use its
+  transaction interface; Orbit migrates in the dependent ticket.
 
 - `ViewModels/HandoverViewModel.swift` is the dashboard data source.
   - Loads patients through an injected `PatientLoading` dependency.
-  - Tracks the selected patient.
+  - Selects the fixed Study Patient once from AppModel's initial bed number.
   - Tracks dashboard section order.
   - Exposes patient-loading failures for the dashboard empty state.
-  - Applies remote dashboard state from SharePlay.
+  - Applies replicated dashboard section order.
 
 - `Data/PatientData.json` is the static ICU patient dataset.
   - Decoded by `Data/PatientDataLoader.swift`, the production implementation of `PatientLoading`.
@@ -61,7 +63,9 @@ Build and agent-working instructions belong in `AGENTS.md`.
   - `DashboardView.swift` composes the patient header, reorderable clinical cards, fixed Systems Assessment panel, dashboard controls, and empty state.
   - `PatientHeaderView.swift` renders pinned patient identity/basic information.
   - `DashboardFlexLayout.swift` implements the custom wrapping layout and multi-column card spans.
-  - `DraggableDashboardCard.swift` adds drag-and-drop section reordering and routes local layout changes through the app model to `SharePlayCoordinator`.
+  - `DraggableDashboardCard.swift` adds drag-and-drop section reordering and
+    routes local layout changes through the app model to
+    `SharedHandoverReplicator`.
   - `DashboardControls.swift` contains the SharePlay and immersive-space controls shown in the dashboard ornament.
   - `EmptyDashboardState.swift` renders the fallback UI when no patient is selected.
 
@@ -85,12 +89,12 @@ Build and agent-working instructions belong in `AGENTS.md`.
 
 - `Handover_V4/SharePlay/`
   - GroupActivities / SharePlay session code.
-  - `SharePlayCoordinator.swift` manages activation, active-session lifecycle,
-    update counters, local broadcasts, remote state application, and late-join
-    snapshots. It distributes accepted Orbit state but does not calculate Orbit
-    transitions.
+  - `SharePlayCoordinator.swift` manages activation and active-session
+    lifecycle, plus the temporary legacy Orbit broadcast and late-join path. It
+    distributes accepted Orbit state but does not calculate Orbit transitions.
   - `SessionController.swift` manages one active group session, configures the spatial coordinator, observes messages, and provides message transport.
-  - `SharePlayMessagingType.swift` defines card sync, dashboard sync, update counters, and catch-up messages.
+  - `SharePlayMessagingType.swift` temporarily defines only Orbit update counts
+    and catch-up messages.
 
 - `Packages/RealityKitContent/`
   - Local Swift package containing RealityKit / Reality Composer Pro content.
@@ -116,7 +120,10 @@ The Systems Assessment card is special in `DashboardView`: it is kept in a fixed
 - `DashboardFlexLayout` measures and positions the reorderable cards. The Vitals card spans two columns when enough space is available; other cards occupy one column.
 - `DraggableDashboardCard` is both the drag source and drop target for a section. Dropping one section onto another moves it into the destination section's current position.
 - `DashboardControls` starts or ends SharePlay and provides entry to the immersive space.
-- `HandoverViewModel.sectionOrder` remains the source of truth for dashboard ordering. `SharePlayCoordinator` synchronizes reorder operations with other participants.
+- `HandoverViewModel.sectionOrder` remains the source of truth for dashboard
+  ordering. `SharedHandoverReplicator` synchronizes reorder operations with
+  other participants. The Study Patient is chosen only by AppModel's initial
+  bed number and is not a runtime or synchronized value.
 
 ## Immersive Implementation
 
@@ -200,16 +207,16 @@ is centered in `SharePlayCoordinator` and `SessionController`.
 
 - Ownership:
   - `SharedCardState` owns spatial-card values without depending on GroupActivities.
-  - `HandoverViewModel` owns selected-patient and dashboard-order values.
+  - `HandoverViewModel` owns the fixed Study Patient and dashboard-order value.
   - `SharedHandoverReplicator` owns versioning and convergence for card
-    expansion, position, and Shared Abbreviation Selection facts.
-  - `SharePlayCoordinator` temporarily owns the remaining Orbit and dashboard
-    synchronization while those values migrate to the replicator.
+    expansion, position, Shared Abbreviation Selection, and dashboard-order
+    facts.
+  - `SharePlayCoordinator` temporarily owns the remaining Orbit synchronization
+    while that value migrates to the replicator.
   - `SessionController` transports messages for one concrete `GroupSession`.
 
 - Dashboard sync:
-  - Selected patient.
-  - Dashboard section order.
+  - Dashboard section order. The fixed Study Patient is excluded.
 
 - Spatial card sync:
   - Expanded/collapsed state.
@@ -226,8 +233,8 @@ is centered in `SharePlayCoordinator` and `SessionController`.
 
 - Late joiners:
   - `ReplicationEnvelope` sends current card facts through the same merge path
-    used for live changes. `CatchUpMessage` temporarily carries only Orbit and
-    dashboard state until those values migrate.
+    used for live changes. `CatchUpMessage` temporarily carries only Orbit state
+    until that value migrates.
 
 ## Useful Gotchas
 

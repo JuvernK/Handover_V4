@@ -8,9 +8,9 @@
 //
 //  Responsibilities:
 //    - Load patients from PatientData.json
-//    - Track which patient is currently displayed via appmodel.patient
+//    - Select the study patient once from AppModel's initial bed number
 //    - Track the order of dashboard sections
-//    - Provide hooks for SharePlay to update state remotely
+//    - Apply replicated dashboard order
 //
 
 import Foundation
@@ -65,18 +65,11 @@ final class HandoverViewModel {
     
     /// Sets the displayed patient by selected bed number.
     /// Falls back to the first patient if the bed number isn't found.
-    func selectPatient(byBed bedNumber: String) {
+    private func selectPatient(byBed bedNumber: String) {
         if let match = patients.first(where: { $0.bedNumber == bedNumber }) {
             patient = match
         } else {
             patient = patients.first
-        }
-    }
-
-    /// Sets the displayed patient by ID when that patient exists.
-    func selectPatient(byID id: String) {
-        if let match = patients.first(where: { $0.id == id }) {
-            patient = match
         }
     }
 
@@ -121,13 +114,5 @@ final class HandoverViewModel {
         }
 
         sectionOrder = resolvedOrder
-    }
-
-    func applyDashboardState(_ dashboardState: DashboardState) {
-        if let selectedPatientID = dashboardState.selectedPatientID {
-            selectPatient(byID: selectedPatientID)
-        }
-
-        applySectionOrder(dashboardState.sectionOrder)
     }
 }

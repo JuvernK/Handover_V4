@@ -3,6 +3,7 @@ import Foundation
 enum SharedHandoverTransaction {
     case setCardExpansion(ClinicalCardID, isExpanded: Bool)
     case moveCard(ClinicalCardID, to: SIMD3<Float>)
+    case moveDashboardSection(SectionID, toPositionOf: SectionID)
     case toggleAbbreviation(
         AbbreviationSelection,
         in: ClinicalCardID
@@ -14,12 +15,14 @@ enum ReplicationFactID: Codable, Hashable {
     case cardExpansion(ClinicalCardID)
     case cardPosition(ClinicalCardID)
     case abbreviationSelection(ClinicalCardID)
+    case dashboardOrder
 }
 
 enum ReplicationFactValue: Codable, Equatable {
     case cardExpansion(Bool)
     case cardPosition(SIMD3<Float>)
     case abbreviationSelection(AbbreviationSelection?)
+    case dashboardOrder([SectionID])
 }
 
 struct ReplicationVersion: Codable, Hashable, Comparable {
@@ -58,16 +61,19 @@ protocol ReplicationTransport: AnyObject {
 final class SharedHandoverReplicator {
     private let participantID: UUID
     private let sharedCardState: SharedCardState
+    private let handoverViewModel: HandoverViewModel
     private var facts: [ReplicationFactID: VersionedReplicationFact] = [:]
     private var disconnectedChanges: Set<ReplicationFactID> = []
     private weak var transport: (any ReplicationTransport)?
 
     init(
         participantID: UUID = UUID(),
-        sharedCardState: SharedCardState
+        sharedCardState: SharedCardState,
+        handoverViewModel: HandoverViewModel
     ) {
         self.participantID = participantID
         self.sharedCardState = sharedCardState
+        self.handoverViewModel = handoverViewModel
     }
 
     @discardableResult
@@ -86,6 +92,20 @@ final class SharedHandoverReplicator {
                 makeFact(
                     id: .cardPosition(cardID),
                     value: .cardPosition(position)
+                )
+            ]
+
+        case .moveDashboardSection(let dragged, let destination):
+            guard handoverViewModel.moveSection(
+                dragged,
+                toPositionOf: destination
+            ) else {
+                return false
+            }
+            changedFacts = [
+                makeFact(
+                    id: .dashboardOrder,
+                    value: .dashboardOrder(handoverViewModel.sectionOrder)
                 )
             ]
 
@@ -204,6 +224,8 @@ final class SharedHandoverReplicator {
                  .cardPosition(let cardID),
                  .abbreviationSelection(let cardID):
                 affectedCards.insert(cardID)
+            case .dashboardOrder:
+                materializeDashboardOrder()
             }
         }
 
@@ -228,5 +250,13 @@ final class SharedHandoverReplicator {
             return
         }
         sharedCardState.setAbbreviationSelection(selection, for: cardID)
+    }
+
+    private func materializeDashboardOrder() {
+        guard let orderFact = facts[.dashboardOrder],
+              case .dashboardOrder(let order) = orderFact.value else {
+            return
+        }
+        handoverViewModel.applySectionOrder(order)
     }
 }

@@ -43,7 +43,6 @@ final class SessionController: SharePlayMessageTransport {
 
         observeReplicationMessages()
         observeOrbitMessages()
-        observeDashboardMessages()
         observeCatchUpMessages()
         observeActiveRemoteParticipants()
 
@@ -69,15 +68,6 @@ final class SessionController: SharePlayMessageTransport {
             ) {
                 guard let replicator else { return }
                 replicator.receive(message)
-            }
-        }
-    }
-
-    private func observeDashboardMessages() {
-        Task.immediate(name: "dashboard message observation") {
-            for await (message, _) in messenger.messages(of: DashboardSyncMessage.self) {
-                guard let coordinator else { return }
-                coordinator.handleRemoteDashboardMessage(message)
             }
         }
     }
@@ -133,11 +123,6 @@ final class SessionController: SharePlayMessageTransport {
     }
 
     // MARK: - Message transport
-
-    func sendMessage(_ message: DashboardSyncMessage) {
-        send(message, kind: "dashboard")
-    }
-
 
     func sendMessage(_ message: OrbitSyncMessage) {
         send(message, kind: "orbit")
