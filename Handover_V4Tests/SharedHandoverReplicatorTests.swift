@@ -149,6 +149,88 @@ struct SharedHandoverReplicatorTests {
         #expect(lateJoiner.state.abbreviationSelections[cardID] == selection)
     }
 
+    @Test
+    func localPositionAppliesImmediatelyAndSendsCanonicalFact() throws {
+        let participant = ReplicationParticipant(id: UUID(), connected: true)
+        let position = SIMD3<Float>(0.25, 1.1, -0.4)
+
+        participant.replicator.transact(.moveCard(cardID, to: position))
+
+        #expect(participant.state.positions[cardID] == position)
+        let fact = try #require(participant.transport.envelopes.first?.facts.first)
+        #expect(fact.id == .cardPosition(cardID))
+        #expect(fact.value == .cardPosition(position))
+    }
+
+    @Test
+    func moveAndCollapseConvergeWhenDeliveredInReverseOrder() {
+        let mover = ReplicationParticipant(id: UUID(), connected: true)
+        let collapser = ReplicationParticipant(id: UUID(), connected: true)
+        let receiver = ReplicationParticipant(id: UUID())
+        let position = SIMD3<Float>(-0.2, 0.8, 0.35)
+
+        mover.replicator.transact(.moveCard(cardID, to: position))
+        collapser.replicator.transact(
+            .setCardExpansion(cardID, isExpanded: false)
+        )
+
+        receiver.replicator.receive(collapser.transport.envelopes[0])
+        receiver.replicator.receive(mover.transport.envelopes[0])
+
+        #expect(receiver.state.positions[cardID] == position)
+        #expect(receiver.state.expansionStates[cardID] == false)
+    }
+
+    @Test
+    func staleDuplicateAndReversedPositionsAreRejected() {
+        let participant = ReplicationParticipant(id: UUID())
+        let writerID = UUID()
+        let oldPosition = SIMD3<Float>(0, 0, 0)
+        let latestPosition = SIMD3<Float>(1, 2, 3)
+        let latest = envelope(
+            id: .cardPosition(cardID),
+            value: .cardPosition(latestPosition),
+            count: 2,
+            participantID: writerID
+        )
+
+        participant.replicator.receive(latest)
+        participant.replicator.receive(latest)
+        participant.replicator.receive(
+            envelope(
+                id: .cardPosition(cardID),
+                value: .cardPosition(oldPosition),
+                count: 1,
+                participantID: writerID
+            )
+        )
+
+        #expect(participant.state.positions[cardID] == latestPosition)
+    }
+
+    @Test
+    func reconnectAndLateJoinSendOnlyLatestPosition() throws {
+        let source = ReplicationParticipant(id: UUID())
+        let lateJoiner = ReplicationParticipant(id: UUID())
+        let latestPosition = SIMD3<Float>(0.6, 0.7, -0.8)
+
+        source.replicator.transact(
+            .moveCard(cardID, to: SIMD3<Float>(0.1, 0.2, 0.3))
+        )
+        source.replicator.transact(.moveCard(cardID, to: latestPosition))
+        source.replicator.attach(source.transport)
+
+        let reconnect = try #require(source.transport.envelopes.first)
+        #expect(reconnect.facts.count == 1)
+        #expect(reconnect.facts[0].value == .cardPosition(latestPosition))
+        #expect(reconnect.facts[0].version.count == 2)
+
+        source.replicator.sendCurrentState(to: [lateJoiner.id])
+        let snapshot = try #require(source.transport.targetedEnvelopes.first)
+        lateJoiner.replicator.receive(snapshot)
+        #expect(lateJoiner.state.positions[cardID] == latestPosition)
+    }
+
     private func makeSelection(
         _ glossaryEntryID: String
     ) -> AbbreviationSelection {

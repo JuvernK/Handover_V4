@@ -18,7 +18,6 @@ final class SharePlayCoordinator {
 
     private var sessionController: SessionController?
     private var transport: (any SharePlayMessageTransport)?
-    private var cardUpdateCounts: [ClinicalCardID: MessageUpdateCount] = [:]
     private var orbitUpdateCount: MessageUpdateCount?
     private var dashboardUpdateCount: MessageUpdateCount?
     private var lastOrbitBroadcastTime = Date.distantPast
@@ -139,31 +138,11 @@ final class SharePlayCoordinator {
         position: SIMD3<Float>,
         syncChanges: Bool
     ) {
-        sharedCardState.setPosition(position, for: cardID)
-
         if syncChanges {
-            broadcastCardAction(.move(position: position), for: cardID)
+            replicator.transact(.moveCard(cardID, to: position))
+        } else {
+            sharedCardState.setPosition(position, for: cardID)
         }
-    }
-
-    private func broadcastCardAction(
-        _ action: CardAction,
-        for cardID: ClinicalCardID
-    ) {
-        guard let updateCount = nextUpdateCount(
-            after: cardUpdateCounts[cardID]
-        ) else {
-            return
-        }
-
-        cardUpdateCounts[cardID] = updateCount
-        let message = CardSyncMessage(
-            cardID: cardID,
-            action: action,
-            updateCount: updateCount
-        )
-
-        transport?.sendMessage(message)
     }
 
     // MARK: - Local abbreviation updates
@@ -292,16 +271,6 @@ final class SharePlayCoordinator {
 
     // MARK: - Remote updates
 
-    func handleRemoteCardMessage(_ message: CardSyncMessage) {
-        if let existingCount = cardUpdateCounts[message.cardID],
-           message.updateCount <= existingCount {
-            return
-        }
-
-        cardUpdateCounts[message.cardID] = message.updateCount
-        sharedCardState.apply(message.action, to: message.cardID)
-    }
-
     func handleRemoteOrbitMessage(_ message: OrbitSyncMessage) {
         if let existingCount = orbitUpdateCount,
            message.updateCount <= existingCount {
@@ -340,24 +309,20 @@ final class SharePlayCoordinator {
     }
 
     func applyCatchUpMessage(_ message: CatchUpMessage) {
-        let cardSnapshot = mergedCardSnapshot(with: message)
         let orbitSnapshot = mergedOrbitSnapshot(with: message)
         let changesPatient = message.dashboardState.selectedPatientID.map {
             $0 != handoverViewModel.patient?.id
         } ?? false
         let previousSelections = sharedCardState.abbreviationSelections
         handoverViewModel.applyDashboardState(message.dashboardState)
-        sharedCardState.replaceAll(
-            expansionStates: cardSnapshot.expansionStates,
-            positions: cardSnapshot.positions,
-            abbreviationSelections: sharedCardState.abbreviationSelections,
-            orbitState: orbitSnapshot.state
+        sharedCardState.setOrbitState(
+            orbitSnapshot.state,
+            animationDuration: 0.35
         )
         if changesPatient {
             sharedCardState.clearAbbreviationSelections()
         }
         recordClearedAbbreviations(from: previousSelections)
-        cardUpdateCounts = cardSnapshot.updateCounts
         orbitUpdateCount = orbitSnapshot.updateCount
         dashboardUpdateCount = message.dashboardUpdateCount
     }
@@ -372,9 +337,6 @@ final class SharePlayCoordinator {
 
     func makeCatchUpMessage() -> CatchUpMessage {
         CatchUpMessage(
-            allCardStates: sharedCardState.expansionStates,
-            allCardPositions: sharedCardState.positions,
-            cardUpdateCounts: cardUpdateCounts,
             orbitState: sharedCardState.orbitState,
             orbitUpdateCount: orbitUpdateCount,
             dashboardState: DashboardState(
@@ -383,42 +345,6 @@ final class SharePlayCoordinator {
             ),
             dashboardUpdateCount: dashboardUpdateCount
         )
-    }
-
-    private func mergedCardSnapshot(
-        with message: CatchUpMessage
-    ) -> (
-        expansionStates: [ClinicalCardID: Bool],
-        positions: [ClinicalCardID: SIMD3<Float>],
-        updateCounts: [ClinicalCardID: MessageUpdateCount]
-    ) {
-        var expansionStates = sharedCardState.expansionStates
-        var positions = sharedCardState.positions
-        var updateCounts = cardUpdateCounts
-
-        for (cardID, incomingCount) in message.cardUpdateCounts {
-            if let currentCount = updateCounts[cardID],
-               incomingCount <= currentCount {
-                continue
-            }
-
-            updateCounts[cardID] = incomingCount
-            expansionStates[cardID] = message.allCardStates[cardID]
-            positions[cardID] = message.allCardPositions[cardID]
-        }
-
-        for (cardID, isExpanded) in message.allCardStates
-        where updateCounts[cardID] == nil
-            && expansionStates[cardID] == nil {
-            expansionStates[cardID] = isExpanded
-        }
-        for (cardID, position) in message.allCardPositions
-        where updateCounts[cardID] == nil
-            && positions[cardID] == nil {
-            positions[cardID] = position
-        }
-
-        return (expansionStates, positions, updateCounts)
     }
 
     private func mergedOrbitSnapshot(

@@ -2,6 +2,7 @@ import Foundation
 
 enum SharedHandoverTransaction {
     case setCardExpansion(ClinicalCardID, isExpanded: Bool)
+    case moveCard(ClinicalCardID, to: SIMD3<Float>)
     case toggleAbbreviation(
         AbbreviationSelection,
         in: ClinicalCardID
@@ -11,11 +12,13 @@ enum SharedHandoverTransaction {
 
 enum ReplicationFactID: Codable, Hashable {
     case cardExpansion(ClinicalCardID)
+    case cardPosition(ClinicalCardID)
     case abbreviationSelection(ClinicalCardID)
 }
 
 enum ReplicationFactValue: Codable, Equatable {
     case cardExpansion(Bool)
+    case cardPosition(SIMD3<Float>)
     case abbreviationSelection(AbbreviationSelection?)
 }
 
@@ -77,6 +80,14 @@ final class SharedHandoverReplicator {
                 for: cardID,
                 isExpanded: isExpanded
             )
+
+        case .moveCard(let cardID, let position):
+            changedFacts = [
+                makeFact(
+                    id: .cardPosition(cardID),
+                    value: .cardPosition(position)
+                )
+            ]
 
         case .toggleAbbreviation(let selection, let cardID):
             guard sharedCardState.isCardExpanded(cardID) else {
@@ -190,6 +201,7 @@ final class SharedHandoverReplicator {
 
             switch incomingFact.id {
             case .cardExpansion(let cardID),
+                 .cardPosition(let cardID),
                  .abbreviationSelection(let cardID):
                 affectedCards.insert(cardID)
             }
@@ -204,6 +216,11 @@ final class SharedHandoverReplicator {
         if let expansionFact = facts[.cardExpansion(cardID)],
            case .cardExpansion(let isExpanded) = expansionFact.value {
             sharedCardState.setExpansionState(isExpanded, for: cardID)
+        }
+
+        if let positionFact = facts[.cardPosition(cardID)],
+           case .cardPosition(let position) = positionFact.value {
+            sharedCardState.setPosition(position, for: cardID)
         }
 
         guard let selectionFact = facts[.abbreviationSelection(cardID)],

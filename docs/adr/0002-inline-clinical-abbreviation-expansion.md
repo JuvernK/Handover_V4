@@ -80,13 +80,19 @@ The former dedicated message, counter, disconnected replay, and catch-up path
 have been removed; live, reconnect, and late-join delivery all use the same
 envelope merge while remaining independently ordered from other facts.
 
-Any participant may select or collapse an abbreviation. For concurrent abbreviation actions on the same card, the existing counter-plus-participant-tiebreak ordering provides deterministic last-action-wins behavior. Current selections and their update counts are included in `CatchUpMessage`, so a late joiner renders the same state.
+Any participant may select or collapse an abbreviation. Concurrent facts use
+the replication version plus participant-ID tiebreaker for deterministic
+last-action-wins behavior. Late joiners receive the latest selection fact in a
+normal `ReplicationEnvelope`.
 
 Card collapse dominates abbreviation selection:
 
 - Applying a local or remote collapse clears that card's selection.
-- An abbreviation selection received while its card is collapsed is ignored.
-- Catch-up state must not contain a selection for a collapsed card.
+- A newer selection fact received while its card is collapsed remains in the
+  ledger but is hidden from presentation; its version still rejects stale
+  selections.
+- A collapse publishes the expansion fact and a selection tombstone in one
+  envelope.
 
 Changing patient clears every abbreviation selection. If runtime patient switching and in-flight messages are supported later, the message envelope must identify the patient/handover so a delayed selection from the previous patient can be rejected. The current prototype selects its initial patient in `AppModel`, so this is a future-facing safety invariant.
 

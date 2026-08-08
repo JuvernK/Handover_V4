@@ -201,7 +201,10 @@ is centered in `SharePlayCoordinator` and `SessionController`.
 - Ownership:
   - `SharedCardState` owns spatial-card values without depending on GroupActivities.
   - `HandoverViewModel` owns selected-patient and dashboard-order values.
-  - `SharePlayCoordinator` owns synchronization metadata and applies local or remote changes to those state objects.
+  - `SharedHandoverReplicator` owns versioning and convergence for card
+    expansion, position, and Shared Abbreviation Selection facts.
+  - `SharePlayCoordinator` temporarily owns the remaining Orbit and dashboard
+    synchronization while those values migrate to the replicator.
   - `SessionController` transports messages for one concrete `GroupSession`.
 
 - Dashboard sync:
@@ -211,18 +214,20 @@ is centered in `SharePlayCoordinator` and `SessionController`.
 - Spatial card sync:
   - Expanded/collapsed state.
   - 3D card position.
-  - Shared Abbreviation Selections and independent per-card update counts.
+  - Expansion, 3D position, and Shared Abbreviation Selection are independently
+    versioned facts keyed by `ClinicalCardID`.
   - Orbit activation, rotation, focused card, and transient focus expansion.
   - Card state and messages are keyed by `ClinicalCardID`, so authored Reality
     Composer Pro names never cross the synchronization seam.
 
 - Conflict handling:
-  - `MessageUpdateCount` compares update count first, then participant ID as a deterministic tiebreaker.
+  - Replicated facts compare their version first, then participant ID as a
+    deterministic tiebreaker.
 
 - Late joiners:
-  - `CatchUpMessage` sends current card states, card positions, Shared
-    Abbreviation Selections, Orbit state, dashboard state, and their update
-    counts.
+  - `ReplicationEnvelope` sends current card facts through the same merge path
+    used for live changes. `CatchUpMessage` temporarily carries only Orbit and
+    dashboard state until those values migrate.
 
 ## Useful Gotchas
 

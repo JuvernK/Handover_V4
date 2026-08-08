@@ -100,30 +100,6 @@ final class SharedCardState {
         orbitState = state
     }
 
-    func apply(_ action: CardAction, to cardID: ClinicalCardID) {
-        switch action {
-        case .toggle(let isExpanded):
-            setExpansionState(isExpanded, for: cardID)
-        case .move(let position):
-            setPosition(position, for: cardID)
-        }
-    }
-
-    func replaceAll(
-        expansionStates: [ClinicalCardID: Bool],
-        positions: [ClinicalCardID: SIMD3<Float>],
-        abbreviationSelections: [ClinicalCardID: AbbreviationSelection],
-        orbitState: OrbitState
-    ) {
-        self.expansionStates = expansionStates
-        self.positions = positions
-        self.abbreviationSelections = [:]
-        setOrbitState(orbitState, animationDuration: 0.35)
-        self.abbreviationSelections = abbreviationSelections.filter {
-            isCardExpanded($0.key)
-        }
-    }
-
     func isCardExpanded(_ cardID: ClinicalCardID) -> Bool {
         if orbitState.isActive {
             return cardID == .basicInformation

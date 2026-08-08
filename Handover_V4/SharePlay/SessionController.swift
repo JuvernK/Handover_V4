@@ -41,7 +41,6 @@ final class SessionController: SharePlayMessageTransport {
         self.coordinator = coordinator
         self.replicator = replicator
 
-        observeCardMessages()
         observeReplicationMessages()
         observeOrbitMessages()
         observeDashboardMessages()
@@ -62,15 +61,6 @@ final class SessionController: SharePlayMessageTransport {
         session.localParticipant.id
     }
     // MARK: - Message observation
-
-    private func observeCardMessages() {
-        Task.immediate(name: "card message observation") {
-            for await (message, _) in messenger.messages(of: CardSyncMessage.self) {
-                guard let coordinator else { return }
-                coordinator.handleRemoteCardMessage(message)
-            }
-        }
-    }
 
     private func observeReplicationMessages() {
         Task.immediate(name: "replication envelope observation") {
@@ -143,10 +133,6 @@ final class SessionController: SharePlayMessageTransport {
     }
 
     // MARK: - Message transport
-
-    func sendMessage(_ message: CardSyncMessage) {
-        send(message, kind: "card")
-    }
 
     func sendMessage(_ message: DashboardSyncMessage) {
         send(message, kind: "dashboard")

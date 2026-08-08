@@ -7,8 +7,6 @@
 
 import Foundation
 import GroupActivities
-import UIKit
-import simd // Required for SIMD3
 
 
 /// A counter system to resolve conflicting message updates from different participants.
@@ -26,18 +24,6 @@ struct MessageUpdateCount: Codable, Hashable, Comparable {
             return String(describing: lhs.participant) < String(describing: rhs.participant)
         }
     }
-}
-
-enum CardAction: Codable {
-    case toggle(isExpanded: Bool)
-    case move(position: SIMD3<Float>)
-}
-
-/// Model to store message data of a person taps a card (toggle) or moves a card (drag).
-struct CardSyncMessage: Codable {
-    let cardID: ClinicalCardID
-    let action: CardAction
-    let updateCount: MessageUpdateCount
 }
 
 struct OrbitSyncMessage: Codable {
@@ -65,10 +51,6 @@ struct DashboardSyncMessage: Codable {
 
 /// Message sent to late joiners containing the complete current state
 struct CatchUpMessage: Codable {
-    // A dictionary storing the state of every card/
-    let allCardStates: [ClinicalCardID: Bool]
-    let allCardPositions: [ClinicalCardID: SIMD3<Float>]
-    let cardUpdateCounts: [ClinicalCardID: MessageUpdateCount]
     let orbitState: OrbitState
     let orbitUpdateCount: MessageUpdateCount?
     let dashboardState: DashboardState
