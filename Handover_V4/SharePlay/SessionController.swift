@@ -21,14 +21,11 @@ final class SessionController: SharePlayMessageTransport {
     /// Configures spatial behavior for the group immersive space.
     private let systemCoordinator: SystemCoordinator
     
-    /// The coordinator owns this controller and applies received messages.
-    private weak var coordinator: SharePlayCoordinator?
     private weak var replicator: SharedHandoverReplicator?
     
     /// Creates a session controller for the given group session.
     init?(
         _ groupSession: GroupSession<SharePlayTogether>,
-        coordinator: SharePlayCoordinator,
         replicator: SharedHandoverReplicator
     ) async {
         guard let groupSystemCoordinator = await groupSession.systemCoordinator else {
@@ -38,12 +35,9 @@ final class SessionController: SharePlayMessageTransport {
         session = groupSession
         messenger = GroupSessionMessenger(session: session, deliveryMode: .reliable)
         systemCoordinator = groupSystemCoordinator
-        self.coordinator = coordinator
         self.replicator = replicator
 
         observeReplicationMessages()
-        observeOrbitMessages()
-        observeCatchUpMessages()
         observeActiveRemoteParticipants()
 
         systemCoordinator.configuration.supportsGroupImmersiveSpace = true
@@ -56,9 +50,6 @@ final class SessionController: SharePlayMessageTransport {
         session.end()
     }
 
-    var localParticipantID: Participant.ID {
-        session.localParticipant.id
-    }
     // MARK: - Message observation
 
     private func observeReplicationMessages() {
@@ -72,24 +63,6 @@ final class SessionController: SharePlayMessageTransport {
         }
     }
 
-    private func observeOrbitMessages() {
-        Task.immediate(name: "orbit message observation") {
-            for await (message, _) in messenger.messages(of: OrbitSyncMessage.self) {
-                guard let coordinator else { return }
-                coordinator.handleRemoteOrbitMessage(message)
-            }
-        }
-    }
-    
-    private func observeCatchUpMessages() {
-        Task.immediate(name: "catch-up message observation") {
-            for await (message, _) in messenger.messages(of: CatchUpMessage.self) {
-                guard let coordinator else { return }
-                coordinator.applyCatchUpMessage(message)
-            }
-        }
-    }
-    
     private func observeActiveRemoteParticipants() {
         Task.immediate(name: "active participant observation") {
             var previousActiveParticipants = Set<Participant>()
@@ -110,11 +83,8 @@ final class SessionController: SharePlayMessageTransport {
                 let newActiveParticipants = currentActiveParticipants
                     .subtracting(previousActiveParticipants)
 
-                if !newActiveParticipants.isEmpty, let coordinator {
+                if !newActiveParticipants.isEmpty {
                     replicator?.sendCurrentState(
-                        to: Set(newActiveParticipants.map(\.id))
-                    )
-                    coordinator.sendCatchUp(
                         to: Set(newActiveParticipants.map(\.id))
                     )
                 }
@@ -123,10 +93,6 @@ final class SessionController: SharePlayMessageTransport {
     }
 
     // MARK: - Message transport
-
-    func sendMessage(_ message: OrbitSyncMessage) {
-        send(message, kind: "orbit")
-    }
 
     func send(_ envelope: ReplicationEnvelope) {
         send(envelope, kind: "replication")
@@ -141,17 +107,6 @@ final class SessionController: SharePlayMessageTransport {
         }
         guard !participants.isEmpty else { return }
         send(envelope, to: .only(participants), kind: "replication")
-    }
-
-    func sendMessage(
-        _ message: CatchUpMessage,
-        to participantIDs: Set<Participant.ID>
-    ) {
-        let participants = session.activeParticipants.filter {
-            participantIDs.contains($0.id)
-        }
-        guard !participants.isEmpty else { return }
-        send(message, to: .only(participants), kind: "catch-up")
     }
 
     private func send<Message: Codable>(

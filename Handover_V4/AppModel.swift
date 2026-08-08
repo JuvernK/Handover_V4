@@ -50,7 +50,9 @@ final class AppModel {
             orderedCardNames: {
                 handoverViewModel.sectionOrder.map(\.rawValue)
             },
-            apply: sharePlayCoordinator.applyOrbitTransition
+            apply: { transition in
+                sharedHandoverReplicator.transact(.setOrbit(transition))
+            }
         )
         sharePlayCoordinator.startObservingSessions()
     }

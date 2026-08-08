@@ -302,6 +302,117 @@ struct SharedHandoverReplicatorTests {
         #expect(lateJoiner.viewModel.sectionOrder == latestOrder)
     }
 
+    @Test
+    func transientOrbitAppliesImmediatelyAndCoalescesLatestFact() throws {
+        let scheduler = ManualReplicationScheduler()
+        let participant = ReplicationParticipant(
+            id: UUID(),
+            connected: true,
+            scheduler: scheduler
+        )
+        let first = orbitState(rotation: 0.2, focused: "vitals")
+        let latest = orbitState(rotation: 0.4, focused: "plan")
+
+        participant.replicator.transact(
+            .setOrbit(transition(first, isFinal: false))
+        )
+        participant.replicator.transact(
+            .setOrbit(transition(latest, isFinal: false))
+        )
+
+        #expect(participant.state.orbitState == latest)
+        #expect(participant.transport.envelopes.isEmpty)
+        scheduler.runAll()
+
+        let envelope = try #require(participant.transport.envelopes.first)
+        #expect(envelope.facts.count == 1)
+        #expect(envelope.facts[0].value == .orbit(latest, isFinal: false))
+        #expect(envelope.facts[0].version.count == 2)
+    }
+
+    @Test
+    func finalOrbitCancelsPendingSendAndTravelsImmediately() throws {
+        let scheduler = ManualReplicationScheduler()
+        let participant = ReplicationParticipant(
+            id: UUID(),
+            connected: true,
+            scheduler: scheduler
+        )
+        let transient = orbitState(rotation: 0.3, focused: "vitals")
+        let settled = orbitState(rotation: 0.5, focused: "plan")
+
+        participant.replicator.transact(
+            .setOrbit(transition(transient, isFinal: false))
+        )
+        participant.replicator.transact(
+            .setOrbit(transition(settled, isFinal: true))
+        )
+
+        let envelope = try #require(participant.transport.envelopes.first)
+        #expect(envelope.facts.count == 1)
+        #expect(envelope.facts[0].value == .orbit(settled, isFinal: true))
+        #expect(scheduler.cancelledActionCount == 1)
+        scheduler.runAll()
+        #expect(participant.transport.envelopes.count == 1)
+    }
+
+    @Test
+    func orbitAndSelectionTombstoneTravelAtomically() throws {
+        let participant = ReplicationParticipant(id: UUID(), connected: true)
+        participant.replicator.transact(
+            .toggleAbbreviation(makeSelection("af"), in: cardID)
+        )
+        participant.transport.envelopes.removeAll()
+        let active = orbitState(rotation: 0, focused: "vitals")
+
+        participant.replicator.transact(
+            .setOrbit(transition(active, isFinal: true))
+        )
+
+        let envelope = try #require(participant.transport.envelopes.first)
+        #expect(envelope.facts.count == 2)
+        #expect(
+            envelope.facts.contains {
+                $0.value == .abbreviationSelection(nil)
+            }
+        )
+        #expect(participant.state.abbreviationSelections[cardID] == nil)
+    }
+
+    @Test
+    func staleReversedReconnectAndLateJoinOrbitConverge() throws {
+        let writerID = UUID()
+        let source = ReplicationParticipant(id: writerID)
+        let receiver = ReplicationParticipant(id: UUID())
+        let lateJoiner = ReplicationParticipant(id: UUID())
+        let older = orbitState(rotation: 0.2, focused: "vitals")
+        let latest = orbitState(rotation: 0.8, focused: "labs")
+
+        source.replicator.transact(
+            .setOrbit(transition(older, isFinal: false))
+        )
+        source.replicator.transact(
+            .setOrbit(transition(latest, isFinal: true))
+        )
+        source.replicator.attach(source.transport)
+        let reconnect = try #require(source.transport.envelopes.first)
+        receiver.replicator.receive(reconnect)
+        receiver.replicator.receive(
+            envelope(
+                id: .orbit,
+                value: .orbit(older, isFinal: false),
+                count: 1,
+                participantID: writerID
+            )
+        )
+        #expect(receiver.state.orbitState == latest)
+
+        source.replicator.sendCurrentState(to: [lateJoiner.id])
+        let snapshot = try #require(source.transport.targetedEnvelopes.first)
+        lateJoiner.replicator.receive(snapshot)
+        #expect(lateJoiner.state.orbitState == latest)
+    }
+
     private func makeSelection(
         _ glossaryEntryID: String
     ) -> AbbreviationSelection {
@@ -309,6 +420,29 @@ struct SharedHandoverReplicatorTests {
             textID: "plan.item.task",
             glossaryEntryID: glossaryEntryID,
             occurrenceIndex: 0
+        )
+    }
+
+    private func orbitState(
+        rotation: Float,
+        focused: String
+    ) -> OrbitState {
+        OrbitState(
+            interactionMode: .orbit,
+            rotation: rotation,
+            focusedCardName: focused,
+            expandedCardName: nil
+        )
+    }
+
+    private func transition(
+        _ state: OrbitState,
+        isFinal: Bool
+    ) -> OrbitTransition {
+        OrbitTransition(
+            state: state,
+            animationDuration: isFinal ? 0.22 : 0,
+            isFinal: isFinal
         )
     }
 
@@ -341,7 +475,11 @@ private final class ReplicationParticipant {
     let transport = RecordingReplicationTransport()
     let replicator: SharedHandoverReplicator
 
-    init(id: UUID, connected: Bool = false) {
+    init(
+        id: UUID,
+        connected: Bool = false,
+        scheduler: (any OrbitScheduling)? = nil
+    ) {
         self.id = id
         let viewModel = HandoverViewModel(
             initialBedNumber: "BED-03",
@@ -351,11 +489,56 @@ private final class ReplicationParticipant {
         replicator = SharedHandoverReplicator(
             participantID: id,
             sharedCardState: state,
-            handoverViewModel: viewModel
+            handoverViewModel: viewModel,
+            scheduler: scheduler
         )
         if connected {
             replicator.attach(transport)
         }
+    }
+}
+
+@MainActor
+private final class ManualReplicationScheduler: OrbitScheduling {
+    private var actions: [ManualReplicationScheduledAction] = []
+    private var nextActionIndex = 0
+
+    var cancelledActionCount: Int {
+        actions.count(where: \.isCancelled)
+    }
+
+    func schedule(
+        after delay: TimeInterval,
+        action: @escaping @MainActor () -> Void
+    ) -> any OrbitScheduledAction {
+        let scheduled = ManualReplicationScheduledAction(action: action)
+        actions.append(scheduled)
+        return scheduled
+    }
+
+    func runAll() {
+        let pending = actions.dropFirst(nextActionIndex)
+        nextActionIndex = actions.count
+        pending.forEach { $0.run() }
+    }
+}
+
+@MainActor
+private final class ManualReplicationScheduledAction: OrbitScheduledAction {
+    private let action: @MainActor () -> Void
+    private(set) var isCancelled = false
+
+    init(action: @escaping @MainActor () -> Void) {
+        self.action = action
+    }
+
+    func cancel() {
+        isCancelled = true
+    }
+
+    func run() {
+        guard !isCancelled else { return }
+        action()
     }
 }
 

@@ -22,8 +22,7 @@ Build and agent-working instructions belong in `AGENTS.md`.
   - `HandoverViewModel` for dashboard state.
   - `SharedCardState` for spatial-card state.
   - `SharedHandoverReplicator` for synchronized Shared Handover State.
-  - `SharePlayCoordinator` for SharePlay lifecycle and the remaining Orbit
-    transport path.
+  - `SharePlayCoordinator` for SharePlay lifecycle.
 
 - `SharedState/SharedCardState.swift` owns spatial-card presentation state independently of SharePlay.
   - Expanded/collapsed state for each card.
@@ -35,8 +34,9 @@ Build and agent-working instructions belong in `AGENTS.md`.
   navigation, and delayed expansion behind one intent-driven interface.
 - `SharedState/SharedHandoverReplicator.swift` owns versioned Shared Handover
   State facts, disconnected replay, and the merge policy. Card expansion,
-  position, Shared Abbreviation Selection, and dashboard order use its
-  transaction interface; Orbit migrates in the dependent ticket.
+  position, Shared Abbreviation Selection, dashboard order, and Orbit use its
+  transaction interface. Transient Orbit changes are coalesced behind an
+  internal scheduling seam; settled state is sent immediately.
 
 - `ViewModels/HandoverViewModel.swift` is the dashboard data source.
   - Loads patients through an injected `PatientLoading` dependency.
@@ -90,11 +90,10 @@ Build and agent-working instructions belong in `AGENTS.md`.
 - `Handover_V4/SharePlay/`
   - GroupActivities / SharePlay session code.
   - `SharePlayCoordinator.swift` manages activation and active-session
-    lifecycle, plus the temporary legacy Orbit broadcast and late-join path. It
-    distributes accepted Orbit state but does not calculate Orbit transitions.
+    lifecycle.
   - `SessionController.swift` manages one active group session, configures the spatial coordinator, observes messages, and provides message transport.
-  - `SharePlayMessagingType.swift` temporarily defines only Orbit update counts
-    and catch-up messages.
+  - `ReplicationEnvelope` is the only message observed or sent by the session
+    transport.
 
 - `Packages/RealityKitContent/`
   - Local Swift package containing RealityKit / Reality Composer Pro content.
@@ -209,10 +208,9 @@ is centered in `SharePlayCoordinator` and `SessionController`.
   - `SharedCardState` owns spatial-card values without depending on GroupActivities.
   - `HandoverViewModel` owns the fixed Study Patient and dashboard-order value.
   - `SharedHandoverReplicator` owns versioning and convergence for card
-    expansion, position, Shared Abbreviation Selection, and dashboard-order
-    facts.
-  - `SharePlayCoordinator` temporarily owns the remaining Orbit synchronization
-    while that value migrates to the replicator.
+    expansion, position, Shared Abbreviation Selection, dashboard order, and
+    atomic Orbit facts.
+  - `SharePlayCoordinator` owns SharePlay lifecycle, not domain transitions.
   - `SessionController` transports messages for one concrete `GroupSession`.
 
 - Dashboard sync:
@@ -223,7 +221,8 @@ is centered in `SharePlayCoordinator` and `SessionController`.
   - 3D card position.
   - Expansion, 3D position, and Shared Abbreviation Selection are independently
     versioned facts keyed by `ClinicalCardID`.
-  - Orbit activation, rotation, focused card, and transient focus expansion.
+  - Orbit activation, rotation, focused card, and transient focus expansion as
+    one atomic fact.
   - Card state and messages are keyed by `ClinicalCardID`, so authored Reality
     Composer Pro names never cross the synchronization seam.
 
@@ -232,9 +231,8 @@ is centered in `SharePlayCoordinator` and `SessionController`.
     deterministic tiebreaker.
 
 - Late joiners:
-  - `ReplicationEnvelope` sends current card facts through the same merge path
-    used for live changes. `CatchUpMessage` temporarily carries only Orbit state
-    until that value migrates.
+  - `ReplicationEnvelope` sends current facts through the same merge path used
+    for live changes; there is no separate catch-up message or merge policy.
 
 ## Useful Gotchas
 

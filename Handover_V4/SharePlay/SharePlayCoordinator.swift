@@ -17,8 +17,6 @@ final class SharePlayCoordinator {
 
     private var sessionController: SessionController?
     private var transport: (any SharePlayMessageTransport)?
-    private var orbitUpdateCount: MessageUpdateCount?
-    private var lastOrbitBroadcastTime = Date.distantPast
     private var isObservingSessions = false
 
     private(set) var isActivating = false
@@ -84,7 +82,6 @@ final class SharePlayCoordinator {
         for await session in SharePlayTogether.sessions() {
             guard let controller = await SessionController(
                 session,
-                coordinator: self,
                 replicator: replicator
             ) else {
                 continue
@@ -150,55 +147,6 @@ final class SharePlayCoordinator {
         replicator.transact(.toggleAbbreviation(selection, in: cardID))
     }
 
-    // MARK: - Local orbit updates
-
-    func applyOrbitTransition(_ transition: OrbitTransition) {
-        let previousSelections = sharedCardState.abbreviationSelections
-        sharedCardState.setOrbitState(
-            transition.state,
-            animationDuration: transition.animationDuration
-        )
-        recordClearedAbbreviations(from: previousSelections)
-
-        let now = Date()
-        guard transition.isFinal
-                || now.timeIntervalSince(lastOrbitBroadcastTime) >= 0.05 else {
-            return
-        }
-        lastOrbitBroadcastTime = now
-        broadcastOrbitState(
-            transition.state,
-            isFinal: transition.isFinal
-        )
-    }
-
-    private func broadcastOrbitState(_ state: OrbitState, isFinal: Bool) {
-        guard let updateCount = nextUpdateCount(after: orbitUpdateCount) else {
-            return
-        }
-
-        orbitUpdateCount = updateCount
-        let message = OrbitSyncMessage(
-            state: state,
-            updateCount: updateCount,
-            isFinal: isFinal
-        )
-        transport?.sendMessage(message)
-    }
-
-    private func nextUpdateCount(
-        after existingCount: MessageUpdateCount?
-    ) -> MessageUpdateCount? {
-        guard let participantID = transport?.localParticipantID else {
-            return nil
-        }
-
-        return MessageUpdateCount(
-            count: (existingCount?.count ?? 0) + 1,
-            participant: participantID
-        )
-    }
-
     func attachTransport(_ transport: any SharePlayMessageTransport) {
         self.transport = transport
         replicator.attach(transport)
@@ -209,70 +157,4 @@ final class SharePlayCoordinator {
         replicator.detach()
     }
 
-    private func recordClearedAbbreviations(
-        from previousSelections: [ClinicalCardID: AbbreviationSelection]
-    ) {
-        let clearedCardIDs = Set(previousSelections.keys).subtracting(
-            sharedCardState.abbreviationSelections.keys
-        )
-        replicator.transact(.clearAbbreviations(clearedCardIDs))
-    }
-
-    // MARK: - Remote updates
-
-    func handleRemoteOrbitMessage(_ message: OrbitSyncMessage) {
-        if let existingCount = orbitUpdateCount,
-           message.updateCount <= existingCount {
-            return
-        }
-
-        orbitUpdateCount = message.updateCount
-        let previousSelections = sharedCardState.abbreviationSelections
-        sharedCardState.setOrbitState(
-            message.state,
-            animationDuration: message.isFinal ? 0.22 : 0.08
-        )
-        recordClearedAbbreviations(from: previousSelections)
-    }
-
-    func applyCatchUpMessage(_ message: CatchUpMessage) {
-        let orbitSnapshot = mergedOrbitSnapshot(with: message)
-        let previousSelections = sharedCardState.abbreviationSelections
-        sharedCardState.setOrbitState(
-            orbitSnapshot.state,
-            animationDuration: 0.35
-        )
-        recordClearedAbbreviations(from: previousSelections)
-        orbitUpdateCount = orbitSnapshot.updateCount
-    }
-
-    func sendCatchUp(to participantIDs: Set<Participant.ID>) {
-        guard !participantIDs.isEmpty else { return }
-        transport?.sendMessage(
-            makeCatchUpMessage(),
-            to: participantIDs
-        )
-    }
-
-    func makeCatchUpMessage() -> CatchUpMessage {
-        CatchUpMessage(
-            orbitState: sharedCardState.orbitState,
-            orbitUpdateCount: orbitUpdateCount
-        )
-    }
-
-    private func mergedOrbitSnapshot(
-        with message: CatchUpMessage
-    ) -> (state: OrbitState, updateCount: MessageUpdateCount?) {
-        guard let incomingCount = message.orbitUpdateCount else {
-            return orbitUpdateCount == nil
-                ? (message.orbitState, nil)
-                : (sharedCardState.orbitState, orbitUpdateCount)
-        }
-        if let currentCount = orbitUpdateCount,
-           incomingCount <= currentCount {
-            return (sharedCardState.orbitState, orbitUpdateCount)
-        }
-        return (message.orbitState, incomingCount)
-    }
 }
