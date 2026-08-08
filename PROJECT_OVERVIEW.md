@@ -24,6 +24,8 @@ Build and agent-working instructions belong in `AGENTS.md`.
   - `SharePlayCoordinator` for synchronized updates.
 
 - `SharedState/SharedCardState.swift` owns spatial-card presentation state independently of SharePlay.
+- `SharedState/OrbitController.swift` owns Orbit enablement, focus, snapping,
+  navigation, and delayed expansion behind one intent-driven interface.
   - Expanded/collapsed state for each card.
   - 3D position for each card.
   - Zero-or-one inline clinical abbreviation selection for each card.
@@ -79,7 +81,10 @@ Build and agent-working instructions belong in `AGENTS.md`.
 
 - `Handover_V4/SharePlay/`
   - GroupActivities / SharePlay session code.
-  - `SharePlayCoordinator.swift` manages activation, active-session lifecycle, update counters, local broadcasts, remote state application, and late-join snapshots.
+  - `SharePlayCoordinator.swift` manages activation, active-session lifecycle,
+    update counters, local broadcasts, remote state application, and late-join
+    snapshots. It distributes accepted Orbit state but does not calculate Orbit
+    transitions.
   - `SessionController.swift` manages one active group session, configures the spatial coordinator, observes messages, and provides message transport.
   - `SharePlayMessagingType.swift` defines card sync, dashboard sync, update counters, and catch-up messages.
 

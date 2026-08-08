@@ -23,6 +23,7 @@ final class AppModel {
     let handoverViewModel: HandoverViewModel
     let sharedCardState: SharedCardState
     let sharePlayCoordinator: SharePlayCoordinator
+    let orbitController: OrbitController
     var orbitGestureWorldToLocal = matrix_identity_float4x4
 
     init(initialBedNumber: String = "BED-03") {
@@ -33,9 +34,17 @@ final class AppModel {
 
         self.handoverViewModel = handoverViewModel
         self.sharedCardState = sharedCardState
-        sharePlayCoordinator = SharePlayCoordinator(
+        let sharePlayCoordinator = SharePlayCoordinator(
             handoverViewModel: handoverViewModel,
             sharedCardState: sharedCardState
+        )
+        self.sharePlayCoordinator = sharePlayCoordinator
+        orbitController = OrbitController(
+            currentState: { sharedCardState.orbitState },
+            orderedCardNames: {
+                handoverViewModel.sectionOrder.map(\.rawValue)
+            },
+            apply: sharePlayCoordinator.applyOrbitTransition
         )
         sharePlayCoordinator.startObservingSessions()
     }
@@ -130,36 +139,25 @@ final class AppModel {
     }
 
     func setOrbitEnabled(_ isEnabled: Bool) {
-        sharePlayCoordinator.setOrbitEnabled(
-            isEnabled,
-            orderedCardNames: orbitCardNames
-        )
+        orbitController.perform(.setEnabled(isEnabled))
     }
 
     func updateOrbitRotation(_ rotation: Float, isFinal: Bool) {
-        sharePlayCoordinator.updateOrbitRotation(
-            rotation,
-            orderedCardNames: orbitCardNames,
-            isFinal: isFinal
+        orbitController.perform(
+            .updateRotation(rotation, isFinal: isFinal)
         )
     }
 
     func focusOrbitCard(named cardName: String) {
-        sharePlayCoordinator.focusOrbitCard(
-            named: cardName,
-            orderedCardNames: orbitCardNames
-        )
+        orbitController.perform(.focusCard(named: cardName))
     }
 
     func toggleFocusedOrbitCardExpansion() {
-        sharePlayCoordinator.toggleFocusedOrbitCardExpansion()
+        orbitController.perform(.toggleFocusedExpansion)
     }
 
     func moveOrbitFocus(by offset: Int) {
-        sharePlayCoordinator.moveOrbitFocus(
-            by: offset,
-            orderedCardNames: orbitCardNames
-        )
+        orbitController.perform(.moveFocus(by: offset))
     }
 
     // MARK: - Shared dashboard state

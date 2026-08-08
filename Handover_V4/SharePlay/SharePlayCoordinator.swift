@@ -23,7 +23,6 @@ final class SharePlayCoordinator {
     private var orbitUpdateCount: MessageUpdateCount?
     private var dashboardUpdateCount: MessageUpdateCount?
     private var lastOrbitBroadcastTime = Date.distantPast
-    private var orbitExpansionTask: Task<Void, Never>?
     private var isObservingSessions = false
 
     private(set) var isActivating = false
@@ -202,152 +201,24 @@ final class SharePlayCoordinator {
 
     // MARK: - Local orbit updates
 
-    func setOrbitEnabled(_ isEnabled: Bool, orderedCardNames: [String]) {
-#if DEBUG
-        print(
-            "[OrbitDebug] setOrbitEnabled(\(isEnabled)); "
-                + "orderedCards=\(orderedCardNames), "
-                + "previousState=\(sharedCardState.orbitState.interactionMode)"
-        )
-#endif
-        orbitExpansionTask?.cancel()
-        let state: OrbitState
-        if isEnabled {
-            guard !sharedCardState.orbitState.isActive else { return }
-            state = OrbitState(
-                interactionMode: .orbit,
-                rotation: 0,
-                focusedCardName: orderedCardNames.first,
-                expandedCardName: nil
-            )
-        } else {
-            guard sharedCardState.orbitState.isActive else { return }
-            state = .inactive
-        }
-
-        applyLocalOrbitState(state, animationDuration: 0.45, isFinal: true)
-        if isEnabled, let focusedCardName = state.focusedCardName {
-            scheduleExpansion(of: focusedCardName, after: 0.45)
-        }
-    }
-
-    func updateOrbitRotation(
-        _ rotation: Float,
-        orderedCardNames: [String],
-        isFinal: Bool
-    ) {
-        guard sharedCardState.orbitState.isActive,
-              !orderedCardNames.isEmpty else {
-            return
-        }
-
-        orbitExpansionTask?.cancel()
-        let index = focusedIndex(for: rotation, cardCount: orderedCardNames.count)
-        var state = sharedCardState.orbitState
-        state.expandedCardName = nil
-        state.rotation = isFinal
-            ? snappedRotation(
-                near: rotation,
-                focusedIndex: index,
-                cardCount: orderedCardNames.count
-            )
-            : rotation
-        state.focusedCardName = orderedCardNames[index]
-        applyLocalOrbitState(
-            state,
-            animationDuration: isFinal ? 0.22 : 0,
-            isFinal: isFinal
-        )
-        if isFinal, let focusedCardName = state.focusedCardName {
-            scheduleExpansion(of: focusedCardName, after: 0.22)
-        }
-    }
-
-    func focusOrbitCard(named cardName: String, orderedCardNames: [String]) {
-        guard sharedCardState.orbitState.isActive,
-              let index = orderedCardNames.firstIndex(of: cardName) else {
-            return
-        }
-
-        orbitExpansionTask?.cancel()
-        var state = sharedCardState.orbitState
-        state.expandedCardName = nil
-        state.rotation = snappedRotation(
-            near: state.rotation,
-            focusedIndex: index,
-            cardCount: orderedCardNames.count
-        )
-        state.focusedCardName = cardName
-        applyLocalOrbitState(state, animationDuration: 0.3, isFinal: true)
-        scheduleExpansion(of: cardName, after: 0.3)
-    }
-
-    func toggleFocusedOrbitCardExpansion() {
-        orbitExpansionTask?.cancel()
-        var state = sharedCardState.orbitState
-        guard state.isActive, let focusedCardName = state.focusedCardName else {
-            return
-        }
-
-        state.expandedCardName = state.expandedCardName == nil
-            ? focusedCardName
-            : nil
-        applyLocalOrbitState(state, animationDuration: 0.3, isFinal: true)
-    }
-
-    func moveOrbitFocus(by offset: Int, orderedCardNames: [String]) {
-        guard sharedCardState.orbitState.isActive,
-              !orderedCardNames.isEmpty else {
-            return
-        }
-
-        let currentIndex = sharedCardState.orbitState.focusedCardName
-            .flatMap(orderedCardNames.firstIndex(of:))
-            ?? focusedIndex(
-                for: sharedCardState.orbitState.rotation,
-                cardCount: orderedCardNames.count
-            )
-        let destination = positiveModulo(currentIndex + offset, orderedCardNames.count)
-        focusOrbitCard(named: orderedCardNames[destination], orderedCardNames: orderedCardNames)
-    }
-
-    private func scheduleExpansion(of cardName: String, after delay: TimeInterval) {
-        orbitExpansionTask?.cancel()
-        orbitExpansionTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .milliseconds(Int(delay * 1_000)))
-            guard !Task.isCancelled, let self else { return }
-
-            var state = sharedCardState.orbitState
-            guard state.isActive,
-                  state.focusedCardName == cardName,
-                  state.expandedCardName == nil else {
-                return
-            }
-
-            state.expandedCardName = cardName
-            applyLocalOrbitState(
-                state,
-                animationDuration: 0.25,
-                isFinal: true
-            )
-        }
-    }
-
-    private func applyLocalOrbitState(
-        _ state: OrbitState,
-        animationDuration: TimeInterval,
-        isFinal: Bool
-    ) {
+    func applyOrbitTransition(_ transition: OrbitTransition) {
         let previousSelections = sharedCardState.abbreviationSelections
-        sharedCardState.setOrbitState(state, animationDuration: animationDuration)
+        sharedCardState.setOrbitState(
+            transition.state,
+            animationDuration: transition.animationDuration
+        )
         recordDisconnectedAbbreviationChanges(from: previousSelections)
 
         let now = Date()
-        guard isFinal || now.timeIntervalSince(lastOrbitBroadcastTime) >= 0.05 else {
+        guard transition.isFinal
+                || now.timeIntervalSince(lastOrbitBroadcastTime) >= 0.05 else {
             return
         }
         lastOrbitBroadcastTime = now
-        broadcastOrbitState(state, isFinal: isFinal)
+        broadcastOrbitState(
+            transition.state,
+            isFinal: transition.isFinal
+        )
     }
 
     private func broadcastOrbitState(_ state: OrbitState, isFinal: Bool) {
@@ -362,28 +233,6 @@ final class SharePlayCoordinator {
             isFinal: isFinal
         )
         transport?.sendMessage(message)
-    }
-
-    private func focusedIndex(for rotation: Float, cardCount: Int) -> Int {
-        let slotAngle = (2 * Float.pi) / Float(cardCount)
-        return positiveModulo(Int(round(-rotation / slotAngle)), cardCount)
-    }
-
-    private func snappedRotation(
-        near currentRotation: Float,
-        focusedIndex: Int,
-        cardCount: Int
-    ) -> Float {
-        let fullTurn = 2 * Float.pi
-        let slotAngle = fullTurn / Float(cardCount)
-        let baseRotation = -Float(focusedIndex) * slotAngle
-        let turns = round((currentRotation - baseRotation) / fullTurn)
-        return baseRotation + turns * fullTurn
-    }
-
-    private func positiveModulo(_ value: Int, _ modulus: Int) -> Int {
-        let remainder = value % modulus
-        return remainder >= 0 ? remainder : remainder + modulus
     }
 
     // MARK: - Local dashboard updates
