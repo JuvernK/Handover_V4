@@ -8,35 +8,26 @@ import Observation
 @preconcurrency import GroupActivities
 import Combine
 
-/// Coordinates SharePlay lifecycle and synchronizes app feature state.
+/// Coordinates SharePlay activation and active-session lifecycle.
 @Observable
 @MainActor
 final class SharePlayCoordinator {
-    private let sharedCardState: SharedCardState
     private let replicator: SharedHandoverReplicator
 
     private var sessionController: SessionController?
-    private var transport: (any SharePlayMessageTransport)?
     private var isObservingSessions = false
 
     private(set) var isActivating = false
     var errorMessage: String?
 
     var isActive: Bool {
-        transport != nil
+        sessionController != nil
     }
 
     init(
-        sharedCardState: SharedCardState,
-        replicator: SharedHandoverReplicator,
-        transport: (any SharePlayMessageTransport)? = nil
+        replicator: SharedHandoverReplicator
     ) {
-        self.sharedCardState = sharedCardState
         self.replicator = replicator
-        self.transport = transport
-        if let transport {
-            replicator.attach(transport)
-        }
     }
 
     // MARK: - Session lifecycle
@@ -75,7 +66,7 @@ final class SharePlayCoordinator {
     }
 
     func endSession() {
-        transport?.endSession()
+        sessionController?.endSession()
     }
 
     private func observeGroupSessions() async {
@@ -88,7 +79,7 @@ final class SharePlayCoordinator {
             }
 
             sessionController = controller
-            attachTransport(controller)
+            replicator.attach(controller)
             observeInvalidation(of: session)
         }
     }
@@ -103,58 +94,11 @@ final class SharePlayCoordinator {
                 }
                 if case .invalidated = state {
                     sessionController = nil
-                    detachTransport()
+                    replicator.detach()
                     return
                 }
             }
         }
-    }
-
-    // MARK: - Local card updates
-
-    func setCardState(
-        _ cardID: ClinicalCardID,
-        isExpanded: Bool,
-        syncChanges: Bool
-    ) {
-        if syncChanges {
-            replicator.transact(
-                .setCardExpansion(cardID, isExpanded: isExpanded)
-            )
-        } else {
-            sharedCardState.setExpansionState(isExpanded, for: cardID)
-        }
-    }
-
-    func setCardPosition(
-        _ cardID: ClinicalCardID,
-        position: SIMD3<Float>,
-        syncChanges: Bool
-    ) {
-        if syncChanges {
-            replicator.transact(.moveCard(cardID, to: position))
-        } else {
-            sharedCardState.setPosition(position, for: cardID)
-        }
-    }
-
-    // MARK: - Local abbreviation updates
-
-    func toggleAbbreviationSelection(
-        _ selection: AbbreviationSelection,
-        for cardID: ClinicalCardID
-    ) {
-        replicator.transact(.toggleAbbreviation(selection, in: cardID))
-    }
-
-    func attachTransport(_ transport: any SharePlayMessageTransport) {
-        self.transport = transport
-        replicator.attach(transport)
-    }
-
-    func detachTransport() {
-        transport = nil
-        replicator.detach()
     }
 
 }

@@ -142,9 +142,12 @@ struct SharedHandoverReplicatorTests {
             .toggleAbbreviation(selection, in: cardID)
         )
 
+        source.transport.connect(
+            to: lateJoiner.replicator,
+            participantID: lateJoiner.id
+        )
         source.replicator.sendCurrentState(to: [lateJoiner.id])
-        let snapshot = try #require(source.transport.targetedEnvelopes.first)
-        lateJoiner.replicator.receive(snapshot)
+        _ = try #require(source.transport.targetedEnvelopes.first)
 
         #expect(lateJoiner.state.abbreviationSelections[cardID] == selection)
     }
@@ -413,6 +416,22 @@ struct SharedHandoverReplicatorTests {
         #expect(lateJoiner.state.orbitState == latest)
     }
 
+    @Test
+    func inMemoryTransportCarriesTheSameEnvelopeAsProduction() {
+        let sender = ReplicationParticipant(id: UUID(), connected: true)
+        let receiver = ReplicationParticipant(id: UUID())
+        let position = SIMD3<Float>(0.15, 0.25, -0.35)
+        sender.transport.connect(
+            to: receiver.replicator,
+            participantID: receiver.id
+        )
+
+        sender.replicator.transact(.moveCard(cardID, to: position))
+
+        #expect(receiver.state.positions[cardID] == position)
+        #expect(sender.transport.envelopes.count == 1)
+    }
+
     private func makeSelection(
         _ glossaryEntryID: String
     ) -> AbbreviationSelection {
@@ -472,7 +491,7 @@ private final class ReplicationParticipant {
     let id: UUID
     let state = SharedCardState()
     let viewModel: HandoverViewModel
-    let transport = RecordingReplicationTransport()
+    let transport = InMemoryReplicationTransport()
     let replicator: SharedHandoverReplicator
 
     init(
@@ -547,12 +566,23 @@ private struct EmptyPatientLoader: PatientLoading {
 }
 
 @MainActor
-private final class RecordingReplicationTransport: ReplicationTransport {
+private final class InMemoryReplicationTransport: ReplicationTransport {
     var envelopes: [ReplicationEnvelope] = []
     var targetedEnvelopes: [ReplicationEnvelope] = []
+    private weak var receiver: SharedHandoverReplicator?
+    private var receiverID: UUID?
+
+    func connect(
+        to receiver: SharedHandoverReplicator,
+        participantID: UUID
+    ) {
+        self.receiver = receiver
+        receiverID = participantID
+    }
 
     func send(_ envelope: ReplicationEnvelope) {
         envelopes.append(envelope)
+        receiver?.receive(envelope)
     }
 
     func send(
@@ -560,5 +590,8 @@ private final class RecordingReplicationTransport: ReplicationTransport {
         to participantIDs: Set<UUID>
     ) {
         targetedEnvelopes.append(envelope)
+        if let receiverID, participantIDs.contains(receiverID) {
+            receiver?.receive(envelope)
+        }
     }
 }

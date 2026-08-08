@@ -115,8 +115,7 @@ struct SpatialCardView: View {
 
             appModel.setCardState(
                 cardID,
-                isExpanded: !normalModeIsExpanded,
-                syncChanges: true
+                isExpanded: !normalModeIsExpanded
             )
         }
 

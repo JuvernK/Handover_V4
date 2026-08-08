@@ -111,7 +111,8 @@ The intended change is constrained to these seams:
 3. Give every `ClinicalAbbreviationText` call site a stable card identity and semantic `textID`.
 4. Add abbreviation selections and reducer-style set/clear operations to `SharedCardState`.
 5. Expose selection through `AppModel`.
-6. Add local broadcast, remote apply, deterministic conflict handling, and late-join catch-up through the SharePlay coordinator and message types.
+6. Replicate selection facts, deterministic conflict handling, tombstones, and
+   late-join state through `SharedHandoverReplicator` and `ReplicationEnvelope`.
 7. Clear selection as part of card collapse and patient change.
 8. Remove whole-entity card tap-to-toggle in immersive space and route expand/collapse through the card header/chevron.
 9. Observe abbreviation-selection changes in `ImmersiveView` and regenerate attachment collision shapes after animated reflow.

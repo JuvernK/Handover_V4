@@ -29,7 +29,7 @@ Build and agent-working instructions belong in `AGENTS.md`.
   - 3D position for each card.
   - Zero-or-one inline clinical abbreviation selection for each card.
   - Transient synchronized orbit mode, rotation, focus, and focus expansion.
-  - Applying and replacing card state without knowing how it is transported.
+  - Applying card state without knowing how it is transported.
 - `SharedState/OrbitController.swift` owns Orbit enablement, focus, snapping,
   navigation, and delayed expansion behind one intent-driven interface.
 - `SharedState/SharedHandoverReplicator.swift` owns versioned Shared Handover
@@ -91,7 +91,9 @@ Build and agent-working instructions belong in `AGENTS.md`.
   - GroupActivities / SharePlay session code.
   - `SharePlayCoordinator.swift` manages activation and active-session
     lifecycle.
-  - `SessionController.swift` manages one active group session, configures the spatial coordinator, observes messages, and provides message transport.
+  - `SessionController.swift` is the production `ReplicationTransport` adapter:
+    it manages one active group session, configures the spatial coordinator,
+    and sends or receives only `ReplicationEnvelope`.
   - `ReplicationEnvelope` is the only message observed or sent by the session
     transport.
 
@@ -201,8 +203,8 @@ registration, Orbit state changes, and calculated card targets.
 
 ## Shared Handover State Implementation
 
-`CONTEXT.md` defines Shared Handover State. Its current SharePlay implementation
-is centered in `SharePlayCoordinator` and `SessionController`.
+`CONTEXT.md` defines Shared Handover State. Its implementation is centered in
+`SharedHandoverReplicator`; SharePlay is one transport adapter.
 
 - Ownership:
   - `SharedCardState` owns spatial-card values without depending on GroupActivities.
@@ -211,7 +213,8 @@ is centered in `SharePlayCoordinator` and `SessionController`.
     expansion, position, Shared Abbreviation Selection, dashboard order, and
     atomic Orbit facts.
   - `SharePlayCoordinator` owns SharePlay lifecycle, not domain transitions.
-  - `SessionController` transports messages for one concrete `GroupSession`.
+  - `SessionController` adapts one concrete `GroupSession` to the domain-blind
+    `ReplicationTransport` interface.
 
 - Dashboard sync:
   - Dashboard section order. The fixed Study Patient is excluded.

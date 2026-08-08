@@ -50,15 +50,18 @@ Orbit authoring, and SharePlay synchronization in detail.
 
 - **App composition:** `AppModel` owns the small API exposed to views and
   composes immersive-space state, `HandoverViewModel`, `SharedCardState`, and
-  `SharePlayCoordinator`.
+  `SharedHandoverReplicator`; `SharePlayCoordinator` owns only SharePlay
+  lifecycle.
 - **State and transport:** `SharedCardState` owns Spatial Card expansion, 3D
-  position, and Orbit values. `HandoverViewModel` owns selected-patient and
-  dashboard-order values. Neither depends on `GroupActivities`.
-  `SharePlayCoordinator` applies local and remote changes; `SessionController`
-  transports messages for one `GroupSession`.
+  position, abbreviation-selection, and Orbit values. `HandoverViewModel` owns
+  the fixed Study Patient and dashboard-order value. Neither depends on
+  `GroupActivities`. `SharedHandoverReplicator` applies local and remote facts;
+  `SessionController` is the production `ReplicationTransport` for one
+  `GroupSession`.
 - **Synchronized state:** when adding a synchronized value, update its owning
-  state object and the message types, then handle local broadcast, remote
-  application, and late-join `CatchUpMessage`.
+  state object and add a transaction, fact identity/value, and materialization
+  path to `SharedHandoverReplicator`. Live, reconnect, and late-join delivery all
+  use `ReplicationEnvelope`; do not add per-domain messages or catch-up paths.
 - **Dashboard:** `DashboardView` composes the pinned patient header, the
   reorderable wrapped layout implemented by `DashboardFlexLayout` and
   `DraggableDashboardCard`, and the fixed Systems Assessment panel, which is

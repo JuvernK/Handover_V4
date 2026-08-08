@@ -41,7 +41,6 @@ final class AppModel {
         )
         self.sharedHandoverReplicator = sharedHandoverReplicator
         let sharePlayCoordinator = SharePlayCoordinator(
-            sharedCardState: sharedCardState,
             replicator: sharedHandoverReplicator
         )
         self.sharePlayCoordinator = sharePlayCoordinator
@@ -114,35 +113,26 @@ final class AppModel {
 
     func setCardState(
         _ cardID: ClinicalCardID,
-        isExpanded: Bool,
-        syncChanges: Bool
+        isExpanded: Bool
     ) {
-        sharePlayCoordinator.setCardState(
-            cardID,
-            isExpanded: isExpanded,
-            syncChanges: syncChanges
+        sharedHandoverReplicator.transact(
+            .setCardExpansion(cardID, isExpanded: isExpanded)
         )
     }
 
     func setCardPosition(
         _ cardID: ClinicalCardID,
-        position: SIMD3<Float>,
-        syncChanges: Bool
+        position: SIMD3<Float>
     ) {
-        sharePlayCoordinator.setCardPosition(
-            cardID,
-            position: position,
-            syncChanges: syncChanges
-        )
+        sharedHandoverReplicator.transact(.moveCard(cardID, to: position))
     }
 
     func toggleAbbreviationSelection(
         _ selection: AbbreviationSelection,
         for cardID: ClinicalCardID
     ) {
-        sharePlayCoordinator.toggleAbbreviationSelection(
-            selection,
-            for: cardID
+        sharedHandoverReplicator.transact(
+            .toggleAbbreviation(selection, in: cardID)
         )
     }
 

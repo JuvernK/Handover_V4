@@ -9,9 +9,9 @@ import Foundation
 @preconcurrency import GroupActivities
 import Combine
 
-/// Controls the SharePlay session for real-time card state synchronization.
+/// Adapts one SharePlay session to Shared Handover State replication.
 @MainActor
-final class SessionController: SharePlayMessageTransport {
+final class SessionController: ReplicationTransport {
     /// The active SharePlay group session.
     let session: GroupSession<SharePlayTogether>
 
@@ -95,7 +95,7 @@ final class SessionController: SharePlayMessageTransport {
     // MARK: - Message transport
 
     func send(_ envelope: ReplicationEnvelope) {
-        send(envelope, kind: "replication")
+        sendEnvelope(envelope)
     }
 
     func send(
@@ -106,19 +106,18 @@ final class SessionController: SharePlayMessageTransport {
             participantIDs.contains($0.id)
         }
         guard !participants.isEmpty else { return }
-        send(envelope, to: .only(participants), kind: "replication")
+        sendEnvelope(envelope, to: .only(participants))
     }
 
-    private func send<Message: Codable>(
-        _ message: Message,
-        to participants: Participants = .all,
-        kind: String
+    private func sendEnvelope(
+        _ envelope: ReplicationEnvelope,
+        to participants: Participants = .all
     ) {
         Task {
             do {
-                try await messenger.send(message, to: participants)
+                try await messenger.send(envelope, to: participants)
             } catch {
-                print("Failed to send \(kind) sync message: \(error)")
+                print("Failed to send replication envelope: \(error)")
             }
         }
     }

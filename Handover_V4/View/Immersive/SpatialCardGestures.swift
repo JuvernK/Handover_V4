@@ -88,8 +88,7 @@ private struct SpatialCardGestureModifier: ViewModifier {
                 guard let cardID = runtimeComponent.cardID else { return }
                 appModel.setCardPosition(
                     cardID,
-                    position: value.entity.position,
-                    syncChanges: true
+                    position: value.entity.position
                 )
             }
     }
