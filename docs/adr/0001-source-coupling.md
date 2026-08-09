@@ -58,5 +58,4 @@ all named meshes glow together. Entity names verified in the RCP hierarchy
 
 ## Status
 
-Accepted and unblocked. Equipment names and the `OrganAnchor_torso` body anchor are authored in
-RCP; implementation can proceed.
+Accepted and unblocked. Its emissive-only visual treatment is superseded by ADR 0005; the Source mapping and active-card-derived controller design remain accepted.

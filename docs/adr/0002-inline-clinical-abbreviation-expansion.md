@@ -30,7 +30,8 @@ The original abbreviation remains visible. Its full term uses the normal text co
 
 - Only the selected Abbreviation Occurrence expands.
 - Each card has zero or one Abbreviation Selection.
-- Selectable abbreviations use an accent colour, underline, and visionOS hover feedback. The interaction must not be communicated by colour alone.
+- Approved Abbreviations render as padded **Abbreviation Capsules** with visionOS hover and press feedback. Unselected capsules use a light outline/tint and the selected capsule uses a stronger Card Identity Colour fill; the interaction must not be communicated by colour alone.
+- Each capsule provides a non-overlapping effective target of at least 60 by 60 points on dashboard and Spatial Cards. Clinical text may reflow to preserve target separation.
 - The complete expansion is shown and may wrap. It is never truncated.
 - Glossary notes are not displayed inline; this feature expands terminology rather than teaching additional clinical concepts.
 - Expansion and collapse use a short reflow animation that respects Reduce Motion. Remote SharePlay changes use the same presentation.
@@ -98,9 +99,7 @@ Changing patient clears every abbreviation selection. If runtime patient switchi
 
 ### Gesture ownership
 
-The current immersive `SpatialTapGesture` treats the entire attachment entity as the card expand/collapse target. That conflicts with interactive abbreviation text.
-
-Card expand/collapse moves to an explicit header/chevron control. Controls inside the card body, including Approved Abbreviations, own their tap/select interaction. Whole-card dragging remains available through the existing movement gesture and its minimum-distance threshold; this ADR does not introduce a small drag handle.
+Controls inside the card body, including Approved Abbreviations, own their tap/select interaction and never initiate card movement. ADR 0004 assigns expand/collapse and movement gesture ownership to the full-width Card Handle.
 
 ## Implementation seams
 
@@ -114,7 +113,7 @@ The intended change is constrained to these seams:
 6. Replicate selection facts, deterministic conflict handling, tombstones, and
    late-join state through `SharedHandoverReplicator` and `ReplicationEnvelope`.
 7. Clear selection as part of card collapse and patient change.
-8. Remove whole-entity card tap-to-toggle in immersive space and route expand/collapse through the card header/chevron.
+8. Route Spatial Card expand/collapse and movement through the Card Handle defined by ADR 0004; clinical content never initiates card movement.
 9. Observe abbreviation-selection changes in `ImmersiveView` and regenerate attachment collision shapes after animated reflow.
 
 ## Invariants
@@ -126,7 +125,7 @@ The intended change is constrained to these seams:
 - The source abbreviation remains visible beside its expansion.
 - The same source data and synchronized selection produce the same expanded occurrence on every participant's device.
 - Tooltip/popover presentation is not retained as a fallback.
-- Whole-card dragging remains available in immersive space.
+- Abbreviation Capsule interaction never initiates Spatial Card movement.
 
 ## Alternatives rejected
 
@@ -151,7 +150,7 @@ Implementation is complete only when:
 4. Selecting the expanded term again, collapsing its card, or changing patient clears it.
 5. Unknown, ambiguous/unapproved, and excluded vital-sign terms remain ordinary text.
 6. Long expansions wrap without truncation and immersive collision/drag bounds follow the resized card.
-7. Abbreviation selection does not toggle the card; header/chevron toggle and whole-card drag still work.
+7. Abbreviation selection neither toggles nor moves the card; Card Handle tap and drag continue to work independently.
 8. Two SharePlay peers converge on the same selected occurrence under simultaneous actions.
 9. A late joiner receives the current selections.
 10. No `.popover` abbreviation presentation remains.
@@ -159,4 +158,4 @@ Implementation is complete only when:
 
 ## Status
 
-Accepted design; documentation complete. Application implementation is intentionally deferred.
+Accepted design; its whole-card-drag gesture ownership is superseded by ADR 0004.
