@@ -44,7 +44,7 @@ struct Handover_V4App: App {
         } defaultValue: {
             .immersiveControls
         }
-        .defaultSize(width: 560, height: 100)
+        .defaultSize(width: 452, height: 256)
         .windowResizability(.contentSize)
         
         ImmersiveSpace(id: appModel.immersiveSpaceID) {

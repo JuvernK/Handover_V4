@@ -11,45 +11,59 @@ struct ImmersiveControlsView: View {
     @Environment(AppModel.self) private var appModel
 
     var body: some View {
-        HStack(spacing: 14) {
-            ToggleImmersiveSpaceButton()
+        VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Orbit")
+                    .font(.headline)
+
+                HStack(spacing: 12) {
+                    Button {
+                        appModel.moveOrbitFocus(by: -1)
+                    } label: {
+                        Label("Previous card", systemImage: "chevron.left")
+                            .labelStyle(.iconOnly)
+                            .frame(width: 60, height: 60)
+                    }
+                    .disabled(!appModel.orbitState.isActive)
+
+                    Button {
+                        appModel.setOrbitEnabled(!appModel.orbitState.isActive)
+                    } label: {
+                        Label(
+                            appModel.orbitState.isActive ? "End Orbit" : "Start Orbit",
+                            systemImage: appModel.orbitState.isActive
+                                ? "circle.dashed.inset.filled"
+                                : "circle.dashed"
+                        )
+                        .frame(maxWidth: .infinity, minHeight: 60)
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Button {
+                        appModel.moveOrbitFocus(by: 1)
+                    } label: {
+                        Label("Next card", systemImage: "chevron.right")
+                            .labelStyle(.iconOnly)
+                            .frame(width: 60, height: 60)
+                    }
+                    .disabled(!appModel.orbitState.isActive)
+                }
+            }
 
             Divider()
-                .frame(height: 28)
 
-            Button {
-                appModel.moveOrbitFocus(by: -1)
-            } label: {
-                Label("Previous card", systemImage: "chevron.left")
-                    .labelStyle(.iconOnly)
-            }
-            .disabled(
-                !appModel.orbitState.isActive
-            )
-
-            Button {
-                appModel.setOrbitEnabled(!appModel.orbitState.isActive)
-            } label: {
-                Label(
-                    appModel.orbitState.isActive ? "End Orbit" : "Start Orbit",
-                    systemImage: appModel.orbitState.isActive
-                        ? "circle.dashed.inset.filled"
-                        : "circle.dashed"
+            ToggleImmersiveSpaceButton(isFullWidth: true)
+                .buttonStyle(.plain)
+                .foregroundStyle(.primary)
+                .background(
+                    Color(red: 0.29, green: 0.33, blue: 0.38)
+                        .opacity(0.55),
+                    in: RoundedRectangle(cornerRadius: 16, style: .continuous)
                 )
-            }
-            .buttonStyle(.borderedProminent)
-
-            Button {
-                appModel.moveOrbitFocus(by: 1)
-            } label: {
-                Label("Next card", systemImage: "chevron.right")
-                    .labelStyle(.iconOnly)
-            }
-            .disabled(
-                !appModel.orbitState.isActive
-            )
+                .glassBackgroundEffect(in: .rect(cornerRadius: 16))
         }
         .padding()
+        .frame(width: 420)
         .glassBackgroundEffect()
     }
 }
@@ -62,6 +76,7 @@ struct ToggleImmersiveSpaceButton: View {
     @Environment(\.dismissWindow) private var dismissWindow
 
     @State private var isPerformingTransition = false
+    var isFullWidth = false
 
     var body: some View {
         Button {
@@ -121,6 +136,10 @@ struct ToggleImmersiveSpaceButton: View {
                 appModel.immersiveSpaceState == .open
                     ? "Exit ICU Immersive Space"
                     : "Enter ICU Immersive Space"
+            )
+            .frame(
+                maxWidth: isFullWidth ? .infinity : nil,
+                minHeight: isFullWidth ? 60 : nil
             )
         }
         .disabled(
