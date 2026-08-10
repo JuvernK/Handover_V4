@@ -9,7 +9,16 @@ import RealityKit
 private struct SpatialCardGestureModifier: ViewModifier {
     @Environment(AppModel.self) private var appModel
     @State private var dragStartPosition: SIMD3<Float>?
+    @State private var isCardDragConfirmed = false
     @State private var orbitDragInterpreter = OrbitDragInterpreter()
+
+    /// Real-world movement (metres) required before a touch on a card is
+    /// treated as a deliberate drag rather than tap jitter. SwiftUI's
+    /// DragGesture minimumDistance is measured in screen points before the
+    /// 3D conversion below, which can be crossed by hand tremor during a
+    /// stationary tap; this re-checks against the converted, physically
+    /// meaningful translation. See issue #32.
+    private let cardDragConfirmationDistance: Float = 0.02
 
     func body(content: Content) -> some View {
         content
@@ -61,6 +70,12 @@ private struct SpatialCardGestureModifier: ViewModifier {
                     from: .local,
                     to: .scene
                 )
+                guard isCardDragConfirmed
+                    || simd_length(translation) >= cardDragConfirmationDistance
+                else {
+                    return
+                }
+                isCardDragConfirmed = true
                 value.entity.position = dragStartPosition + translation
             }
             .onEnded { value in
@@ -76,6 +91,13 @@ private struct SpatialCardGestureModifier: ViewModifier {
 
                 orbitDragInterpreter.reset()
                 dragStartPosition = nil
+                let wasDragConfirmed = isCardDragConfirmed
+                isCardDragConfirmed = false
+
+                // Movement never crossed the confirmation distance, so this
+                // touch was a tap, not a drag -- the card never actually
+                // moved and there's no new position to commit.
+                guard wasDragConfirmed else { return }
 
                 guard let runtimeComponent = value.entity.components[
                     PointOfInterestRuntimeComponent.self
