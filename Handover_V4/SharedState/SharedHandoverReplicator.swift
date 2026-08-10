@@ -82,7 +82,7 @@ final class SharedHandoverReplicator {
         self.participantID = participantID
         self.sharedCardState = sharedCardState
         self.handoverViewModel = handoverViewModel
-        self.scheduler = scheduler ?? ReplicationTaskScheduler()
+        self.scheduler = scheduler ?? TaskOrbitScheduler()
     }
 
     @discardableResult
@@ -365,37 +365,11 @@ final class SharedHandoverReplicator {
         }
         sharedCardState.setOrbitState(
             state,
-            animationDuration: animationDuration ?? (isFinal ? 0.22 : 0.08)
+            animationDuration: animationDuration ?? (
+                isFinal
+                    ? ImmersiveConfiguration.orbitSnapDuration
+                    : ImmersiveConfiguration.orbitRemoteSnapFallbackDuration
+            )
         )
-    }
-}
-
-@MainActor
-private final class ReplicationTaskScheduledAction: OrbitScheduledAction {
-    private let task: Task<Void, Never>
-
-    init(
-        delay: TimeInterval,
-        action: @escaping @MainActor () -> Void
-    ) {
-        task = Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(Int(delay * 1_000)))
-            guard !Task.isCancelled else { return }
-            action()
-        }
-    }
-
-    func cancel() {
-        task.cancel()
-    }
-}
-
-@MainActor
-private struct ReplicationTaskScheduler: OrbitScheduling {
-    func schedule(
-        after delay: TimeInterval,
-        action: @escaping @MainActor () -> Void
-    ) -> any OrbitScheduledAction {
-        ReplicationTaskScheduledAction(delay: delay, action: action)
     }
 }

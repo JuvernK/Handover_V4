@@ -1,5 +1,12 @@
 import Foundation
 
+enum OrbitMath {
+    static func positiveModulo(_ value: Int, _ modulus: Int) -> Int {
+        let remainder = value % modulus
+        return remainder >= 0 ? remainder : remainder + modulus
+    }
+}
+
 enum OrbitIntent {
     case setEnabled(Bool)
     case updateRotation(Float, isFinal: Bool)
@@ -28,7 +35,7 @@ protocol OrbitScheduling {
 }
 
 @MainActor
-private final class TaskOrbitScheduledAction: OrbitScheduledAction {
+final class TaskOrbitScheduledAction: OrbitScheduledAction {
     private let task: Task<Void, Never>
 
     init(
@@ -50,7 +57,7 @@ private final class TaskOrbitScheduledAction: OrbitScheduledAction {
 }
 
 @MainActor
-private struct TaskOrbitScheduler: OrbitScheduling {
+struct TaskOrbitScheduler: OrbitScheduling {
     func schedule(
         after delay: TimeInterval,
         action: @escaping @MainActor () -> Void
@@ -113,9 +120,16 @@ final class OrbitController {
             state = .inactive
         }
 
-        applyTransition(state, animationDuration: 0.45, isFinal: true)
+        applyTransition(
+            state,
+            animationDuration: ImmersiveConfiguration.orbitEnableDisableDuration,
+            isFinal: true
+        )
         if isEnabled, let focusedCardName = state.focusedCardName {
-            scheduleExpansion(of: focusedCardName, after: 0.45)
+            scheduleExpansion(
+                of: focusedCardName,
+                after: ImmersiveConfiguration.orbitEnableDisableDuration
+            )
         }
     }
 
@@ -137,11 +151,14 @@ final class OrbitController {
         state.focusedCardName = names[index]
         applyTransition(
             state,
-            animationDuration: isFinal ? 0.22 : 0,
+            animationDuration: isFinal ? ImmersiveConfiguration.orbitSnapDuration : 0,
             isFinal: isFinal
         )
         if isFinal, let focusedCardName = state.focusedCardName {
-            scheduleExpansion(of: focusedCardName, after: 0.22)
+            scheduleExpansion(
+                of: focusedCardName,
+                after: ImmersiveConfiguration.orbitSnapDuration
+            )
         }
     }
 
@@ -161,8 +178,15 @@ final class OrbitController {
             cardCount: names.count
         )
         state.focusedCardName = cardName
-        applyTransition(state, animationDuration: 0.3, isFinal: true)
-        scheduleExpansion(of: cardName, after: 0.3)
+        applyTransition(
+            state,
+            animationDuration: ImmersiveConfiguration.orbitFocusDuration,
+            isFinal: true
+        )
+        scheduleExpansion(
+            of: cardName,
+            after: ImmersiveConfiguration.orbitFocusDuration
+        )
     }
 
     private func toggleFocusedExpansion() {
@@ -175,7 +199,11 @@ final class OrbitController {
         state.expandedCardName = state.expandedCardName == nil
             ? focusedCardName
             : nil
-        applyTransition(state, animationDuration: 0.3, isFinal: true)
+        applyTransition(
+            state,
+            animationDuration: ImmersiveConfiguration.orbitFocusDuration,
+            isFinal: true
+        )
     }
 
     private func moveFocus(by offset: Int) {
@@ -186,7 +214,7 @@ final class OrbitController {
         let currentIndex = state.focusedCardName
             .flatMap(names.firstIndex(of:))
             ?? focusedIndex(for: state.rotation, cardCount: names.count)
-        let destination = positiveModulo(currentIndex + offset, names.count)
+        let destination = OrbitMath.positiveModulo(currentIndex + offset, names.count)
         focusCard(named: names[destination])
     }
 
@@ -205,7 +233,11 @@ final class OrbitController {
             }
 
             state.expandedCardName = cardName
-            applyTransition(state, animationDuration: 0.25, isFinal: true)
+            applyTransition(
+                state,
+                animationDuration: ImmersiveConfiguration.orbitExpansionDelay,
+                isFinal: true
+            )
             scheduledExpansion = nil
         }
     }
@@ -231,7 +263,7 @@ final class OrbitController {
 
     private func focusedIndex(for rotation: Float, cardCount: Int) -> Int {
         let slotAngle = (2 * Float.pi) / Float(cardCount)
-        return positiveModulo(Int(round(-rotation / slotAngle)), cardCount)
+        return OrbitMath.positiveModulo(Int(round(-rotation / slotAngle)), cardCount)
     }
 
     private func snappedRotation(
@@ -246,8 +278,4 @@ final class OrbitController {
         return baseRotation + turns * fullTurn
     }
 
-    private func positiveModulo(_ value: Int, _ modulus: Int) -> Int {
-        let remainder = value % modulus
-        return remainder >= 0 ? remainder : remainder + modulus
-    }
 }

@@ -26,13 +26,15 @@ enum PointOfInterestMapper {
     static func destination(for name: String) -> PointOfInterestDestination {
         let normalizedName = normalize(name)
 
-        if normalizedName == "basic_information" {
-            return .basicInformation
+        guard let cardID = ClinicalCardID(canonicalName: normalizedName) else {
+            return .unknown
         }
-        if let section = SectionID(rawValue: normalizedName) {
+        switch cardID {
+        case .basicInformation:
+            return .basicInformation
+        case .section(let section):
             return .section(section)
         }
-        return .unknown
     }
 
     static func normalize(_ name: String) -> String {

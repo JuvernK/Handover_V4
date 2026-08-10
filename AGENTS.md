@@ -10,9 +10,10 @@ Keep components modular and concerns clearly separated.
 Prefer established, well-maintained libraries when they reduce overall complexity or improve reliability. Do not reimplement common functionality without a clear reason.
 Lean on the dependencies already in the project before writing your own implementation or adding packages. Do not assume a library lacks a capability without checking its documentation and types.
 Fix the actual cause of a problem, not its symptoms. Do not hack around an issue to make it appear solved, and do not leave a known-broken path in place with a comment saying it'll be fixed later.
-Before declaring a task complete, verify it: run the tests, run the build, or actually execute the code path you changed. Do not report something as done based on the diff looking correct.
+Before declaring a task complete, verify what you can actually verify: the build must succeed. Run `Handover_V4Tests` only when the change touches logic already covered by an existing test — do not treat the full suite as a default requirement. For anything touching `SharedHandoverReplicator`, Orbit, or Card Handle gestures, the minimum bar is manual verification in the simulator (exercise the changed path, check `[OrbitDebug]` logs where relevant). If a change needs a live multi-participant SharePlay session to be fully verified, say so explicitly in the summary instead of reporting it as done — end-to-end SharePlay verification is done manually by the project owner, not solo by an agent.
 Touch only the code required for the task at hand. Do not refactor, rename, or "clean up" unrelated code in the same change.
 If a requirement is ambiguous or underspecified in a way that would change the design, ask before building. Do not guess silently and produce something that has to be redone.
+Before adding new state, a new manager/controller type, or a new synchronization path, search the codebase for an existing structure with the same responsibility and extend it instead of building a parallel one. `PROJECT_OVERVIEW.md` is the map of what already exists; treat it as authoritative before designing something new, and update it when you add or change a structure it documents.
 
 
 
