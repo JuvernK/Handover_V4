@@ -11,6 +11,11 @@ import SwiftUI
 
 enum CardChrome {
     static let cornerRadius: CGFloat = 16
+
+    /// Height of the tappable strip covering a Spatial Card's header bar
+    /// (CardHeader) or, for a collapsed compact card, effectively the whole
+    /// card. Matches the "Card Handle" surface described in CONTEXT.md.
+    static let expansionTapAreaHeight: CGFloat = 52
 }
 
 extension View {

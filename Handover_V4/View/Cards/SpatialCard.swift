@@ -56,6 +56,7 @@ struct SpatialCardView: View {
                     .frame(width: defaultCardWidth)
                     .spatialExpansionControl(
                         isExpanded: false,
+                        tapStripHeight: CardChrome.expansionTapAreaHeight,
                         action: toggleExpansion
                     )
             }
@@ -66,6 +67,7 @@ struct SpatialCardView: View {
                     .frame(width: expandedWidth(for: sectionID))
                     .spatialExpansionControl(
                         isExpanded: true,
+                        tapStripHeight: CardChrome.expansionTapAreaHeight,
                         action: toggleExpansion
                     )
                     .identityStyled(sectionID)
@@ -74,6 +76,7 @@ struct SpatialCardView: View {
                     .frame(width: defaultCardWidth)
                     .spatialExpansionControl(
                         isExpanded: false,
+                        tapStripHeight: CardChrome.expansionTapAreaHeight,
                         action: toggleExpansion
                     )
                     .identityStyled(sectionID)
@@ -191,12 +194,33 @@ private struct CompactSpatialCard: View {
 }
 
 private extension View {
+    /// - Parameter tapStripHeight: when set, the whole top strip of this
+    ///   height becomes tappable (the card's header bar, or effectively the
+    ///   whole card when it's collapsed to a single row) instead of only the
+    ///   small chevron icon. Leave `nil` where the top of the content already
+    ///   has its own interactive elements (e.g. expanded Basic Information's
+    ///   diagnosis abbreviation), so the strip can't steal their taps.
     func spatialExpansionControl(
         isExpanded: Bool,
         isEnabled: Bool = true,
+        tapStripHeight: CGFloat? = nil,
         action: @escaping () -> Void
     ) -> some View {
-        overlay(alignment: .topTrailing) {
+        overlay(alignment: .top) {
+            if isEnabled, let tapStripHeight {
+                Button(action: action) {
+                    Color.clear
+                        .frame(maxWidth: .infinity, minHeight: tapStripHeight)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .hoverEffect(.highlight)
+                .accessibilityLabel(
+                    isExpanded ? "Collapse card" : "Expand card"
+                )
+            }
+        }
+        .overlay(alignment: .topTrailing) {
             if isEnabled {
                 Button(action: action) {
                     Image(
@@ -210,6 +234,7 @@ private extension View {
                 }
                 .buttonStyle(.plain)
                 .hoverEffect(.highlight)
+                .accessibilityHidden(tapStripHeight != nil)
                 .accessibilityLabel(
                     isExpanded ? "Collapse card" : "Expand card"
                 )
