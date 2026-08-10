@@ -123,6 +123,12 @@ struct SpatialCardView: View {
                 return
             }
 
+#if DEBUG
+            print(
+                "[CardDragDebug] toggleExpansion tapped: card=\(cardID.canonicalName), "
+                    + "expandedBefore=\(normalModeIsExpanded)"
+            )
+#endif
             appModel.setCardState(
                 cardID,
                 isExpanded: !normalModeIsExpanded
@@ -232,7 +238,7 @@ private extension View {
                 // The tap strip above already owns tap/hover/accessibility
                 // when it's present, so the icon is decorative in that case
                 // rather than a second stacked control over the same region.
-                if let tapStripHeight {
+                if tapStripHeight != nil {
                     expansionIcon(isExpanded: isExpanded)
                         .allowsHitTesting(false)
                         .accessibilityHidden(true)

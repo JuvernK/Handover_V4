@@ -56,11 +56,12 @@ private struct SpatialCardGestureModifier: ViewModifier {
                     return
                 }
 
-                guard value.entity.components[
+                guard let runtimeComponent = value.entity.components[
                     PointOfInterestRuntimeComponent.self
-                ] != nil else {
+                ] else {
                     return
                 }
+                let wasStartingFresh = dragStartPosition == nil
                 if dragStartPosition == nil {
                     dragStartPosition = value.entity.position
                 }
@@ -71,11 +72,30 @@ private struct SpatialCardGestureModifier: ViewModifier {
                     from: .local,
                     to: .scene
                 )
+                let distance = simd_length(translation)
+#if DEBUG
+                if wasStartingFresh || !isCardDragConfirmed {
+                    print(
+                        "[CardDragDebug] onChanged: card=\(runtimeComponent.diagnosticName), "
+                            + "distance=\(distance), "
+                            + "confirmedBefore=\(isCardDragConfirmed), "
+                            + "threshold=\(ImmersiveConfiguration.cardDragConfirmationDistance)"
+                    )
+                }
+#endif
                 guard isCardDragConfirmed
-                    || simd_length(translation)
+                    || distance
                         >= ImmersiveConfiguration.cardDragConfirmationDistance
                 else {
                     return
+                }
+                if !isCardDragConfirmed {
+#if DEBUG
+                    print(
+                        "[CardDragDebug] drag CONFIRMED: card=\(runtimeComponent.diagnosticName), "
+                            + "distance=\(distance)"
+                    )
+#endif
                 }
                 isCardDragConfirmed = true
                 value.entity.position = dragStartPosition + translation
@@ -95,6 +115,15 @@ private struct SpatialCardGestureModifier: ViewModifier {
                 dragStartPosition = nil
                 let wasDragConfirmed = isCardDragConfirmed
                 isCardDragConfirmed = false
+#if DEBUG
+                let diagnosticName = value.entity.components[
+                    PointOfInterestRuntimeComponent.self
+                ]?.diagnosticName ?? "unknown"
+                print(
+                    "[CardDragDebug] onEnded: card=\(diagnosticName), "
+                        + "wasDragConfirmed=\(wasDragConfirmed)"
+                )
+#endif
 
                 // Movement never crossed the confirmation distance, so this
                 // touch was a tap, not a drag -- the card never actually
