@@ -386,7 +386,7 @@ enum OrbitLayoutController {
             : wrappedParameter + Float(count)
         let index = Int(floor(positiveParameter))
         let t = positiveParameter - Float(index)
-        let p0 = points[positiveModulo(index - 1, count)]
+        let p0 = points[OrbitMath.positiveModulo(index - 1, count)]
         let p1 = points[index % count]
         let p2 = points[(index + 1) % count]
         let p3 = points[(index + 2) % count]
@@ -405,11 +405,6 @@ enum OrbitLayoutController {
         let cubicTerm = cubicCoefficient * t3
         let result = constantTerm + linearTerm + quadraticTerm + cubicTerm
         return result * 0.5
-    }
-
-    private static func positiveModulo(_ value: Int, _ modulus: Int) -> Int {
-        let remainder = value % modulus
-        return remainder >= 0 ? remainder : remainder + modulus
     }
 
     private static func fallbackSlots() -> [SIMD3<Float>] {

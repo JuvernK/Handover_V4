@@ -27,6 +27,12 @@ enum ImmersiveConfiguration {
     static let orbitDragIntentThreshold: Float = 5 * .pi / 180
     static let orbitDragSensitivity: Float = 1.5
 
+    static let orbitEnableDisableDuration: TimeInterval = 0.45
+    static let orbitSnapDuration: TimeInterval = 0.22
+    static let orbitFocusDuration: TimeInterval = 0.3
+    static let orbitExpansionDelay: TimeInterval = 0.25
+    static let orbitRemoteSnapFallbackDuration: TimeInterval = 0.08
+
     static func orbitSlotEntityName(_ index: Int) -> String {
         "OrbitSlot_\(index)"
     }
