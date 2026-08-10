@@ -34,7 +34,10 @@ struct RelatedBackgroundCard: View {
             Divider().padding(.horizontal, 12)
 
             if isEmpty {
-                EmptyState()
+                CardEmptyState(
+                    systemImage: "person.text.rectangle",
+                    message: "No related background recorded"
+                )
                     .padding(16)
             } else {
                 VStack(alignment: .leading, spacing: 14) {
@@ -84,7 +87,7 @@ struct RelatedBackgroundCard: View {
                 .padding(16)
             }
         }
-        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+        .cardContainerBackground()
     }
 }
 
@@ -140,21 +143,6 @@ private struct BulletList: View {
                     )
                 }
             }
-        }
-    }
-}
-
-// MARK: - Empty state
-
-private struct EmptyState: View {
-    var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "person.text.rectangle")
-                .foregroundStyle(.secondary)
-            Text("No related background recorded")
-                .font(.system(size: 13))
-                .foregroundStyle(.secondary)
-            Spacer()
         }
     }
 }

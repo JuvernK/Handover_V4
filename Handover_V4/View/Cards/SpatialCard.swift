@@ -44,7 +44,7 @@ struct SpatialCardView: View {
         case .basicInformation:
             if isExpanded {
                 PatientHeaderView(patient: patient)
-                    .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+                    .cardContainerBackground()
                     .frame(width: basicInformationCardWidth)
                     .spatialExpansionControl(
                         isExpanded: true,
@@ -161,7 +161,7 @@ private struct CompactBasicInformationCard: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+        .cardContainerBackground()
         .hoverEffect()
     }
 }
@@ -185,7 +185,7 @@ private struct CompactSpatialCard: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+        .cardContainerBackground()
         .hoverEffect()
     }
 }
@@ -226,7 +226,7 @@ private extension View {
         self
             .tint(sectionID.identityColor)
             .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: CardChrome.cornerRadius, style: .continuous)
                     .strokeBorder(sectionID.identityColor.opacity(0.9), lineWidth: 2)
             )
     }
@@ -273,6 +273,6 @@ private struct UnknownPOIView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(16)
-        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+        .cardContainerBackground()
     }
 }

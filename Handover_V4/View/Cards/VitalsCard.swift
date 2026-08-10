@@ -39,7 +39,7 @@ struct VitalsCard: View {
             }
             .padding(16)
         }
-        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+        .cardContainerBackground()
         .hoverEffect()
     }
 }

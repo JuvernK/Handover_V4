@@ -27,7 +27,7 @@ struct VitalBox: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
-                trendArrow
+                TrendArrowView(trend: vital.trend)
             }
             
             // Current value + unit
@@ -63,26 +63,6 @@ struct VitalBox: View {
                 .stroke(statusBorderColor, lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-    
-    // MARK: - Trend arrow
-    
-    @ViewBuilder
-    private var trendArrow: some View {
-        switch vital.trend {
-        case .up:
-            Image(systemName: "arrow.up")
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(.secondary)
-        case .down:
-            Image(systemName: "arrow.down")
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(.secondary)
-        case .stable:
-            Image(systemName: "arrow.right")
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(.tertiary)
-        }
     }
     
     // MARK: - Status-driven colours

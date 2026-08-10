@@ -20,22 +20,18 @@ struct LinesAccessCard: View {
             Divider().padding(.horizontal, 12)
             
             if patient.lines.isEmpty {
-                EmptyState(message: "No lines or access in situ")
+                CardEmptyState(
+                    systemImage: "checkmark.circle",
+                    message: "No lines or access in situ"
+                )
                     .padding(16)
             } else {
-                VStack(spacing: 0) {
-                    ForEach(Array(patient.lines.enumerated()), id: \.element.id) { index, line in
-                        LineRow(line: line)
-                        
-                        if index < patient.lines.count - 1 {
-                            Divider().padding(.horizontal, 16)
-                        }
-                    }
+                DividedRowList(data: patient.lines) { line in
+                    LineRow(line: line)
                 }
-                .padding(.vertical, 8)
             }
         }
-        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+        .cardContainerBackground()
     }
 }
 
@@ -79,23 +75,6 @@ private struct LineRow: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
-    }
-}
-
-// MARK: - Empty state
-
-private struct EmptyState: View {
-    let message: String
-    
-    var body: some View {
-        HStack {
-            Image(systemName: "checkmark.circle")
-                .foregroundStyle(.secondary)
-            Text(message)
-                .font(.system(size: 13))
-                .foregroundStyle(.secondary)
-            Spacer()
-        }
     }
 }
 

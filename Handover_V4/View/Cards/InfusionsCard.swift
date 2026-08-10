@@ -24,22 +24,15 @@ struct InfusionsCard: View {
             Divider().padding(.horizontal, 12)
             
             if patient.infusions.isEmpty {
-                EmptyState()
+                CardEmptyState(systemImage: "drop", message: "No active infusions")
                     .padding(16)
             } else {
-                VStack(spacing: 0) {
-                    ForEach(Array(patient.infusions.enumerated()), id: \.element.id) { index, infusion in
-                        InfusionRow(infusion: infusion)
-                        
-                        if index < patient.infusions.count - 1 {
-                            Divider().padding(.horizontal, 16)
-                        }
-                    }
+                DividedRowList(data: patient.infusions) { infusion in
+                    InfusionRow(infusion: infusion)
                 }
-                .padding(.vertical, 8)
             }
         }
-        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+        .cardContainerBackground()
     }
 }
 
@@ -121,21 +114,6 @@ private struct InfusionRow: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
-    }
-}
-
-// MARK: - Empty state
-
-private struct EmptyState: View {
-    var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "drop")
-                .foregroundStyle(.secondary)
-            Text("No active infusions")
-                .font(.system(size: 13))
-                .foregroundStyle(.secondary)
-            Spacer()
-        }
     }
 }
 

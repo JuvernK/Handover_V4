@@ -28,7 +28,10 @@ struct SystemsAssessmentCard: View {
             Divider().padding(.horizontal, 12)
             
             if patient.systems.isEmpty {
-                EmptyState()
+                CardEmptyState(
+                    systemImage: "stethoscope",
+                    message: "No systems assessment recorded"
+                )
                     .padding(16)
             } else {
                 LazyVGrid(
@@ -45,7 +48,7 @@ struct SystemsAssessmentCard: View {
                 .padding(.vertical, 4)
             }
         }
-        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+        .cardContainerBackground()
     }
 }
 
@@ -118,21 +121,6 @@ private struct SystemRow: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-    }
-}
-
-// MARK: - Empty state
-
-private struct EmptyState: View {
-    var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "stethoscope")
-                .foregroundStyle(.secondary)
-            Text("No systems assessment recorded")
-                .font(.system(size: 13))
-                .foregroundStyle(.secondary)
-            Spacer()
-        }
     }
 }
 
