@@ -192,6 +192,12 @@ final class OrbitController {
     private func toggleFocusedExpansion() {
         cancelScheduledExpansion()
         var state = currentState()
+#if DEBUG
+        print(
+            "[OrbitDebug] toggleFocusedExpansion entered: isActive=\(state.isActive), "
+                + "focused=\(state.focusedCardName ?? "nil")"
+        )
+#endif
         guard state.isActive, let focusedCardName = state.focusedCardName else {
             return
         }
@@ -199,6 +205,12 @@ final class OrbitController {
         state.expandedCardName = state.expandedCardName == nil
             ? focusedCardName
             : nil
+#if DEBUG
+        print(
+            "[OrbitDebug] toggleFocusedExpansion applied: focused=\(focusedCardName), "
+                + "expandedAfter=\(state.expandedCardName ?? "nil")"
+        )
+#endif
         applyTransition(
             state,
             animationDuration: ImmersiveConfiguration.orbitFocusDuration,
