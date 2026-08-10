@@ -26,6 +26,9 @@ enum ImmersiveConfiguration {
     static let orbitCollisionWidth: Float = 0.12
     static let orbitDragIntentThreshold: Float = 5 * .pi / 180
     static let orbitDragSensitivity: Float = 1.5
+    /// Raises rotating cards above the ring curve so they don't visually
+    /// overlap it; the ring geometry itself is unaffected.
+    static let orbitCardVerticalOffset: Float = 0.08
 
     static let orbitEnableDisableDuration: TimeInterval = 0.45
     static let orbitSnapDuration: TimeInterval = 0.22
