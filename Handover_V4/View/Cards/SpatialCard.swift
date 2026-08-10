@@ -222,26 +222,40 @@ private extension View {
         }
         .overlay(alignment: .topTrailing) {
             if isEnabled {
-                Button(action: action) {
-                    Image(
-                        systemName: isExpanded
-                            ? "chevron.down.circle.fill"
-                            : "chevron.up.circle.fill"
+                // The tap strip above already owns tap/hover/accessibility
+                // when it's present, so the icon is decorative in that case
+                // rather than a second stacked control over the same region.
+                if let tapStripHeight {
+                    expansionIcon(isExpanded: isExpanded)
+                        .allowsHitTesting(false)
+                        .accessibilityHidden(true)
+                        .padding(.top, 8)
+                        .padding(.trailing, 10)
+                } else {
+                    Button(action: action) {
+                        expansionIcon(isExpanded: isExpanded)
+                            .contentShape(.circle)
+                    }
+                    .buttonStyle(.plain)
+                    .hoverEffect(.highlight)
+                    .accessibilityLabel(
+                        isExpanded ? "Collapse card" : "Expand card"
                     )
-                    .font(.system(size: 20, weight: .semibold))
-                    .frame(width: 36, height: 36)
-                    .contentShape(.circle)
+                    .padding(.top, 8)
+                    .padding(.trailing, 10)
                 }
-                .buttonStyle(.plain)
-                .hoverEffect(.highlight)
-                .accessibilityHidden(tapStripHeight != nil)
-                .accessibilityLabel(
-                    isExpanded ? "Collapse card" : "Expand card"
-                )
-                .padding(.top, 8)
-                .padding(.trailing, 10)
             }
         }
+    }
+
+    private func expansionIcon(isExpanded: Bool) -> some View {
+        Image(
+            systemName: isExpanded
+                ? "chevron.down.circle.fill"
+                : "chevron.up.circle.fill"
+        )
+        .font(.system(size: 20, weight: .semibold))
+        .frame(width: 36, height: 36)
     }
 
     /// Applies a card's Card Identity Colour to its border and tinted glyphs so
