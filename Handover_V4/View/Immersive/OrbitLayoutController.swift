@@ -221,12 +221,17 @@ enum OrbitLayoutController {
             )
             let isExpanded = state.expandedCardName == canonicalName
             let isFocused = state.focusedCardName == canonicalName
-            let position = isExpanded
+            let basePosition = isExpanded
                 ? geometry.slots[0]
                 : sampleClosedPath(
                     geometry.slots,
                     parameter: Float(index) + slotOffset
                 )
+            let position = basePosition + SIMD3<Float>(
+                0,
+                ImmersiveConfiguration.orbitCardVerticalOffset,
+                0
+            )
 
             if animationDuration >= 0.4 {
                 let homePosition = homePositions[
