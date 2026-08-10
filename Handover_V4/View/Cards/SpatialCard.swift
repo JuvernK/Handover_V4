@@ -56,6 +56,7 @@ struct SpatialCardView: View {
                     .frame(width: defaultCardWidth)
                     .spatialExpansionControl(
                         isExpanded: false,
+                        tapStripHeight: CardChrome.expansionTapAreaHeight,
                         action: toggleExpansion
                     )
             }
@@ -66,6 +67,7 @@ struct SpatialCardView: View {
                     .frame(width: expandedWidth(for: sectionID))
                     .spatialExpansionControl(
                         isExpanded: true,
+                        tapStripHeight: CardChrome.expansionTapAreaHeight,
                         action: toggleExpansion
                     )
                     .identityStyled(sectionID)
@@ -74,6 +76,7 @@ struct SpatialCardView: View {
                     .frame(width: defaultCardWidth)
                     .spatialExpansionControl(
                         isExpanded: false,
+                        tapStripHeight: CardChrome.expansionTapAreaHeight,
                         action: toggleExpansion
                     )
                     .identityStyled(sectionID)
@@ -191,32 +194,68 @@ private struct CompactSpatialCard: View {
 }
 
 private extension View {
+    /// - Parameter tapStripHeight: when set, the whole top strip of this
+    ///   height becomes tappable (the card's header bar, or effectively the
+    ///   whole card when it's collapsed to a single row) instead of only the
+    ///   small chevron icon. Leave `nil` where the top of the content already
+    ///   has its own interactive elements (e.g. expanded Basic Information's
+    ///   diagnosis abbreviation), so the strip can't steal their taps.
     func spatialExpansionControl(
         isExpanded: Bool,
         isEnabled: Bool = true,
+        tapStripHeight: CGFloat? = nil,
         action: @escaping () -> Void
     ) -> some View {
-        overlay(alignment: .topTrailing) {
-            if isEnabled {
+        overlay(alignment: .top) {
+            if isEnabled, let tapStripHeight {
                 Button(action: action) {
-                    Image(
-                        systemName: isExpanded
-                            ? "chevron.down.circle.fill"
-                            : "chevron.up.circle.fill"
-                    )
-                    .font(.system(size: 20, weight: .semibold))
-                    .frame(width: 36, height: 36)
-                    .contentShape(.circle)
+                    Color.clear
+                        .frame(maxWidth: .infinity, minHeight: tapStripHeight)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .hoverEffect(.highlight)
                 .accessibilityLabel(
                     isExpanded ? "Collapse card" : "Expand card"
                 )
-                .padding(.top, 8)
-                .padding(.trailing, 10)
             }
         }
+        .overlay(alignment: .topTrailing) {
+            if isEnabled {
+                // The tap strip above already owns tap/hover/accessibility
+                // when it's present, so the icon is decorative in that case
+                // rather than a second stacked control over the same region.
+                if let tapStripHeight {
+                    expansionIcon(isExpanded: isExpanded)
+                        .allowsHitTesting(false)
+                        .accessibilityHidden(true)
+                        .padding(.top, 8)
+                        .padding(.trailing, 10)
+                } else {
+                    Button(action: action) {
+                        expansionIcon(isExpanded: isExpanded)
+                            .contentShape(.circle)
+                    }
+                    .buttonStyle(.plain)
+                    .hoverEffect(.highlight)
+                    .accessibilityLabel(
+                        isExpanded ? "Collapse card" : "Expand card"
+                    )
+                    .padding(.top, 8)
+                    .padding(.trailing, 10)
+                }
+            }
+        }
+    }
+
+    private func expansionIcon(isExpanded: Bool) -> some View {
+        Image(
+            systemName: isExpanded
+                ? "chevron.down.circle.fill"
+                : "chevron.up.circle.fill"
+        )
+        .font(.system(size: 20, weight: .semibold))
+        .frame(width: 36, height: 36)
     }
 
     /// Applies a card's Card Identity Colour to its border and tinted glyphs so
