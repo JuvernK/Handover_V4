@@ -25,22 +25,15 @@ struct PlanCard: View {
             Divider().padding(.horizontal, 12)
             
             if patient.plan.isEmpty {
-                EmptyState()
+                CardEmptyState(systemImage: "list.bullet.clipboard", message: "No tasks set")
                     .padding(16)
             } else {
-                VStack(spacing: 0) {
-                    ForEach(Array(patient.plan.enumerated()), id: \.element.id) { index, item in
-                        PlanRow(item: item)
-                        
-                        if index < patient.plan.count - 1 {
-                            Divider().padding(.horizontal, 16)
-                        }
-                    }
+                DividedRowList(data: patient.plan) { item in
+                    PlanRow(item: item)
                 }
-                .padding(.vertical, 8)
             }
         }
-        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+        .cardContainerBackground()
     }
 }
 
@@ -107,21 +100,6 @@ private struct PlanRow: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"
         return formatter.string(from: date)
-    }
-}
-
-// MARK: - Empty state
-
-private struct EmptyState: View {
-    var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "list.bullet.clipboard")
-                .foregroundStyle(.secondary)
-            Text("No tasks set")
-                .font(.system(size: 13))
-                .foregroundStyle(.secondary)
-            Spacer()
-        }
     }
 }
 

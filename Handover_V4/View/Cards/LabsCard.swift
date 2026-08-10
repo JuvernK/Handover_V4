@@ -30,22 +30,19 @@ struct LabsCard: View {
             Divider().padding(.horizontal, 12)
             
             if abnormalLabs.isEmpty {
-                AllNormalState()
+                CardEmptyState(
+                    systemImage: "checkmark.circle.fill",
+                    message: "All labs within normal limits",
+                    iconColor: .green
+                )
                     .padding(16)
             } else {
-                VStack(spacing: 0) {
-                    ForEach(Array(abnormalLabs.enumerated()), id: \.element.id) { index, lab in
-                        LabRow(lab: lab)
-                        
-                        if index < abnormalLabs.count - 1 {
-                            Divider().padding(.horizontal, 16)
-                        }
-                    }
+                DividedRowList(data: abnormalLabs) { lab in
+                    LabRow(lab: lab)
                 }
-                .padding(.vertical, 8)
             }
         }
-        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+        .cardContainerBackground()
     }
 }
 
@@ -88,55 +85,18 @@ private struct LabRow: View {
             }
             
             // Trend arrow (if present)
-            trendArrow
+            TrendArrowView(trend: lab.trend, fontSize: 10)
                 .frame(width: 14)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
     }
-    
+
     private var statusColor: Color {
         switch lab.status {
         case .normal:   return .green
         case .warning:  return .orange
         case .critical: return .red
-        }
-    }
-    
-    @ViewBuilder
-    private var trendArrow: some View {
-        if let trend = lab.trend {
-            switch trend {
-            case .up:
-                Image(systemName: "arrow.up")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(.secondary)
-            case .down:
-                Image(systemName: "arrow.down")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(.secondary)
-            case .stable:
-                Image(systemName: "arrow.right")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(.tertiary)
-            }
-        } else {
-            Color.clear
-        }
-    }
-}
-
-// MARK: - All-normal state
-
-private struct AllNormalState: View {
-    var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(.green)
-            Text("All labs within normal limits")
-                .font(.system(size: 13))
-                .foregroundStyle(.secondary)
-            Spacer()
         }
     }
 }
