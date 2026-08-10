@@ -16,9 +16,10 @@ struct ImmersiveControlsView: View {
                 Text("Orbit")
                     .font(.headline)
 
+                // Looks like "<" "End Orbit" ">"
                 HStack(spacing: 12) {
                     Button {
-                        appModel.moveOrbitFocus(by: -1)
+                        appModel.moveOrbitFocus(by: 1)
                     } label: {
                         Label("Previous card", systemImage: "chevron.left")
                             .labelStyle(.iconOnly)
@@ -40,7 +41,7 @@ struct ImmersiveControlsView: View {
                     .buttonStyle(.borderedProminent)
 
                     Button {
-                        appModel.moveOrbitFocus(by: 1)
+                        appModel.moveOrbitFocus(by: -1)
                     } label: {
                         Label("Next card", systemImage: "chevron.right")
                             .labelStyle(.iconOnly)
