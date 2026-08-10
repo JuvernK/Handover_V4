@@ -9,16 +9,17 @@ import RealityKit
 private struct SpatialCardGestureModifier: ViewModifier {
     @Environment(AppModel.self) private var appModel
     @State private var dragStartPosition: SIMD3<Float>?
+    // Below ImmersiveConfiguration.cardDragConfirmationDistance of movement,
+    // a touch is tap jitter, not a deliberate drag -- SwiftUI's DragGesture
+    // minimumDistance is measured in screen points before the 3D conversion
+    // below, which hand tremor during a stationary tap can cross easily.
+    // This is a linear-distance sibling of OrbitDragInterpreter's angular
+    // intent threshold, not a shared type: the two gestures measure
+    // different things (translation vs. rotation), and folding this into
+    // OrbitDragInterpreter would mean generalizing tested, working code for
+    // a metric it wasn't built for. See issue #32.
     @State private var isCardDragConfirmed = false
     @State private var orbitDragInterpreter = OrbitDragInterpreter()
-
-    /// Real-world movement (metres) required before a touch on a card is
-    /// treated as a deliberate drag rather than tap jitter. SwiftUI's
-    /// DragGesture minimumDistance is measured in screen points before the
-    /// 3D conversion below, which can be crossed by hand tremor during a
-    /// stationary tap; this re-checks against the converted, physically
-    /// meaningful translation. See issue #32.
-    private let cardDragConfirmationDistance: Float = 0.02
 
     func body(content: Content) -> some View {
         content
@@ -71,7 +72,8 @@ private struct SpatialCardGestureModifier: ViewModifier {
                     to: .scene
                 )
                 guard isCardDragConfirmed
-                    || simd_length(translation) >= cardDragConfirmationDistance
+                    || simd_length(translation)
+                        >= ImmersiveConfiguration.cardDragConfirmationDistance
                 else {
                     return
                 }
