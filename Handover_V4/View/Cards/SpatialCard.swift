@@ -105,6 +105,13 @@ struct SpatialCardView: View {
         let changes: () -> Void = {
             if appModel.orbitState.isActive {
                 let canonicalName = cardID.canonicalName
+#if DEBUG
+                print(
+                    "[OrbitDebug] toggleExpansion tapped: card=\(canonicalName), "
+                        + "focused=\(appModel.orbitState.focusedCardName ?? "nil"), "
+                        + "expandedBefore=\(appModel.orbitState.expandedCardName ?? "nil")"
+                )
+#endif
                 if appModel.orbitState.focusedCardName == canonicalName {
                     appModel.toggleFocusedOrbitCardExpansion()
                 } else {

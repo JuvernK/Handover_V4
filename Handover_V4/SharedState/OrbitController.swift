@@ -199,6 +199,12 @@ final class OrbitController {
         state.expandedCardName = state.expandedCardName == nil
             ? focusedCardName
             : nil
+#if DEBUG
+        print(
+            "[OrbitDebug] toggleFocusedExpansion applied: focused=\(focusedCardName), "
+                + "expandedAfter=\(state.expandedCardName ?? "nil")"
+        )
+#endif
         applyTransition(
             state,
             animationDuration: ImmersiveConfiguration.orbitFocusDuration,
