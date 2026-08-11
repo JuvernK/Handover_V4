@@ -26,11 +26,6 @@ struct SpatialCardView: View {
     
     let patient: Patient
     
-    /// Width the card renders at in 3D space. Most cards stay compact; Systems
-    /// gets extra width so its adaptive internal grid can split into columns.
-    private let defaultCardWidth: CGFloat = 360
-    private let basicInformationCardWidth: CGFloat = 720
-    private let systemsCardWidth: CGFloat = 760
     private let immersiveCardScale: CGFloat = 1.5
     
     var body: some View {
@@ -45,7 +40,7 @@ struct SpatialCardView: View {
             if isExpanded {
                 PatientHeaderView(patient: patient)
                     .cardContainerBackground()
-                    .frame(width: basicInformationCardWidth)
+                    .frame(width: CardChrome.basicInformationCardWidth)
                     .spatialExpansionControl(
                         isExpanded: true,
                         isEnabled: !appModel.orbitState.isActive,
@@ -53,7 +48,7 @@ struct SpatialCardView: View {
                     )
             } else {
                 CompactBasicInformationCard(patient: patient)
-                    .frame(width: defaultCardWidth)
+                    .frame(width: CardChrome.defaultCardWidth)
                     .spatialExpansionControl(
                         isExpanded: false,
                         tapStripHeight: CardChrome.expansionTapAreaHeight,
@@ -64,7 +59,7 @@ struct SpatialCardView: View {
         case .section(let sectionID):
             if isExpanded {
                 sectionID.view(for: patient)
-                    .frame(width: expandedWidth(for: sectionID))
+                    .frame(width: CardChrome.expandedCardWidth(for: sectionID))
                     .spatialExpansionControl(
                         isExpanded: true,
                         tapStripHeight: CardChrome.expansionTapAreaHeight,
@@ -73,7 +68,7 @@ struct SpatialCardView: View {
                     .identityStyled(sectionID)
             } else {
                 CompactSpatialCard(sectionID: sectionID)
-                    .frame(width: defaultCardWidth)
+                    .frame(width: CardChrome.defaultCardWidth)
                     .spatialExpansionControl(
                         isExpanded: false,
                         tapStripHeight: CardChrome.expansionTapAreaHeight,
@@ -84,7 +79,7 @@ struct SpatialCardView: View {
 
         case .unknown:
             UnknownPOIView(poiName: unknownPOIName ?? "Unknown")
-                .frame(width: defaultCardWidth)
+                .frame(width: CardChrome.defaultCardWidth)
         }
     }
 
@@ -97,10 +92,6 @@ struct SpatialCardView: View {
                 == cardID?.canonicalName
         }
         return normalModeIsExpanded
-    }
-
-    private func expandedWidth(for sectionID: SectionID) -> CGFloat {
-        sectionID == .systems ? systemsCardWidth : defaultCardWidth
     }
 
     private func toggleExpansion() {

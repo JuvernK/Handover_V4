@@ -33,10 +33,6 @@ enum ImmersiveConfiguration {
     /// angle-based (OrbitDragInterpreter.swift), so it's a sibling constant
     /// rather than a shared value.
     static let cardDragConfirmationDistance: Float = 0.02
-    /// Fraction (from the top) of an expanded card's measured bounds treated
-    /// as its Card Handle for gesture-driven tap fallback. Approximate --
-    /// see the doc comment on SpatialCardGestureModifier.isWithinCardHandleRegion.
-    static let cardHandleRegionFraction: Float = 0.18
     /// Raises rotating cards above the ring curve so they don't visually
     /// overlap it; the ring geometry itself is unaffected.
     static let orbitCardVerticalOffset: Float = 0.08
