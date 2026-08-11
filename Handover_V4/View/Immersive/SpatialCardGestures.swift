@@ -19,6 +19,17 @@ private struct SpatialCardGestureModifier: ViewModifier {
     // OrbitDragInterpreter would mean generalizing tested, working code for
     // a metric it wasn't built for. See issue #32.
     @State private var isCardDragConfirmed = false
+    // The RealityKit DragGesture below and the SwiftUI Button inside the
+    // card's header (SpatialCard.swift's spatialExpansionControl) are two
+    // independent recognizers over the same touch, so which one "wins" a
+    // given tap on the header isn't deterministic -- when the drag gesture
+    // wins, the Button never fires and nothing happens. Track whether the
+    // touch started within the header region so this gesture can fire the
+    // toggle itself as a fallback when it wins a tap. Not applied to
+    // Basic Information: its expanded state has an interactive diagnosis
+    // abbreviation at the top the region check isn't precise enough to
+    // reliably avoid. See issue #32.
+    @State private var isTapEligibleForCardToggle = false
     @State private var orbitDragInterpreter = OrbitDragInterpreter()
 
     func body(content: Content) -> some View {
@@ -64,6 +75,17 @@ private struct SpatialCardGestureModifier: ViewModifier {
                 let wasStartingFresh = dragStartPosition == nil
                 if dragStartPosition == nil {
                     dragStartPosition = value.entity.position
+                    isTapEligibleForCardToggle = isWithinCardHandleRegion(
+                        runtimeComponent: runtimeComponent,
+                        entity: value.entity,
+                        touchLocalPosition: value.startLocation3D
+                    )
+#if DEBUG
+                    print(
+                        "[CardDragDebug] touch started: card=\(runtimeComponent.diagnosticName), "
+                            + "isTapEligibleForCardToggle=\(isTapEligibleForCardToggle)"
+                    )
+#endif
                 }
                 guard let dragStartPosition else { return }
 
@@ -115,24 +137,35 @@ private struct SpatialCardGestureModifier: ViewModifier {
                 dragStartPosition = nil
                 let wasDragConfirmed = isCardDragConfirmed
                 isCardDragConfirmed = false
-#if DEBUG
-                let diagnosticName = value.entity.components[
+                let wasTapEligibleForToggle = isTapEligibleForCardToggle
+                isTapEligibleForCardToggle = false
+
+                guard let runtimeComponent = value.entity.components[
                     PointOfInterestRuntimeComponent.self
-                ]?.diagnosticName ?? "unknown"
+                ] else {
+                    return
+                }
+#if DEBUG
                 print(
-                    "[CardDragDebug] onEnded: card=\(diagnosticName), "
-                        + "wasDragConfirmed=\(wasDragConfirmed)"
+                    "[CardDragDebug] onEnded: card=\(runtimeComponent.diagnosticName), "
+                        + "wasDragConfirmed=\(wasDragConfirmed), "
+                        + "wasTapEligibleForToggle=\(wasTapEligibleForToggle)"
                 )
 #endif
 
                 // Movement never crossed the confirmation distance, so this
                 // touch was a tap, not a drag -- the card never actually
                 // moved and there's no new position to commit.
-                guard wasDragConfirmed else { return }
-
-                guard let runtimeComponent = value.entity.components[
-                    PointOfInterestRuntimeComponent.self
-                ] else {
+                guard wasDragConfirmed else {
+                    // The drag gesture won the arena for this tap instead of
+                    // the header's own Button, so nothing would otherwise
+                    // happen -- fire the toggle here as a fallback.
+                    if wasTapEligibleForToggle, let cardID = runtimeComponent.cardID {
+                        appModel.setCardState(
+                            cardID,
+                            isExpanded: !(appModel.cardStates[cardID] ?? true)
+                        )
+                    }
                     return
                 }
 
@@ -144,6 +177,39 @@ private struct SpatialCardGestureModifier: ViewModifier {
                     position: value.entity.position
                 )
             }
+    }
+
+    /// Whether a touch's start position falls within the card's Card Handle
+    /// (its header bar) rather than its body. A collapsed card is a single
+    /// row, so the whole thing counts, matching #28's whole-bar tap target;
+    /// an expanded card only counts its top fraction, since the body can
+    /// hold its own interactive content (e.g. abbreviation capsules) that
+    /// must not be mistaken for a toggle. This is a bounds-relative
+    /// approximation, not an exact match to the SwiftUI header's rendered
+    /// height (CardChrome.expansionTapAreaHeight is in points; this compares
+    /// against the entity's own measured extents to avoid guessing at a
+    /// points-to-metres conversion) -- expect to tune
+    /// ImmersiveConfiguration.cardHandleRegionFraction after checking it in
+    /// the simulator.
+    private func isWithinCardHandleRegion(
+        runtimeComponent: PointOfInterestRuntimeComponent,
+        entity: Entity,
+        touchLocalPosition: Point3D
+    ) -> Bool {
+        guard let cardID = runtimeComponent.cardID, cardID != .basicInformation else {
+            return false
+        }
+
+        let isExpanded = appModel.cardStates[cardID] ?? true
+        guard isExpanded else {
+            return true
+        }
+
+        let bounds = entity.visualBounds(relativeTo: entity)
+        guard bounds.extents.y > 0 else { return false }
+        let headerHeight = bounds.extents.y
+            * ImmersiveConfiguration.cardHandleRegionFraction
+        return Float(touchLocalPosition.y) >= bounds.max.y - headerHeight
     }
 
     private func orbitAngle(for point: SIMD3<Float>) -> Float {
