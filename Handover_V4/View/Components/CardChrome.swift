@@ -16,6 +16,20 @@ enum CardChrome {
     /// (CardHeader) or, for a collapsed compact card, effectively the whole
     /// card. Matches the "Card Handle" surface described in CONTEXT.md.
     static let expansionTapAreaHeight: CGFloat = 52
+
+    /// Width a Spatial Card renders at in the immersive space. Most cards
+    /// stay compact; Systems gets extra width so its adaptive internal grid
+    /// can split into columns. Shared with SpatialCardGestures.swift, which
+    /// needs the same authored width to convert the RealityKit attachment's
+    /// measured metres back into the SwiftUI points expansionTapAreaHeight
+    /// is defined in.
+    static let defaultCardWidth: CGFloat = 360
+    static let basicInformationCardWidth: CGFloat = 720
+    static let systemsCardWidth: CGFloat = 760
+
+    static func expandedCardWidth(for sectionID: SectionID) -> CGFloat {
+        sectionID == .systems ? systemsCardWidth : defaultCardWidth
+    }
 }
 
 extension View {

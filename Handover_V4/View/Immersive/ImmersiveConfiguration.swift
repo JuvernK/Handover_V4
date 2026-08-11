@@ -26,6 +26,13 @@ enum ImmersiveConfiguration {
     static let orbitCollisionWidth: Float = 0.12
     static let orbitDragIntentThreshold: Float = 5 * .pi / 180
     static let orbitDragSensitivity: Float = 1.5
+    /// Real-world movement (metres) required before a touch on a card in
+    /// normal mode is treated as a deliberate drag rather than tap jitter.
+    /// See `orbitDragIntentThreshold` for Orbit's angular equivalent; this
+    /// one is linear-distance-based (SpatialCardGestures.swift) rather than
+    /// angle-based (OrbitDragInterpreter.swift), so it's a sibling constant
+    /// rather than a shared value.
+    static let cardDragConfirmationDistance: Float = 0.02
     /// Raises rotating cards above the ring curve so they don't visually
     /// overlap it; the ring geometry itself is unaffected.
     static let orbitCardVerticalOffset: Float = 0.08
