@@ -212,13 +212,30 @@ private extension View {
     ) -> some View {
         overlay(alignment: .top) {
             if isEnabled, let tapStripHeight {
+                let handleShape = UnevenRoundedRectangle(
+                    topLeadingRadius: CardChrome.cornerRadius,
+                    bottomLeadingRadius: 0,
+                    bottomTrailingRadius: 0,
+                    topTrailingRadius: CardChrome.cornerRadius
+                )
                 Button(action: action) {
-                    Color.clear
+                    // A persistent tint and hairline seam so the Card Handle
+                    // reads as its own control at rest, not only while it
+                    // happens to catch the glass material's gaze shimmer.
+                    Rectangle()
+                        .fill(Color.primary.opacity(0.16))
                         .frame(maxWidth: .infinity, minHeight: tapStripHeight)
+                        .overlay(alignment: .bottom) {
+                            Rectangle()
+                                .fill(Color.primary.opacity(0.28))
+                                .frame(height: 1)
+                        }
+                        .clipShape(handleShape)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .hoverEffect(.highlight)
+                .contentShape(.hoverEffect, handleShape)
                 .accessibilityLabel(
                     isExpanded ? "Collapse card" : "Expand card"
                 )
