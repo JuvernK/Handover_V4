@@ -8,28 +8,11 @@ import RealityKit
 
 private struct SpatialCardGestureModifier: ViewModifier {
     @Environment(AppModel.self) private var appModel
-    @State private var dragStartPosition: SIMD3<Float>?
-    // Below ImmersiveConfiguration.cardDragConfirmationDistance of movement,
-    // a touch is tap jitter, not a deliberate drag. SwiftUI's DragGesture
-    // minimumDistance is measured in screen points before the 3D conversion
-    // below, which hand tremor during a stationary tap can cross easily.
-    // This is a linear-distance sibling of OrbitDragInterpreter's angular
-    // intent threshold, not a shared type: the two gestures measure
-    // different things (translation vs. rotation), and folding this into
-    // OrbitDragInterpreter would mean generalizing tested, working code for
-    // a metric it wasn't built for. See issue #32.
-    @State private var isCardDragConfirmed = false
-    // The RealityKit DragGesture below and the SwiftUI Button inside the
-    // card's header (SpatialCard.swift's spatialExpansionControl) are two
-    // independent recognizers over the same touch, so which one "wins" a
-    // given tap on the header isn't deterministic. When the drag gesture
-    // wins, the Button never fires and nothing happens. Track whether the
-    // touch started within the header region so this gesture can fire the
-    // toggle itself as a fallback when it wins a tap. Not applied to
-    // Basic Information: its expanded state has an interactive diagnosis
-    // abbreviation at the top the region check isn't precise enough to
-    // reliably avoid. See issue #32.
-    @State private var isTapEligibleForCardToggle = false
+    // Grouped so a completed or abandoned touch resets with one assignment
+    // instead of several booleans that must be cleared together. See
+    // CardHandleInteraction.swift for the tap-vs-drag-vs-toggle decision
+    // logic this state feeds.
+    @State private var touchState: CardTouchState?
     @State private var orbitDragInterpreter = OrbitDragInterpreter()
 
     func body(content: Content) -> some View {
@@ -72,22 +55,24 @@ private struct SpatialCardGestureModifier: ViewModifier {
                 ] else {
                     return
                 }
-                let wasStartingFresh = dragStartPosition == nil
-                if dragStartPosition == nil {
-                    dragStartPosition = value.entity.position
-                    isTapEligibleForCardToggle = isWithinCardHandleRegion(
-                        runtimeComponent: runtimeComponent,
-                        entity: value.entity,
-                        touchLocalPosition: value.startLocation3D
+                let wasStartingFresh = touchState == nil
+                if touchState == nil {
+                    touchState = CardTouchState(
+                        startPosition: value.entity.position,
+                        isEligibleForToggle: isWithinCardHandleRegion(
+                            runtimeComponent: runtimeComponent,
+                            entity: value.entity,
+                            touchLocalPosition: value.startLocation3D
+                        )
                     )
 #if DEBUG
                     print(
                         "[CardDragDebug] touch started: card=\(runtimeComponent.diagnosticName), "
-                            + "isTapEligibleForCardToggle=\(isTapEligibleForCardToggle)"
+                            + "isEligibleForToggle=\(touchState?.isEligibleForToggle ?? false)"
                     )
 #endif
                 }
-                guard let dragStartPosition else { return }
+                guard var state = touchState else { return }
 
                 let translation = value.convert(
                     value.translation3D,
@@ -96,22 +81,24 @@ private struct SpatialCardGestureModifier: ViewModifier {
                 )
                 let distance = simd_length(translation)
 #if DEBUG
-                if wasStartingFresh || !isCardDragConfirmed {
+                if wasStartingFresh || !state.isDragConfirmed {
                     print(
                         "[CardDragDebug] onChanged: card=\(runtimeComponent.diagnosticName), "
                             + "distance=\(distance), "
-                            + "confirmedBefore=\(isCardDragConfirmed), "
+                            + "confirmedBefore=\(state.isDragConfirmed), "
                             + "threshold=\(ImmersiveConfiguration.cardDragConfirmationDistance)"
                     )
                 }
 #endif
-                guard isCardDragConfirmed
-                    || distance
-                        >= ImmersiveConfiguration.cardDragConfirmationDistance
-                else {
-                    return
-                }
-                if !isCardDragConfirmed {
+                let wasConfirmedBefore = state.isDragConfirmed
+                state.isDragConfirmed = CardHandleInteraction.isDragConfirmed(
+                    distance: distance,
+                    alreadyConfirmed: state.isDragConfirmed,
+                    threshold: ImmersiveConfiguration.cardDragConfirmationDistance
+                )
+                touchState = state
+                guard state.isDragConfirmed else { return }
+                if !wasConfirmedBefore {
 #if DEBUG
                     print(
                         "[CardDragDebug] drag CONFIRMED: card=\(runtimeComponent.diagnosticName), "
@@ -119,8 +106,7 @@ private struct SpatialCardGestureModifier: ViewModifier {
                     )
 #endif
                 }
-                isCardDragConfirmed = true
-                value.entity.position = dragStartPosition + translation
+                value.entity.position = state.startPosition + translation
             }
             .onEnded { value in
                 if appModel.orbitState.isActive {
@@ -134,48 +120,46 @@ private struct SpatialCardGestureModifier: ViewModifier {
                 }
 
                 orbitDragInterpreter.reset()
-                dragStartPosition = nil
-                let wasDragConfirmed = isCardDragConfirmed
-                isCardDragConfirmed = false
-                let wasTapEligibleForToggle = isTapEligibleForCardToggle
-                isTapEligibleForCardToggle = false
+                defer { touchState = nil }
 
-                guard let runtimeComponent = value.entity.components[
-                    PointOfInterestRuntimeComponent.self
-                ] else {
+                guard let state = touchState,
+                      let runtimeComponent = value.entity.components[
+                        PointOfInterestRuntimeComponent.self
+                      ]
+                else {
                     return
                 }
 #if DEBUG
                 print(
                     "[CardDragDebug] onEnded: card=\(runtimeComponent.diagnosticName), "
-                        + "wasDragConfirmed=\(wasDragConfirmed), "
-                        + "wasTapEligibleForToggle=\(wasTapEligibleForToggle)"
+                        + "wasDragConfirmed=\(state.isDragConfirmed), "
+                        + "wasTapEligibleForToggle=\(state.isEligibleForToggle)"
                 )
 #endif
 
-                // Movement never crossed the confirmation distance, so this
-                // touch was a tap, not a drag. The card never actually
-                // moved and there's no new position to commit.
-                guard wasDragConfirmed else {
+                let outcome = CardHandleInteraction.resolveOutcome(
+                    for: state,
+                    entityPosition: value.entity.position
+                )
+                switch outcome {
+                case .moved(let position):
+                    // Unknown debug POIs can still be moved locally, but
+                    // have no canonical identity and therefore never cross
+                    // the sync seam.
+                    guard let cardID = runtimeComponent.cardID else { return }
+                    appModel.setCardPosition(cardID, position: position)
+                case .toggled:
                     // The drag gesture won the arena for this tap instead of
                     // the header's own Button, so nothing would otherwise
                     // happen. Fire the toggle here as a fallback.
-                    if wasTapEligibleForToggle, let cardID = runtimeComponent.cardID {
-                        appModel.setCardState(
-                            cardID,
-                            isExpanded: !(appModel.cardStates[cardID] ?? true)
-                        )
-                    }
-                    return
+                    guard let cardID = runtimeComponent.cardID else { return }
+                    appModel.setCardState(
+                        cardID,
+                        isExpanded: !(appModel.cardStates[cardID] ?? true)
+                    )
+                case .none:
+                    break
                 }
-
-                // Unknown debug POIs can still be moved locally, but have no
-                // canonical identity and therefore never cross the sync seam.
-                guard let cardID = runtimeComponent.cardID else { return }
-                appModel.setCardPosition(
-                    cardID,
-                    position: value.entity.position
-                )
             }
     }
 
