@@ -78,9 +78,9 @@ Build and agent-working instructions belong in `AGENTS.md`.
   - `ImmersiveAttachmentFactory.swift` creates SwiftUI card attachments for discovered points of interest.
   - `ImmersiveAttachmentConfigurator.swift` configures RealityKit attachment entities, collision shapes, and synchronized positions.
   - `AttachmentsProvider.swift` stores the SwiftUI views exposed to RealityKit as attachments.
-  - `SpatialCardGestures.swift` handles whole-card 3D dragging and Orbit
-    rotation. Spatial Card expansion is controlled by an explicit chevron in
-    `SpatialCardView` so interactive card content owns its own selection.
+  - `SpatialCardGestures.swift` handles Card Handle 3D movement and Orbit ring
+    rotation. Spatial Card expansion is controlled by the full-width handle in
+    `SpatialCardView`, while interactive clinical content owns its selection.
   - `OrbitLayoutController.swift` builds the interactive ring and lays cards out in the focused carousel.
   - `PointOfInterestMapper.swift` resolves each authored POI name once to a
     canonical `ClinicalCardID`; unknown debug POIs remain local and are not
@@ -179,8 +179,9 @@ Root
 - `OrbitLayoutController` builds a smooth closed Catmull–Rom path through the
   eight slots. The visible ring consists of 64 procedural cylinder segments,
   each with a larger collision box for gaze-and-pinch targeting.
-- Dragging the ring or a card rotates all eight cards along the path. The
-  Previous/Next controls perform the same slot transition.
+- Dragging the ring rotates all eight cards along the path. Spatial Cards do
+  not move individually or navigate the Orbit; the Previous/Next controls
+  perform the same slot transition.
 
 The Orbit size is determined by the slot positions, not a radius setting. To
 make it smaller, keep `OrbitAnchor` at scale `1` and reduce every slot's local
