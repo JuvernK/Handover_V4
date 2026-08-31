@@ -41,11 +41,7 @@ extension SectionID {
         case .systems:
             return .equipment(["Ventilator"])
         case .labs:
-            // Bloods derive from the patient, not room equipment.
-            return .organ(
-                symbol: "drop.fill",
-                anchor: ImmersiveConfiguration.torsoOrganAnchorName
-            )
+            return .none
         case .plan, .escalation, .relatedBackground:
             return .none
         }

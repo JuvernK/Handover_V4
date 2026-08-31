@@ -53,8 +53,7 @@ all named meshes glow together. Entity names verified in the RCP hierarchy
 | Active Infusions | `equipment` [`InfusionPump`, `MachineF`] |
 | Lines & Access | `equipment` [`IVDrip`] |
 | Systems Assessment | `equipment` [`Ventilator`] |
-| Abnormal Labs | `organ` `drop.fill`, anchored to `OrganAnchor_torso` (under `Root`, scale 1.0) |
-| Treatment Plan / Escalation / Related Background / Basic Information | `none` |
+| Abnormal Labs / Treatment Plan / Escalation / Related Background / Basic Information | `none` |
 
 ## Status
 

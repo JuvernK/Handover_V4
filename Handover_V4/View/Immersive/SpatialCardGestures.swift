@@ -25,6 +25,10 @@ private struct SpatialCardGestureModifier: ViewModifier {
             .targetedToAnyEntity()
             .onChanged { value in
                 if appModel.orbitState.isActive {
+                    guard OrbitLayoutController.isRingEntity(value.entity) else {
+                        orbitDragInterpreter.reset()
+                        return
+                    }
                     let startPoint = value.convert(
                         value.startLocation3D,
                         from: .local,
@@ -74,6 +78,11 @@ private struct SpatialCardGestureModifier: ViewModifier {
                 }
                 guard var state = touchState else { return }
 
+                // Clinical content owns its own interaction. The RealityKit
+                // drag recognizer may observe the touch, but only a touch that
+                // began in the Card Handle may preview card movement.
+                guard state.isEligibleForToggle else { return }
+
                 let translation = value.convert(
                     value.translation3D,
                     from: .local,
@@ -110,6 +119,10 @@ private struct SpatialCardGestureModifier: ViewModifier {
             }
             .onEnded { value in
                 if appModel.orbitState.isActive {
+                    guard OrbitLayoutController.isRingEntity(value.entity) else {
+                        orbitDragInterpreter.reset()
+                        return
+                    }
                     if let rotation = orbitDragInterpreter.end() {
                         appModel.updateOrbitRotation(
                             rotation,

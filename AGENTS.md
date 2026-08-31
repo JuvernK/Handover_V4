@@ -3,6 +3,8 @@
 Canonical guidance for Codex and other coding agents working in this
 repository.
 
+Create and switch to a dedicated branch for every task before editing repository files; never work directly on `main`.
+After opening a pull request, return to `main` and delete the local task branch once its commits are safely pushed. Delete the remote branch only after its pull request is merged or closed.
 Do not preserve backward compatibility. Remove obsolete paths instead of adding compatibility layers, fallbacks, or migrations.
 Choose the simplest implementation that fully meets the current requirements. Avoid speculative abstractions, configuration, and indirection.
 Grow the system in layers. Start from the smallest version that works end to end, and add each new capability on top of a product that already works. Never trade a working product for unfinished complexity.

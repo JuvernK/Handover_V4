@@ -8,10 +8,10 @@ visionOS ICU handover prototype: a dashboard and a fully immersive ICU scene in 
 A floating SwiftUI clinical card shown in the immersive ICU scene (e.g. Vitals, Labs, Infusions), anchored to an authored point of interest.
 
 **Orbit**:
-The eight-card snapping carousel that rotates the clinical cards around the patient bed. One card occupies the front reading position at a time; the ring is visual rather than draggable.
+The eight-card snapping carousel that rotates the clinical cards around the patient bed. One card occupies the front reading position at a time; dragging the Orbit ring rotates the carousel and release snaps it to the nearest card.
 
 **Orbit Navigation**:
-The controls that move a card into the Orbit's front reading position: floating Previous and Next controls beside the Focused Card for one-step movement, and an eight-position slider for direct movement. Any participant may use either control; slider dragging scrubs the shared Orbit smoothly while the front card remains collapsed, and release snaps to the nearest card and expands it. Spatial Card dragging does not navigate the Orbit.
+The controls that move a card into the Orbit's front reading position: dragging the Orbit ring for direct manipulation, floating Previous and Next controls beside the Focused Card for one-step movement, and an eight-position slider for direct movement. Any participant may use any control; ring or slider dragging scrubs the shared Orbit smoothly while the front card remains collapsed, and release snaps to the nearest card and expands it. Spatial Card dragging does not navigate the Orbit.
 
 **Focused Card**:
 The single card currently in the front reading position of the Orbit. Tracked by `OrbitState.focusedCardName` and SharePlay-synced.
