@@ -25,17 +25,17 @@ struct DashboardView: View {
     private let columnSpacing: CGFloat = 16
     private let minimumLeftColumnWidth: CGFloat = 760
     private let systemsPanelWidth: CGFloat = 440
-    
+
     /// Sections that flow in the flex layout (everything except Systems,
     /// which is rendered in the fixed right panel).
     private var reorderableSections: [SectionID] {
         viewModel.sectionOrder.filter { $0 != .systems }
     }
-    
+
     var body: some View {
         GeometryReader { geometry in
             let layout = dashboardLayout(for: geometry.size.width)
-            
+
             ScrollView {
                 if let patient = viewModel.patient {
                     HStack(alignment: .top, spacing: columnSpacing) {
@@ -43,7 +43,7 @@ struct DashboardView: View {
                             // Pinned header (always at top, not draggable)
                             PatientHeaderView(patient: patient)
                                 .glassBackgroundEffect(in: .rect(cornerRadius: 16))
-                            
+
                             // Reorderable cards
                             DashboardFlexLayout(minimumItemWidth: 280, spacing: 12) {
                                 ForEach(reorderableSections) { sectionID in
@@ -58,7 +58,7 @@ struct DashboardView: View {
                             .animation(.smooth(duration: 0.25), value: viewModel.sectionOrder)
                         }
                         .frame(width: layout.leftWidth, alignment: .topLeading)
-                        
+
                         // Systems Assessment — fixed right panel, not reorderable
                         if viewModel.sectionOrder.contains(.systems) {
                             SystemsAssessmentCard(patient: patient)
@@ -94,7 +94,7 @@ struct DashboardView: View {
             Text(appModel.sharePlayErrorMessage ?? "")
         }
     }
-    
+
     private func dashboardLayout(for availableWidth: CGFloat) -> DashboardColumnLayout {
         let safeAvailableWidth = availableWidth.isFinite ? max(availableWidth, 1) : 1
         let horizontalPadding = contentPadding * 2
@@ -106,13 +106,13 @@ struct DashboardView: View {
             minimumLeftColumnWidth
         )
         let totalWidth = horizontalPadding + availableContentWidth + rightWidth + spacing
-        
+
         return DashboardColumnLayout(
             leftWidth: availableContentWidth,
             totalWidth: totalWidth
         )
     }
-    
+
     private struct DashboardColumnLayout {
         let leftWidth: CGFloat
         let totalWidth: CGFloat
@@ -129,13 +129,13 @@ private struct DashboardFlexLayout: Layout {
     var minimumItemWidth: CGFloat
     var spacing: CGFloat
     var rowSpacing: CGFloat
-    
+
     init(minimumItemWidth: CGFloat, spacing: CGFloat, rowSpacing: CGFloat? = nil) {
         self.minimumItemWidth = minimumItemWidth
         self.spacing = spacing
         self.rowSpacing = rowSpacing ?? spacing
     }
-    
+
     func sizeThatFits(
         proposal: ProposedViewSize,
         subviews: Subviews,
@@ -146,10 +146,10 @@ private struct DashboardFlexLayout: Layout {
         let totalHeight = rows.enumerated().reduce(CGFloat.zero) { height, row in
             height + row.element.height + (row.offset == rows.count - 1 ? 0 : rowSpacing)
         }
-        
+
         return CGSize(width: availableWidth, height: totalHeight)
     }
-    
+
     func placeSubviews(
         in bounds: CGRect,
         proposal: ProposedViewSize,
@@ -161,10 +161,10 @@ private struct DashboardFlexLayout: Layout {
             availableWidth: resolvedWidth(bounds.width, subviewCount: subviews.count)
         )
         var y = bounds.minY
-        
+
         for row in rows {
             var x = bounds.minX
-            
+
             for (position, index) in row.indices.enumerated() {
                 subviews[index].place(
                     at: CGPoint(x: x, y: y),
@@ -176,14 +176,14 @@ private struct DashboardFlexLayout: Layout {
                 )
                 x += row.widths[position] + spacing
             }
-            
+
             y += row.height + rowSpacing
         }
     }
-    
+
     private func makeRows(for subviews: Subviews, availableWidth: CGFloat) -> [Row] {
         guard !subviews.isEmpty else { return [] }
-        
+
         let safeWidth = resolvedWidth(availableWidth, subviewCount: subviews.count)
         let columnCount = max(
             1,
@@ -192,40 +192,40 @@ private struct DashboardFlexLayout: Layout {
         let baseItemWidth = (
             safeWidth - spacing * CGFloat(columnCount - 1)
         ) / CGFloat(columnCount)
-        
+
         var rows: [Row] = []
         var startIndex = subviews.startIndex
-        
+
         while startIndex < subviews.endIndex {
             var indices: [Subviews.Index] = []
             var widths: [CGFloat] = []
             var occupiedColumns = 0
             var index = startIndex
-            
+
             while index < subviews.endIndex {
                 let span = cardSpan(for: subviews[index], columnCount: columnCount)
-                
+
                 if !indices.isEmpty, occupiedColumns + span > columnCount {
                     break
                 }
-                
+
                 indices.append(index)
                 widths.append(width(forSpan: span, baseItemWidth: baseItemWidth))
                 occupiedColumns += span
                 index = subviews.index(after: index)
-                
+
                 if occupiedColumns >= columnCount {
                     break
                 }
             }
-            
+
             let sizes = indices.enumerated().map { position, index in
                 subviews[index].sizeThatFits(
                     ProposedViewSize(width: widths[position], height: nil)
                 )
             }
             let rowHeight = sizes.map(\.height).max() ?? 0
-            
+
             rows.append(
                 Row(
                     indices: indices,
@@ -234,30 +234,30 @@ private struct DashboardFlexLayout: Layout {
                     height: rowHeight
                 )
             )
-            
+
             startIndex = index
         }
-        
+
         return rows
     }
-    
+
     private func cardSpan(for subview: LayoutSubview, columnCount: Int) -> Int {
         min(max(1, subview[DashboardCardSpanKey.self]), columnCount)
     }
-    
+
     private func width(forSpan span: Int, baseItemWidth: CGFloat) -> CGFloat {
         baseItemWidth * CGFloat(span) + spacing * CGFloat(span - 1)
     }
-    
+
     private func resolvedWidth(_ width: CGFloat?, subviewCount: Int) -> CGFloat {
         if let width, width.isFinite, width > 0 {
             return max(width, minimumItemWidth)
         }
-        
+
         let itemCount = max(1, subviewCount)
         return minimumItemWidth * CGFloat(itemCount) + spacing * CGFloat(itemCount - 1)
     }
-    
+
     private struct Row {
         let indices: [Subviews.Index]
         let sizes: [CGSize]
@@ -312,9 +312,9 @@ private struct DraggableCard: View {
     let sectionID: SectionID
     let patient: Patient
     @Environment(AppModel.self) private var appModel
-    
+
     @State private var isTargeted: Bool = false
-    
+
     var body: some View {
         sectionID.view(for: patient)
             .opacity(isTargeted ? 0.6 : 1.0)
@@ -333,7 +333,7 @@ private struct DraggableCard: View {
                 isTargeted = targeted
             }
     }
-    
+
 }
 
 // MARK: - Empty state

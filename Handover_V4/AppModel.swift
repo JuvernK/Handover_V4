@@ -20,12 +20,12 @@ class AppModel {
         case open
     }
     var immersiveSpaceState = ImmersiveSpaceState.closed
-    
+
     let handoverViewModel: HandoverViewModel
     let patients = PatientDataLoader.loadOrEmpty()
     var isActivatingSharePlay = false
     var sharePlayErrorMessage: String?
-    
+
     init(initialBedNumber: String = "BED-02") {
         handoverViewModel = HandoverViewModel(initialBedNumber: initialBedNumber)
 //        // Temporary debug code to test decoding
@@ -37,16 +37,15 @@ class AppModel {
             await observeGroupSessions()
         }
     }
-    
+
     // MARK: - Set up SharePlay
     private var sessionController: SessionController?
-    
 
     /// Returns whether a SharePlay session is currently active.
     var isSharePlayActive: Bool {
         sessionController != nil
     }
-    
+
     /// Ends the current SharePlay session if one is active.
     func endSession() {
         sessionController?.endSession()
@@ -80,7 +79,7 @@ class AppModel {
             sharePlayErrorMessage = "SharePlay is not available right now."
         }
     }
-    
+
     /// Observes the life cycle of SharePlay group sessions.
     /// This method listens for new `SharePlayTogether` sessions and manages their life cycles.
     /// The method runs continuously in a background task and the system calls it only once during initialization.
@@ -91,10 +90,10 @@ class AppModel {
                 continue
             }
             self.sessionController = sessionController
-            
+
             // Create a task to observe the group session state and clear the
             // session controller when the group session invalidates.
-            Task.immediate(name: "session state observation")  {
+            Task.immediate(name: "session state observation") {
                 for await state in session.$state.values {
                     // Safety check for active session before new one created
                     guard self.sessionController?.session.id == session.id else {
@@ -108,13 +107,13 @@ class AppModel {
             }
         }
     }
-    
+
     // MARK: - Card State Management
-    
+
     // State Dictionaries
     var cardStates: [String: Bool] = [:]
     var cardPositions: [String: SIMD3<Float>] = [:]
-    
+
     // update counts to prevent race conditions
     private var cardUpdateCounts: [String: MessageUpdateCount] = [:]
     private var dashboardUpdateCount: MessageUpdateCount?
@@ -135,33 +134,33 @@ class AppModel {
             dashboardUpdateCount: dashboardUpdateCount
         )
     }
-    
+
     // MARK: - Local Updates  (SELF)
     func setCardState(name: String, isExpanded: Bool, syncChanges: Bool) {
         cardStates[name] = isExpanded
-        
+
         if syncChanges {
             incrementAndBroadcast(name: name, action: .toggle(isExpanded: isExpanded))
         }
     }
-    
+
     func setCardPosition(name: String, position: SIMD3<Float>, syncChanges: Bool) {
         cardPositions[name] = position
-        
+
         if syncChanges {
             incrementAndBroadcast(name: name, action: .move(position: position))
         }
     }
-    
+
     // Helper to handle the counter logic and send the message
     /// Seal message and counter into CardSyncMessage type and send via SessionController
     private func incrementAndBroadcast(name: String, action: CardAction) {
 
         guard let newUpdateCount = nextUpdateCount(after: cardUpdateCounts[name]) else { return }
         cardUpdateCounts[name] = newUpdateCount // Save our new count locally
-        
+
         let message = CardSyncMessage(cardName: name, action: action, updateCount: newUpdateCount)
-        
+
         Task {
             await sessionController?.sendMessage(message)
         }
@@ -205,17 +204,17 @@ class AppModel {
             participant: participantId
         )
     }
-    
+
     // MARK: - Remote Updates (Changes Other Participant)
     func handleRemoteSyncMessage(_ message: CardSyncMessage) {
         // 1. Check for race conditions. Ignore if our local record is newer than the incoming message.
         if let existingCount = cardUpdateCounts[message.cardName], message.updateCount <= existingCount {
             return
         }
-        
+
         // 2. It's a valid new update. Save the new high score.
         cardUpdateCounts[message.cardName] = message.updateCount
-        
+
         // 3. Apply the state change
         switch message.action {
         case .toggle(let isExpanded):

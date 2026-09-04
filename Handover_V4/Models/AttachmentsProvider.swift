@@ -24,5 +24,3 @@ final class AttachmentsProvider {
         }.sorted { $0.tag < $1.tag }
     }
 }
-
-

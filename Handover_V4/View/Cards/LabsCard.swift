@@ -17,18 +17,18 @@ import SwiftUI
 
 struct LabsCard: View {
     let patient: Patient
-    
+
     /// Only labs with status .warning or .critical.
     private var abnormalLabs: [LabResult] {
         patient.labs.filter { $0.status != .normal }
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             CardHeader(title: "Abnormal Labs", systemImage: "testtube.2")
-            
+
             Divider().padding(.horizontal, 12)
-            
+
             if abnormalLabs.isEmpty {
                 AllNormalState()
                     .padding(16)
@@ -36,7 +36,7 @@ struct LabsCard: View {
                 VStack(spacing: 0) {
                     ForEach(Array(abnormalLabs.enumerated()), id: \.element.id) { index, lab in
                         LabRow(lab: lab)
-                        
+
                         if index < abnormalLabs.count - 1 {
                             Divider().padding(.horizontal, 16)
                         }
@@ -53,21 +53,21 @@ struct LabsCard: View {
 
 private struct LabRow: View {
     let lab: LabResult
-    
+
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
             // Status indicator dot
             Circle()
                 .fill(statusColor)
                 .frame(width: 8, height: 8)
-            
+
             // Lab name
             Text(lab.name)
                 .font(.system(size: 14, weight: .medium))
                 .foregroundStyle(.primary)
-            
+
             Spacer(minLength: 8)
-            
+
             // Value + unit
             HStack(alignment: .lastTextBaseline, spacing: 2) {
                 Text(lab.value)
@@ -77,7 +77,7 @@ private struct LabRow: View {
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
             }
-            
+
             // Trend arrow (if present)
             trendArrow
                 .frame(width: 14)
@@ -85,7 +85,7 @@ private struct LabRow: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
     }
-    
+
     private var statusColor: Color {
         switch lab.status {
         case .normal:   return .green
@@ -93,7 +93,7 @@ private struct LabRow: View {
         case .critical: return .red
         }
     }
-    
+
     @ViewBuilder
     private var trendArrow: some View {
         if let trend = lab.trend {
@@ -146,17 +146,17 @@ extension Patient {
             icuAdmissionDate: p.icuAdmissionDate,
             vitals: [], infusions: [], lines: [],
             labs: [
-                LabResult(id: "lb1", name: "Hb",          value: "9.8",  unit: "g/dL",   status: .warning,  trend: .down),
-                LabResult(id: "lb2", name: "K+",          value: "3.5",  unit: "mmol/L", status: .warning,  trend: .stable),
-                LabResult(id: "lb3", name: "Creatinine",  value: "112",  unit: "µmol/L", status: .warning,  trend: .up),
-                LabResult(id: "lb4", name: "Lactate",     value: "1.4",  unit: "mmol/L", status: .normal,   trend: .stable),  // filtered out
-                LabResult(id: "lb5", name: "INR",         value: "1.6",  unit: "",       status: .warning,  trend: .stable)
+                LabResult(id: "lb1", name: "Hb", value: "9.8", unit: "g/dL", status: .warning, trend: .down),
+                LabResult(id: "lb2", name: "K+", value: "3.5", unit: "mmol/L", status: .warning, trend: .stable),
+                LabResult(id: "lb3", name: "Creatinine", value: "112", unit: "µmol/L", status: .warning, trend: .up),
+                LabResult(id: "lb4", name: "Lactate", value: "1.4", unit: "mmol/L", status: .normal, trend: .stable),  // filtered out
+                LabResult(id: "lb5", name: "INR", value: "1.6", unit: "", status: .warning, trend: .stable)
             ],
             systems: [], plan: [],
             family: p.family, escalation: p.escalation
         )
     }
-    
+
     static var mockLabs_Siti: Patient {
         let p = mockHeader_Siti
         return Patient(
@@ -167,18 +167,18 @@ extension Patient {
             icuAdmissionDate: p.icuAdmissionDate,
             vitals: [], infusions: [], lines: [],
             labs: [
-                LabResult(id: "lb1", name: "WBC",           value: "22.1", unit: "x10⁹/L", status: .critical, trend: .up),
-                LabResult(id: "lb2", name: "CRP",           value: "310",  unit: "mg/L",   status: .critical, trend: .up),
-                LabResult(id: "lb3", name: "Lactate",       value: "3.8",  unit: "mmol/L", status: .critical, trend: .up),
-                LabResult(id: "lb4", name: "Procalcitonin", value: "45",   unit: "ng/mL",  status: .critical, trend: .up),
-                LabResult(id: "lb5", name: "Creatinine",    value: "198",  unit: "µmol/L", status: .critical, trend: .up),
-                LabResult(id: "lb6", name: "Platelets",     value: "88",   unit: "x10⁹/L", status: .warning,  trend: .down)
+                LabResult(id: "lb1", name: "WBC", value: "22.1", unit: "x10⁹/L", status: .critical, trend: .up),
+                LabResult(id: "lb2", name: "CRP", value: "310", unit: "mg/L", status: .critical, trend: .up),
+                LabResult(id: "lb3", name: "Lactate", value: "3.8", unit: "mmol/L", status: .critical, trend: .up),
+                LabResult(id: "lb4", name: "Procalcitonin", value: "45", unit: "ng/mL", status: .critical, trend: .up),
+                LabResult(id: "lb5", name: "Creatinine", value: "198", unit: "µmol/L", status: .critical, trend: .up),
+                LabResult(id: "lb6", name: "Platelets", value: "88", unit: "x10⁹/L", status: .warning, trend: .down)
             ],
             systems: [], plan: [],
             family: p.family, escalation: p.escalation
         )
     }
-    
+
     static var mockLabs_AllNormal: Patient {
         let p = mockHeader_Ahmad
         return Patient(
@@ -190,7 +190,7 @@ extension Patient {
             vitals: [], infusions: [], lines: [],
             labs: [
                 LabResult(id: "lb1", name: "Hb", value: "13.5", unit: "g/dL", status: .normal, trend: .stable),
-                LabResult(id: "lb2", name: "K+", value: "4.2",  unit: "mmol/L", status: .normal, trend: .stable)
+                LabResult(id: "lb2", name: "K+", value: "4.2", unit: "mmol/L", status: .normal, trend: .stable)
             ],
             systems: [], plan: [],
             family: p.family, escalation: p.escalation

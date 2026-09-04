@@ -17,13 +17,13 @@ import SwiftUI
 
 struct PlanCard: View {
     let patient: Patient
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             CardHeader(title: "Treatment Plan", systemImage: "list.bullet.clipboard")
-            
+
             Divider().padding(.horizontal, 12)
-            
+
             if patient.plan.isEmpty {
                 EmptyState()
                     .padding(16)
@@ -31,7 +31,7 @@ struct PlanCard: View {
                 VStack(spacing: 0) {
                     ForEach(Array(patient.plan.enumerated()), id: \.element.id) { index, item in
                         PlanRow(item: item)
-                        
+
                         if index < patient.plan.count - 1 {
                             Divider().padding(.horizontal, 16)
                         }
@@ -48,22 +48,22 @@ struct PlanCard: View {
 
 private struct PlanRow: View {
     let item: PlanItem
-    
+
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             // Priority indicator (flame for urgent; subtle dot for routine)
             priorityIndicator
                 .padding(.top, 2)
                 .frame(width: 14)
-            
+
             // Task text
             Text(item.task)
                 .font(.system(size: 14))
                 .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
-            
+
             Spacer(minLength: 8)
-            
+
             // Due time (if present)
             if let dueTime = item.dueTime {
                 Text(formatTime(dueTime))
@@ -78,7 +78,7 @@ private struct PlanRow: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
     }
-    
+
     @ViewBuilder
     private var priorityIndicator: some View {
         switch item.priority {
@@ -94,7 +94,7 @@ private struct PlanRow: View {
                 .accessibilityLabel("Routine")
         }
     }
-    
+
     private func formatTime(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"

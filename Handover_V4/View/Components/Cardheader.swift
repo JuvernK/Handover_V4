@@ -14,8 +14,8 @@ import SwiftUI
 
 struct CardHeader: View {
     let title: String
-    var systemImage: String? = nil      // optional icon next to title (e.g. "heart.fill")
-    
+    var systemImage: String?      // optional icon next to title (e.g. "heart.fill")
+
     var body: some View {
         HStack(spacing: 8) {
             // Drag-handle grip icon (visual-only for now)
@@ -24,19 +24,19 @@ struct CardHeader: View {
                 .font(.system(size: 14, weight: .medium))
                 .foregroundStyle(.secondary.opacity(0.5))
                 .accessibilityHidden(true)
-            
+
             // Optional leading icon
             if let systemImage {
                 Image(systemName: systemImage)
                     .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(.secondary)
             }
-            
+
             // Title
             Text(title)
                 .font(.headline)
                 .foregroundStyle(.primary)
-            
+
             Spacer()
         }
         .padding(.horizontal, 16)

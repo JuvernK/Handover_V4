@@ -42,14 +42,12 @@ struct ToggleImmersiveSpaceButton: View {
                     case .closed:
                         appModel.immersiveSpaceState = .inTransition
                         switch await openImmersiveSpace(id: appModel.immersiveSpaceID) {
-                            case .opened:
+                        case .opened:
                                 // Don't set immersiveSpaceState to .open because there
                                 // may be multiple paths to ImmersiveView.onAppear().
                                 // Only set .open in ImmersiveView.onAppear().
                                 dismissWindow(id: "dashboard")
                                 openWindow(id: "controls")    // ← new
-
-                                break
 
                             case .userCancelled, .error:
                                 // On error, we need to mark the immersive space

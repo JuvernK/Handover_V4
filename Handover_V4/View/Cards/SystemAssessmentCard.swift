@@ -20,13 +20,13 @@ import SwiftUI
 
 struct SystemsAssessmentCard: View {
     let patient: Patient
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             CardHeader(title: "Systems Assessment", systemImage: "stethoscope")
-            
+
             Divider().padding(.horizontal, 12)
-            
+
             if patient.systems.isEmpty {
                 EmptyState()
                     .padding(16)
@@ -53,7 +53,7 @@ struct SystemsAssessmentCard: View {
 
 private struct SystemRow: View {
     let assessment: SystemAssessment
-    
+
     var body: some View {
         HStack(alignment: .top, spacing: 14) {
             // System icon
@@ -62,19 +62,19 @@ private struct SystemRow: View {
                 .foregroundStyle(assessment.system.iconColor)
                 .frame(width: 28, height: 28)
                 .padding(.top, 2)
-            
+
             VStack(alignment: .leading, spacing: 6) {
                 // System name
                 Text(assessment.system.displayName)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.primary)
-                
+
                 // Summary text
                 Text(assessment.summary)
                     .font(.system(size: 13))
                     .foregroundStyle(.primary.opacity(0.85))
                     .fixedSize(horizontal: false, vertical: true)
-                
+
                 // Concerns (if any)
                 if !assessment.concerns.isEmpty {
                     VStack(alignment: .leading, spacing: 4) {
@@ -84,7 +84,7 @@ private struct SystemRow: View {
                                     .font(.system(size: 9, weight: .semibold))
                                     .foregroundStyle(.orange)
                                     .padding(.top, 3)
-                                
+
                                 Text(concern)
                                     .font(.system(size: 12))
                                     .foregroundStyle(.secondary)
@@ -95,7 +95,7 @@ private struct SystemRow: View {
                     .padding(.top, 2)
                 }
             }
-            
+
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 16)
@@ -133,7 +133,7 @@ private extension BodySystem {
         case .infection:        return "bandage.fill"
         }
     }
-    
+
     var iconColor: Color {
         switch self {
         case .neuro:            return .purple
@@ -184,7 +184,7 @@ extension Patient {
             family: p.family, escalation: p.escalation
         )
     }
-    
+
     static var mockSystems_Siti: Patient {
         let p = mockHeader_Siti
         return Patient(

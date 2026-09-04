@@ -16,13 +16,13 @@ import SwiftUI
 
 struct InfusionsCard: View {
     let patient: Patient
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             CardHeader(title: "Active Infusions", systemImage: "drop.fill")
-            
+
             Divider().padding(.horizontal, 12)
-            
+
             if patient.infusions.isEmpty {
                 EmptyState()
                     .padding(16)
@@ -30,7 +30,7 @@ struct InfusionsCard: View {
                 VStack(spacing: 0) {
                     ForEach(Array(patient.infusions.enumerated()), id: \.element.id) { index, infusion in
                         InfusionRow(infusion: infusion)
-                        
+
                         if index < patient.infusions.count - 1 {
                             Divider().padding(.horizontal, 16)
                         }
@@ -47,7 +47,7 @@ struct InfusionsCard: View {
 
 private struct InfusionRow: View {
     let infusion: Infusion
-    
+
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             // High-alert indicator (or invisible spacer for alignment)
@@ -62,25 +62,25 @@ private struct InfusionRow: View {
                     .frame(width: 8, height: 8)
                     .padding(.top, 6)
             }
-            
+
             VStack(alignment: .leading, spacing: 3) {
                 // Top line: drug name + dose
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(infusion.drugName)
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.primary)
-                    
+
                     Text(infusion.dose)
                         .font(.system(size: 13, weight: .medium, design: .rounded))
                         .foregroundStyle(.primary)
-                    
+
                     Spacer(minLength: 8)
-                    
+
                     Text(infusion.route)
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                 }
-                
+
                 // Purpose (optional, smaller, secondary)
                 if !infusion.purpose.isEmpty {
                     Text(infusion.purpose)
@@ -135,7 +135,7 @@ extension Patient {
             family: p.family, escalation: p.escalation
         )
     }
-    
+
     static var mockInfusions_Siti: Patient {
         let p = mockHeader_Siti
         return Patient(

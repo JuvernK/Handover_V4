@@ -19,26 +19,26 @@ import Observation
 @Observable
 @MainActor
 final class HandoverViewModel {
-    
+
     /// All patients loaded from the bundle.
     private(set) var patients: [Patient] = []
-    
+
     /// The patient currently displayed on the dashboard.
     var patient: Patient?
-    
+
     /// The order in which dashboard sections appear in the grid.
     /// Drag-and-drop in DashboardView mutates this through moveSection().
     var sectionOrder: [SectionID] = SectionID.defaultOrder
-    
+
     /// Loads all patients from JSON and selects an initial patient by bed number.
     /// If the bed number is not found, falls back to the first patient.
     init(initialBedNumber: String = "BED-01") {
         loadPatients()
         selectPatient(byBed: initialBedNumber)
     }
-    
+
     // MARK: - Patient management
-    
+
     /// Loads patients from PatientData.json.
     func loadPatients() {
         do {
@@ -48,7 +48,7 @@ final class HandoverViewModel {
             self.patients = []
         }
     }
-    
+
     /// Sets the displayed patient by selected bed number.
     /// Falls back to the first patient if the bed number isn't found.
     func selectPatient(byBed bedNumber: String) {
@@ -58,7 +58,7 @@ final class HandoverViewModel {
             self.patient = patients.first
         }
     }
-    
+
     /// Note: Removable
     /// Sets the displayed patient by ID. Used internally by tests/previews.
     func selectPatient(byID id: String) {
@@ -66,22 +66,20 @@ final class HandoverViewModel {
             self.patient = match
         }
     }
-    
+
     // MARK: - Section ordering
-    
+
     /// Moves a section from one index to another within the section order. (Index`based))
     // @discardableResult
     // func moveSection(from source: Int, to destination: Int) -> Bool {
     //     guard source >= 0, source < sectionOrder.count else { return false }
     //     guard destination >= 0, destination <= sectionOrder.count else { return false }
-        
+
     //     let item = sectionOrder.remove(at: source)
     //     let insertionIndex = destination > source ? destination - 1 : destination
     //     sectionOrder.insert(item, at: insertionIndex)
     //     return true
     // }
-    
-
 
     /// Moves the dragged section into the destination section's current position. (ID based)
     /// Used by .dropDestination handlers in DashboardView.
@@ -94,15 +92,15 @@ final class HandoverViewModel {
         guard dragged != destination else { return false }
         guard let fromIndex = sectionOrder.firstIndex(of: dragged) else { return false }
         guard let destinationIndex = sectionOrder.firstIndex(of: destination) else { return false }
-        
+
         // Remove the dragged item first; this may shift the destination index.
         sectionOrder.remove(at: fromIndex)
-        
+
         let insertionIndex = min(destinationIndex, sectionOrder.count)
         sectionOrder.insert(dragged, at: insertionIndex)
         return true
     }
-    
+
     /// Resets the section order to the default. Useful for a "reset layout" button.
     func resetSectionOrder() {
         sectionOrder = SectionID.defaultOrder

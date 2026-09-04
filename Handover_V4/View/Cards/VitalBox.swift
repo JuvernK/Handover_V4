@@ -18,7 +18,7 @@ import SwiftUI
 
 struct VitalBox: View {
     let vital: VitalSign
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             // Top row: label + trend arrow
@@ -29,7 +29,7 @@ struct VitalBox: View {
                 Spacer()
                 trendArrow
             }
-            
+
             // Current value + unit
             HStack(alignment: .lastTextBaseline, spacing: 3) {
                 Text(vital.value)
@@ -39,12 +39,12 @@ struct VitalBox: View {
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
-            
+
             // Sparkline
             Sparkline(data: vital.history, lineColor: statusColor)
                 .frame(height: 36)
                 .padding(.vertical, 2)
-            
+
             // 12-hour range
             HStack(spacing: 4) {
                 // Text("12h")
@@ -64,9 +64,9 @@ struct VitalBox: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
-    
+
     // MARK: - Trend arrow
-    
+
     @ViewBuilder
     private var trendArrow: some View {
         switch vital.trend {
@@ -84,9 +84,9 @@ struct VitalBox: View {
                 .foregroundStyle(.tertiary)
         }
     }
-    
+
     // MARK: - Status-driven colours
-    
+
     private var statusColor: Color {
         switch vital.status {
         case .normal:   return .green
@@ -94,7 +94,7 @@ struct VitalBox: View {
         case .critical: return .red
         }
     }
-    
+
     private var statusBackground: Color {
         switch vital.status {
         case .normal:   return Color.green.opacity(0.08)
@@ -102,7 +102,7 @@ struct VitalBox: View {
         case .critical: return Color.red.opacity(0.12)
         }
     }
-    
+
     private var statusBorderColor: Color {
         switch vital.status {
         case .normal:   return Color.green.opacity(0.25)
@@ -119,30 +119,30 @@ struct VitalBox: View {
 struct Sparkline: View {
     let data: [Double]
     let lineColor: Color
-    
+
     var body: some View {
         GeometryReader { proxy in
             sparklinePath(in: proxy.size)
                 .stroke(lineColor, style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
         }
     }
-    
+
     private func sparklinePath(in size: CGSize) -> Path {
         Path { path in
             guard data.count > 1 else { return }
-            
+
             let minVal = data.min() ?? 0
             let maxVal = data.max() ?? 1
             let range = max(maxVal - minVal, 0.0001)   // avoid divide-by-zero
-            
+
             let xStep = size.width / CGFloat(data.count - 1)
             let usableHeight = size.height - 2          // leave 1pt padding top/bottom
-            
+
             for (i, value) in data.enumerated() {
                 let x = CGFloat(i) * xStep
                 let normalized = (value - minVal) / range          // 0...1
                 let y = usableHeight - CGFloat(normalized) * usableHeight + 1
-                
+
                 if i == 0 {
                     path.move(to: CGPoint(x: x, y: y))
                 } else {

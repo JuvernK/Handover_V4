@@ -22,21 +22,21 @@ struct SpatialCardView: View {
 
     /// The POI name as authored in Reality Composer Pro.
     let poiName: String
-    
+
     let patient: Patient
-    
+
     /// Width the card renders at in 3D space. Most cards stay compact; Systems
     /// gets extra width so its adaptive internal grid can split into columns.
     private let defaultCardWidth: CGFloat = 360
     private let basicInformationCardWidth: CGFloat = 720
     private let systemsCardWidth: CGFloat = 760
     private let immersiveCardScale: CGFloat = 1.5
-    
+
     var body: some View {
         cardContent
             .scaleEffect(immersiveCardScale)
     }
-    
+
     @ViewBuilder
     private var cardContent: some View {
         if isBasicInformationPOI {
@@ -169,7 +169,7 @@ private extension SectionID {
 /// Helps debugging when RCP names drift out of sync with code.
 private struct UnknownPOIView: View {
     let poiName: String
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
@@ -178,11 +178,11 @@ private struct UnknownPOIView: View {
                 Text("Unknown POI")
                     .font(.headline)
             }
-            
+
             Text("\"\(poiName)\"")
                 .font(.system(.body, design: .monospaced))
                 .foregroundStyle(.secondary)
-            
+
             Text("No dashboard section matches this name. Check the POI name in Reality Composer Pro against the SectionID enum.")
                 .font(.caption)
                 .foregroundStyle(.secondary)

@@ -71,7 +71,7 @@ enum BodySystem: String, Codable, CaseIterable {
     case gastrointestinal
     case skin
     case infection
-    
+
     /// Display name for UI.
     var displayName: String {
         switch self {
@@ -94,7 +94,7 @@ enum CodeStatus: Codable, Hashable {
     case fullCode
     case dnr
     case custom(String)
-    
+
     /// Display string for the UI.
     var displayText: String {
         switch self {
@@ -103,18 +103,18 @@ enum CodeStatus: Codable, Hashable {
         case .custom(let text): return text
         }
     }
-    
+
     // MARK: Codable conformance
     // Encodes as { "type": "fullCode" } / { "type": "dnr" } / { "type": "custom", "details": "..." }
-    
+
     private enum CodingKeys: String, CodingKey {
         case type, details
     }
-    
+
     private enum CodeStatusType: String, Codable {
         case fullCode, dnr, custom
     }
-    
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let type = try container.decode(CodeStatusType.self, forKey: .type)
@@ -126,7 +126,7 @@ enum CodeStatus: Codable, Hashable {
             self = .custom(details)
         }
     }
-    
+
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         switch self {

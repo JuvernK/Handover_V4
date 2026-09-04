@@ -16,40 +16,40 @@ import SwiftUI
 
 struct PatientHeaderView: View {
     let patient: Patient
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Top row: avatar + identity
             HStack(alignment: .top, spacing: 16) {
                 AvatarView(patient: patient)
-                
+
                 VStack(alignment: .leading, spacing: 4) {
                     // Name
                     Text(patient.name)
                         .font(.system(size: 28, weight: .bold))
                         .foregroundStyle(.primary)
-                    
+
                     // Diagnosis + LOS pill
                     HStack(spacing: 8) {
                         Text(patient.diagnosis)
                             .font(.system(size: 18, weight: .semibold))
                             .foregroundStyle(.primary)
-                        
+
                         LengthOfStayPill(text: patient.lengthOfStayDisplay)
                         AcuityBadge(acuity: patient.acuity)
                         TrajectoryBadge(trajectory: patient.trajectory)
                     }
-                    
+
                     // Demographics
                     Text(demographicsLine)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .padding(.top, 2)
                 }
-                
+
                 Spacer()
             }
-            
+
             // Bottom row: safety info (allergies + code status)
             HStack(alignment: .center, spacing: 20) {
                 AllergiesRow(allergies: patient.allergies)
@@ -59,7 +59,7 @@ struct PatientHeaderView: View {
         }
         .padding(20)
     }
-    
+
     /// "62M  ·  BED-01  ·  MRN-202400341"
     private var demographicsLine: String {
         let genderLetter = patient.gender == .male ? "M" : "F"
@@ -71,9 +71,9 @@ struct PatientHeaderView: View {
 
 private struct AvatarView: View {
     let patient: Patient
-    
+
     private let size: CGFloat = 72
-    
+
     var body: some View {
         if let imageName = patient.avatarImageName,
            UIImage(named: imageName) != nil {
@@ -100,7 +100,7 @@ private struct AvatarView: View {
 
 private struct LengthOfStayPill: View {
     let text: String
-    
+
     var body: some View {
         Text(text)
             .font(.system(size: 12, weight: .medium))
@@ -220,13 +220,13 @@ private extension Trajectory {
 
 private struct AllergiesRow: View {
     let allergies: [Allergy]
-    
+
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(allergies.isEmpty ? .secondary : Color.red)
-            
+
             if allergies.isEmpty {
                 Text("NKDA")
                     .font(.system(size: 13, weight: .medium))
@@ -248,7 +248,7 @@ private struct AllergiesRow: View {
 
 private struct AllergyPill: View {
     let allergy: Allergy
-    
+
     var body: some View {
         HStack(spacing: 4) {
             Text(allergy.substance)
@@ -272,7 +272,7 @@ private struct AllergyPill: View {
 
 private struct CodeStatusBadge: View {
     let codeStatus: CodeStatus
-    
+
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: iconName)
@@ -286,7 +286,7 @@ private struct CodeStatusBadge: View {
         .background(backgroundColor)
         .clipShape(Capsule())
     }
-    
+
     private var iconName: String {
         switch codeStatus {
         case .fullCode: return "checkmark.circle.fill"
@@ -294,7 +294,7 @@ private struct CodeStatusBadge: View {
         case .custom:   return "exclamationmark.circle.fill"
         }
     }
-    
+
     private var foregroundColor: Color {
         switch codeStatus {
         case .fullCode: return .green
@@ -302,7 +302,7 @@ private struct CodeStatusBadge: View {
         case .custom:   return .orange
         }
     }
-    
+
     private var backgroundColor: Color {
         switch codeStatus {
         case .fullCode: return .green.opacity(0.15)
@@ -335,7 +335,7 @@ extension Patient {
             escalation: EscalationInfo(mainConcerns: [], triggers: [], escalateTo: "ICU Reg")
         )
     }
-    
+
     static var mockHeader_Siti: Patient {
         Patient(
             id: "p2",
@@ -358,7 +358,7 @@ extension Patient {
             escalation: EscalationInfo(mainConcerns: [], triggers: [], escalateTo: "ICU Reg")
         )
     }
-    
+
     static var mockHeader_Mariam: Patient {
         Patient(
             id: "p6",
@@ -381,7 +381,7 @@ extension Patient {
             escalation: EscalationInfo(mainConcerns: [], triggers: [], escalateTo: "Transplant Surgeon")
         )
     }
-    
+
     static var mockHeader_NoAllergies: Patient {
         let p = mockHeader_Ahmad
         return Patient(
@@ -405,7 +405,7 @@ extension Patient {
 }
 #endif
 
-//#Preview("patient header") {
+// #Preview("patient header") {
 //    let patients = PatientDataLoader.loadOrEmpty()
 //    
 //    return Group {
@@ -420,7 +420,7 @@ extension Patient {
 //            Text("No patients loaded")
 //        }
 //    }
-//}
+// }
 
 #Preview("patient header") {
     let patients = PatientDataLoader.loadOrEmpty()

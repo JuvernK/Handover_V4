@@ -10,7 +10,6 @@ import GroupActivities
 import UIKit
 import simd // Required for SIMD3
 
-
 /// A counter system to resolve conflicting message updates from different participants.
 struct MessageUpdateCount: Codable, Hashable, Comparable {
     /// The update number, incremented with each color change.
@@ -56,7 +55,6 @@ struct DashboardSyncMessage: Codable {
     let updateCount: MessageUpdateCount
 }
 
-
 /// Message sent to late joiners containing the complete current state
 struct CatchUpMessage: Codable {
     // A dictionary storing the state of every card/
@@ -66,4 +64,3 @@ struct CatchUpMessage: Codable {
     let dashboardState: DashboardState
     let dashboardUpdateCount: MessageUpdateCount?
 }
-

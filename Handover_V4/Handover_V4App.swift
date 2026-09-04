@@ -11,23 +11,23 @@ import RealityKitContent
 
 @main
 struct Handover_V4App: App {
-    
+
     @State private var appModel = AppModel()
     @State private var avPlayerViewModel = AVPlayerViewModel()
-    
+
     // register so RealityKit can use it at runtime
     init() {
         PointOfInterestComponent.registerComponent()
         PointOfInterestRuntimeComponent.registerComponent()
     }
-    
+
     var body: some SwiftUI.Scene {
         WindowGroup(id: "dashboard") {
             DashboardView(viewModel: appModel.handoverViewModel)
                 .environment(appModel)
         }
         .defaultSize(width: 1700, height: 980)
-        
+
         // Controls window (used & visible during immersive space)
             WindowGroup(id: "controls") {
                 ImmersiveControlsView()
@@ -35,7 +35,7 @@ struct Handover_V4App: App {
             }
             .defaultSize(width: 320, height: 100)  // just the buttons
             .windowResizability(.contentSize)        // sized to its content
-        
+
         ImmersiveSpace(id: appModel.immersiveSpaceID) {
             ImmersiveView()
                 .environment(appModel)

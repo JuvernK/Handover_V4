@@ -20,4 +20,3 @@ struct SharePlayTogether: GroupActivity, Transferable {
         return metadata
     }()
 }
-

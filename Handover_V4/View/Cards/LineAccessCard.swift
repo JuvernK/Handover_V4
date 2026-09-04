@@ -12,13 +12,13 @@ import SwiftUI
 
 struct LinesAccessCard: View {
     let patient: Patient
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             CardHeader(title: "Lines & Access", systemImage: "cable.connector")
-            
+
             Divider().padding(.horizontal, 12)
-            
+
             if patient.lines.isEmpty {
                 EmptyState(message: "No lines or access in situ")
                     .padding(16)
@@ -26,7 +26,7 @@ struct LinesAccessCard: View {
                 VStack(spacing: 0) {
                     ForEach(Array(patient.lines.enumerated()), id: \.element.id) { index, line in
                         LineRow(line: line)
-                        
+
                         if index < patient.lines.count - 1 {
                             Divider().padding(.horizontal, 16)
                         }
@@ -43,19 +43,19 @@ struct LinesAccessCard: View {
 
 private struct LineRow: View {
     let line: LineAccess
-    
+
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
             Image(systemName: "circle.fill")
                 .font(.system(size: 6))
                 .foregroundStyle(.secondary)
-            
+
             Text(line.type)
                 .font(.system(size: 14, weight: .medium))
                 .foregroundStyle(.primary)
-            
+
             Spacer(minLength: 12)
-            
+
             Text(line.location)
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
@@ -70,7 +70,7 @@ private struct LineRow: View {
 
 private struct EmptyState: View {
     let message: String
-    
+
     var body: some View {
         HStack {
             Image(systemName: "checkmark.circle")

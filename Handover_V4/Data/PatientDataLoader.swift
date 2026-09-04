@@ -18,7 +18,7 @@ struct PatientDataFile: Codable {
 // MARK: - Loader
 
 enum PatientDataLoader {
-    
+
     /// Loads and decodes PatientData.json from the main bundle.
     /// - Returns: An array of Patient objects.
     /// - Throws: An error if the file is missing or decoding fails.
@@ -26,22 +26,22 @@ enum PatientDataLoader {
         guard let url = Bundle.main.url(forResource: "PatientData", withExtension: "json") else {
             throw LoaderError.fileNotFound
         }
-        
+
         let data = try Data(contentsOf: url)
-        
+
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601   // matches "2026-04-28T07:00:00Z"
-        
+
         let file = try decoder.decode(PatientDataFile.self, from: data)
         return file.patients
     }
-    
+
     /// Convenience non-throwing variant — returns [] if anything goes wrong.
     /// Useful for SwiftUI previews and quick prototyping.
     static func loadOrEmpty() -> [Patient] {
         (try? load()) ?? []
     }
-    
+
     enum LoaderError: Error {
         case fileNotFound
     }

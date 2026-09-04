@@ -18,20 +18,20 @@ import SwiftUI
 
 struct VitalsCard: View {
     let patient: Patient
-    
+
     // 2-column grid — fixed for visual consistency across the dashboard
     private let columns = Array(
         repeating: GridItem(.flexible(), spacing: 12, alignment: .top),
         count: 2
     )
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             CardHeader(title: "Vitals (Past 12 hrs)", systemImage: "waveform.path.ecg")
-            
+
             Divider()
                 .padding(.horizontal, 12)
-            
+
             LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(patient.vitals) { vital in
                     VitalBox(vital: vital)
@@ -119,7 +119,7 @@ extension Patient {
             escalation: EscalationInfo(mainConcerns: [], triggers: [], escalateTo: "ICU Registrar")
         )
     }
-    
+
     static var mockSiti: Patient {
         Patient(
             id: "p2",
@@ -186,8 +186,8 @@ extension Patient {
         .padding()
 }
 
-//#Preview("Narrow window") {
+// #Preview("Narrow window") {
 //    VitalsCard(patient: .mockAhmad)
 //        .frame(width: 380)
 //        .padding()
-//}
+// }
