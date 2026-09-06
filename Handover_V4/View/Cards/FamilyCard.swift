@@ -1,3 +1,4 @@
+// Flow: Patient records -> FamilyCard -> DashboardTheme + SwiftUI presentation.
 //
 //  FamilyCard.swift
 //  Handover_V4
@@ -25,7 +26,7 @@ struct FamilyCard: View {
                 HStack(spacing: 8) {
                     Text(family.primaryContact)
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(DashboardTheme.foreground)
 
                     BedsidePill(presentAtBedside: family.presentAtBedside)
                 }
@@ -33,13 +34,13 @@ struct FamilyCard: View {
                 if !family.notes.isEmpty {
                     Text(family.notes)
                         .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(DashboardTheme.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .padding(16)
         }
-        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+        .dashboardCardSurface(cornerRadius: 16)
     }
 }
 
@@ -49,10 +50,10 @@ private struct BedsidePill: View {
     var body: some View {
         Text(presentAtBedside ? "At bedside" : "Not at bedside")
             .font(.system(size: 11, weight: .medium))
-            .foregroundStyle(presentAtBedside ? .green : .secondary)
+            .foregroundStyle(presentAtBedside ? DashboardTheme.normal : DashboardTheme.secondary)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
-            .background((presentAtBedside ? Color.green : Color.secondary).opacity(0.15))
+            .background((presentAtBedside ? DashboardTheme.normal : Color.secondary).opacity(0.15))
             .clipShape(Capsule())
     }
 }

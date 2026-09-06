@@ -1,95 +1,114 @@
-// Flow: DashboardView -> PatientDashboardView -> DashboardPresentationState + ISBARSection views.
+// Flow: DashboardView -> PatientDashboardView -> ISBAR navigation + patient summaries + systems assessment.
 import SwiftUI
 
-/// Patient reading experience with no window controls or RealityKit dependencies.
-///
-/// The caller supplies the configured patient and a bounded display area.
-/// This view owns local reading state and responsive layout; `DashboardView`
-/// owns window controls and SharePlay alerts. A future immersive host can reuse
-/// this content, but attachment placement and sizing are not implemented here.
+/// Owns disclosure and navigation while the patient header and systems panel stay in view.
 struct PatientDashboardView: View {
     let patient: Patient
     @State private var presentation = DashboardPresentationState()
-
-    /// One-shot scrolling request, separate from the persistent focused section.
-    /// Clearing it allows a second tap on the same shortcut to scroll again.
     @State private var navigationRequest: ISBARSectionID?
 
     var body: some View {
         GeometryReader { geometry in
             ScrollViewReader { proxy in
+                let isWide = geometry.size.width >= 1100 && geometry.size.height >= 650
                 Group {
-                    if geometry.size.width >= 1100 {
-                        // Sibling scroll regions keep vitals visible while the
-                        // reading column scrolls, without clipping tall vitals.
-                        HStack(alignment: .top, spacing: 24) {
+                    if isWide {
+                        HStack(alignment: .top, spacing: 20) {
                             navigation(isHorizontal: false)
                                 .frame(width: 76)
                                 .padding(.top, 32)
 
-                            ScrollView {
-                                sections
-                                    .padding(20)
+                            VStack(spacing: 0) {
+                                PatientHeaderView(patient: patient)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                Divider().padding(.horizontal, 20)
+                                ScrollView {
+                                    sections.padding(18)
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
                             }
-                            .frame(maxWidth: .infinity)
-                            .glassBackgroundEffect(in: .rect(cornerRadius: 32))
+                            .dashboardPanel(cornerRadius: 28)
 
+                            // A sibling scroll region keeps the systems overview stationary
+                            // while the main reader scrolls, like the former vitals panel.
                             ScrollView {
-                                LiveVitalsSidebar(patient: patient)
+                                systems.padding(16)
                             }
-                            .scrollBounceBehavior(.basedOnSize)
-                            .frame(width: 300)
+                            .frame(width: min(460, geometry.size.width * 0.34), alignment: .top)
+                            .frame(maxHeight: .infinity)
+                            .dashboardPanel(cornerRadius: 28)
                             .padding(.top, 32)
                         }
+                        .padding(14)
                     } else {
-                        // On narrow windows everything remains reachable in
-                        // one scroll region; vitals are not pinned here.
+                        // One scroll region keeps short windows fully reachable.
                         ScrollView {
                             VStack(spacing: 16) {
+                                patientHeader.id(ISBARSectionID.introduction)
                                 navigation(isHorizontal: true)
-                                LiveVitalsSidebar(patient: patient)
-                                sections
+                                ForEach(ISBARSectionID.detailSections) { section in
+                                    sectionView(section)
+                                    if section == .assessment { systems }
+                                }
                             }
-                            .padding(20)
+                            .padding(18)
                         }
-                        .glassBackgroundEffect(in: .rect(cornerRadius: 32))
+                        .dashboardPanel(cornerRadius: 28)
+                        .padding(14)
                     }
                 }
-                .padding(14)
                 .task(id: navigationRequest) {
-                    guard let section = navigationRequest else { return }
-                    // Let the opened section enter the layout before scrolling.
+                    guard let destination = navigationRequest else { return }
+                    // Wait for expanded content to enter layout before finding its anchor.
                     await Task.yield()
                     guard !Task.isCancelled else { return }
                     withAnimation(.snappy(duration: 0.25)) {
-                        proxy.scrollTo(section, anchor: .top)
+                        // Introduction is already pinned in wide windows; return the reader to the top.
+                        proxy.scrollTo(isWide && destination == .introduction ? ISBARSectionID.situation : destination,
+                                       anchor: .top)
                     }
                     navigationRequest = nil
                 }
             }
         }
+        .environment(\.isDashboardSurface, true)
+        .foregroundStyle(DashboardTheme.foreground)
+        .tint(DashboardTheme.accent)
     }
 
     private func navigation(isHorizontal: Bool) -> some View {
-        ISBARNavColumn(patient: patient, presentation: $presentation, isHorizontal: isHorizontal) { section in
-            navigationRequest = section
+        ISBARNavColumn(presentation: $presentation, isHorizontal: isHorizontal) { destination in
+            navigationRequest = destination
         }
     }
 
+    private var patientHeader: some View {
+        PatientHeaderView(patient: patient)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .dashboardPanel(cornerRadius: 28)
+    }
+
+    private var systems: some View {
+        SystemsAssessmentCard(patient: patient, isHandoverSidebar: true)
+    }
+
     private var sections: some View {
-        VStack(spacing: 16) {
-            ForEach(ISBARSectionID.allCases) { section in
-                ISBARSectionView(
-                    section: section,
-                    patient: patient,
-                    isExpanded: Binding(
-                        get: { presentation.isExpanded(section) },
-                        set: { presentation.setExpanded($0, for: section) }
-                    )
-                )
-                .id(section)
+        VStack(spacing: 14) {
+            ForEach(ISBARSectionID.detailSections) { section in
+                sectionView(section)
             }
         }
-        .frame(maxWidth: .infinity)
+    }
+
+    private func sectionView(_ section: ISBARSectionID) -> some View {
+        ISBARSectionView(
+            section: section,
+            patient: patient,
+            isExpanded: Binding(
+                get: { presentation.isExpanded(section) },
+                set: { presentation.setExpanded($0, for: section) }
+            )
+        )
+        .id(section)
     }
 }

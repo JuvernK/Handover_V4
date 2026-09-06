@@ -1,3 +1,4 @@
+// Flow: Patient records -> Cardheader -> DashboardTheme + SwiftUI presentation.
 //
 //  Cardheader.swift
 //  Handover_V4
@@ -29,13 +30,13 @@ struct CardHeader: View {
             if let systemImage {
                 Image(systemName: systemImage)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DashboardTheme.secondary)
             }
 
             // Title
             Text(title)
                 .font(.headline)
-                .foregroundStyle(.primary)
+                .foregroundStyle(DashboardTheme.foreground)
 
             Spacer()
         }

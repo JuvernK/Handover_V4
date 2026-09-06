@@ -1,3 +1,4 @@
+// Flow: Patient records -> LabsCard -> DashboardTheme + SwiftUI presentation.
 //
 //  LabsCard.swift
 //  Handover_V4
@@ -45,7 +46,7 @@ struct LabsCard: View {
                 .padding(.vertical, 8)
             }
         }
-        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+        .dashboardCardSurface(cornerRadius: 16)
     }
 }
 
@@ -64,7 +65,7 @@ private struct LabRow: View {
             // Lab name
             Text(lab.name)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.primary)
+                .foregroundStyle(DashboardTheme.foreground)
 
             Spacer(minLength: 8)
 
@@ -75,7 +76,7 @@ private struct LabRow: View {
                     .foregroundStyle(statusColor)
                 Text(lab.unit)
                     .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DashboardTheme.secondary)
             }
 
             // Trend arrow (if present)
@@ -88,9 +89,9 @@ private struct LabRow: View {
 
     private var statusColor: Color {
         switch lab.status {
-        case .normal:   return .green
-        case .warning:  return .orange
-        case .critical: return .red
+        case .normal:   return DashboardTheme.normal
+        case .warning:  return DashboardTheme.warning
+        case .critical: return DashboardTheme.critical
         }
     }
 
@@ -101,15 +102,15 @@ private struct LabRow: View {
             case .up:
                 Image(systemName: "arrow.up")
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DashboardTheme.secondary)
             case .down:
                 Image(systemName: "arrow.down")
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DashboardTheme.secondary)
             case .stable:
                 Image(systemName: "arrow.right")
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(DashboardTheme.tertiary)
             }
         } else {
             Color.clear
@@ -123,10 +124,10 @@ private struct AllNormalState: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(.green)
+                .foregroundStyle(DashboardTheme.normal)
             Text("All labs within normal limits")
                 .font(.system(size: 13))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DashboardTheme.secondary)
             Spacer()
         }
     }

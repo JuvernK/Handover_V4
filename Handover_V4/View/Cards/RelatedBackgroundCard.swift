@@ -1,3 +1,4 @@
+// Flow: Patient records -> RelatedBackgroundCard -> DashboardTheme + SwiftUI presentation.
 //
 //  RelatedBackgroundCard.swift
 //  Handover_V4
@@ -44,7 +45,7 @@ struct RelatedBackgroundCard: View {
                         ) {
                             Text(background.presentingComplaint)
                                 .font(.system(size: 13))
-                                .foregroundStyle(.primary)
+                                .foregroundStyle(DashboardTheme.foreground)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
@@ -79,7 +80,7 @@ struct RelatedBackgroundCard: View {
                 .padding(16)
             }
         }
-        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+        .dashboardCardSurface(cornerRadius: 16)
     }
 }
 
@@ -95,12 +96,12 @@ private struct BackgroundSection<Content: View>: View {
             HStack(spacing: 7) {
                 Image(systemName: systemImage)
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DashboardTheme.secondary)
                     .frame(width: 14)
 
                 Text(title.uppercased())
                     .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DashboardTheme.secondary)
                     .tracking(0.5)
             }
 
@@ -123,7 +124,7 @@ private struct BulletList: View {
 
                     Text(item)
                         .font(.system(size: 13))
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(DashboardTheme.foreground)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -137,10 +138,10 @@ private struct EmptyState: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "person.text.rectangle")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DashboardTheme.secondary)
             Text("No related background recorded")
                 .font(.system(size: 13))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DashboardTheme.secondary)
             Spacer()
         }
     }

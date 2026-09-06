@@ -1,3 +1,4 @@
+// Flow: Patient records -> SituationCard -> DashboardTheme + SwiftUI presentation.
 //
 //  SituationCard.swift
 //  Handover_V4
@@ -20,12 +21,12 @@ struct SituationCard: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text(patient.diagnosis)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(DashboardTheme.foreground)
 
                 HStack(spacing: 8) {
                     StatusPill(
                         text: patient.acuity == .critical ? "Critical acuity" : "Stable acuity",
-                        color: patient.acuity == .critical ? .red : .green
+                        color: patient.acuity == .critical ? DashboardTheme.critical : DashboardTheme.normal
                     )
                     StatusPill(
                         text: trajectoryText,
@@ -35,7 +36,7 @@ struct SituationCard: View {
 
                 if patient.escalation.mainConcerns.isEmpty {
                     Text("No main concerns recorded")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(DashboardTheme.secondary)
                 } else {
                     ForEach(Array(patient.escalation.mainConcerns.enumerated()), id: \.offset) { _, concern in
                         Label(concern, systemImage: "exclamationmark.triangle")
@@ -46,7 +47,7 @@ struct SituationCard: View {
             }
             .padding(16)
         }
-        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+        .dashboardCardSurface(cornerRadius: 16)
     }
 
     private var trajectoryText: String {
@@ -59,9 +60,9 @@ struct SituationCard: View {
 
     private var trajectoryColor: Color {
         switch patient.trajectory {
-        case .improving: return .green
-        case .stable: return .blue
-        case .worsening: return .red
+        case .improving: return DashboardTheme.normal
+        case .stable: return DashboardTheme.secondary
+        case .worsening: return DashboardTheme.warning
         }
     }
 }
@@ -73,11 +74,12 @@ private struct StatusPill: View {
     var body: some View {
         Text(text)
             .font(.system(size: 12, weight: .semibold))
-            .foregroundStyle(.white)
+            .foregroundStyle(color)
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
-            .background(color.opacity(0.85))
+            .background(color.opacity(0.16))
             .clipShape(Capsule())
+            .overlay(Capsule().strokeBorder(color.opacity(0.65), lineWidth: 1))
     }
 }
 

@@ -1,3 +1,4 @@
+// Flow: Patient records -> LineAccessCard -> DashboardTheme + SwiftUI presentation.
 //
 //  LineAccessCard.swift
 //  Handover_V4
@@ -35,7 +36,7 @@ struct LinesAccessCard: View {
                 .padding(.vertical, 8)
             }
         }
-        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+        .dashboardCardSurface(cornerRadius: 16)
     }
 }
 
@@ -48,17 +49,17 @@ private struct LineRow: View {
         HStack(alignment: .center, spacing: 12) {
             Image(systemName: "circle.fill")
                 .font(.system(size: 6))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DashboardTheme.secondary)
 
             Text(line.type)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.primary)
+                .foregroundStyle(DashboardTheme.foreground)
 
             Spacer(minLength: 12)
 
             Text(line.location)
                 .font(.system(size: 13))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DashboardTheme.secondary)
                 .multilineTextAlignment(.trailing)
         }
         .padding(.horizontal, 16)
@@ -74,10 +75,10 @@ private struct EmptyState: View {
     var body: some View {
         HStack {
             Image(systemName: "checkmark.circle")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DashboardTheme.secondary)
             Text(message)
                 .font(.system(size: 13))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DashboardTheme.secondary)
             Spacer()
         }
     }

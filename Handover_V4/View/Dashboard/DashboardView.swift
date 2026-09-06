@@ -4,12 +4,8 @@
 //
 //  Created by Juvern Khor on 29/4/2026.
 //
-//  Top-level dashboard view. Five collapsible ISBAR sections (Introduction /
-//  Situation / Background / Assessment / Recommendation) — see
-//  ISBARSection.swift for the section definitions and accordion chrome.
-//
-//  Hosts reusable PatientDashboardView content and window-specific controls.
-//  Patient selection remains configured by AppModel's initial bed number.
+//  Hosts the summary-first handover and window-specific controls.
+//  Patient selection remains configured by AppModel.
 //
 
 // Flow: AppModel -> DashboardView -> PatientDashboardView + DashboardControls.
@@ -17,6 +13,7 @@ import SwiftUI
 
 struct DashboardView: View {
     @State var viewModel: HandoverViewModel
+    @AppStorage("dashboardUsesDarkAppearance") private var usesDarkAppearance = true
     @Environment(AppModel.self) private var appModel
 
     var body: some View {
@@ -25,12 +22,14 @@ struct DashboardView: View {
                 PatientDashboardView(patient: patient)
             } else {
                 EmptyDashboardState()
-                    .glassBackgroundEffect(in: .rect(cornerRadius: 32))
+                    .dashboardPanel(cornerRadius: 32)
             }
         }
+        .tint(DashboardTheme.accent)
         .dynamicTypeSize(.medium)
         .ornament(attachmentAnchor: .scene(.bottom)) {
-            DashboardControls()
+            DashboardControls(usesDarkAppearance: $usesDarkAppearance)
+                .environment(\.colorScheme, usesDarkAppearance ? .dark : .light)
         }
         .alert(
             "SharePlay",
@@ -49,12 +48,14 @@ struct DashboardView: View {
         } message: {
             Text(appModel.sharePlayErrorMessage ?? "")
         }
+        .environment(\.colorScheme, usesDarkAppearance ? .dark : .light)
     }
 }
 
 // MARK: - Dashboard controls
 
 private struct DashboardControls: View {
+    @Binding var usesDarkAppearance: Bool
     @Environment(AppModel.self) private var appModel
 
     var body: some View {
@@ -76,6 +77,14 @@ private struct DashboardControls: View {
             .disabled(appModel.isActivatingSharePlay)
 
             ToggleImmersiveSpaceButton()
+
+            Button {
+                usesDarkAppearance.toggle()
+            } label: {
+                Label(usesDarkAppearance ? "Light mode" : "Dark mode",
+                      systemImage: usesDarkAppearance ? "sun.max" : "moon")
+            }
+            .accessibilityValue(usesDarkAppearance ? "Dark mode active" : "Light mode active")
         }
         .padding(12)
         .glassBackgroundEffect()
@@ -89,13 +98,13 @@ private struct EmptyDashboardState: View {
         VStack(spacing: 12) {
             Image(systemName: "bed.double")
                 .font(.system(size: 40))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DashboardTheme.secondary)
             Text("No patient selected")
                 .font(.title3)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DashboardTheme.secondary)
             Text("PatientData.json may not have loaded.")
                 .font(.caption)
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(DashboardTheme.tertiary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(40)

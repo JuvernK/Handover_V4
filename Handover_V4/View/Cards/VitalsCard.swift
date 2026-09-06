@@ -1,3 +1,4 @@
+// Flow: Patient records -> VitalsCard -> DashboardTheme + SwiftUI presentation.
 //
 //  VitalsCard.swift
 //  Handover_V4
@@ -39,7 +40,7 @@ struct VitalsCard: View {
             }
             .padding(16)
         }
-        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+        .dashboardCardSurface(cornerRadius: 16)
         .hoverEffect()
     }
 }

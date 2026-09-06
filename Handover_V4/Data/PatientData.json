@@ -19,6 +19,12 @@
         }
       ],
       "diagnosis": "Post-coronary artery bypass grafting x3",
+      "handoverSummaries": {
+        "situation": "Recovering after CABG x3, with noradrenaline being weaned and ongoing monitoring for arrhythmia and bleeding.",
+        "background": "Elective CABG followed progressive angina from triple-vessel disease, with diabetes and hypertension in the background.",
+        "assessment": "Current vitals are within their recorded normal ranges, with falling haemoglobin and mildly rising creatinine.",
+        "recommendation": "The plan prioritises noradrenaline weaning if MAP remains stable, potassium replacement, and monitoring of chest drain output."
+      },
       "avatarImageName": null,
       "icuAdmissionDate": "2026-04-27T18:00:00+10:00",
       "vitals": [
@@ -375,6 +381,12 @@
         }
       ],
       "diagnosis": "Septic shock — right lower lobe pneumonia",
+      "handoverSummaries": {
+        "situation": "Septic shock from pneumonia is worsening, with high vasopressor requirements and declining renal function.",
+        "background": "Pneumonia followed fever and productive cough, against a background of diabetes, obesity, asthma, and recurrent respiratory infections.",
+        "assessment": "Oxygenation is deteriorating, with rising lactate and creatinine.",
+        "recommendation": "The plan prioritises repeat lactate, review of sputum cultures, and reassessment of organ support needs."
+      },
       "avatarImageName": null,
       "icuAdmissionDate": "2026-04-26T22:00:00+10:00",
       "vitals": [
@@ -777,6 +789,12 @@
       },
       "allergies": [],
       "diagnosis": "Severe diabetic ketoacidosis with acute kidney injury Stage 3",
+      "handoverSummaries": {
+        "situation": "Severe DKA is improving, but acidosis persists and stage 3 acute kidney injury requires CRRT.",
+        "background": "This is a new type 1 diabetes diagnosis and first ICU admission, with substantial education and psychological support needs.",
+        "assessment": "Acidosis and hyperglycaemia are improving, while low potassium remains a concern during insulin treatment.",
+        "recommendation": "The plan prioritises CRRT, hourly glucose monitoring, potassium replacement, and endocrine review."
+      },
       "avatarImageName": null,
       "icuAdmissionDate": "2026-04-27T20:00:00+10:00",
       "vitals": [
@@ -1161,6 +1179,12 @@
         }
       ],
       "diagnosis": "Orthotopic liver transplant",
+      "handoverSummaries": {
+        "situation": "Stable after liver transplant, with a low tacrolimus trough and ongoing graft perfusion and infection surveillance.",
+        "background": "Transplant followed end-stage liver disease from NASH, with diabetes, hypertension, and a documented latex allergy.",
+        "assessment": "Liver enzymes are falling and creatinine is stable, but the tacrolimus trough remains below its recorded target.",
+        "recommendation": "The plan prioritises tacrolimus dose review, hepatic artery Doppler monitoring, and follow-up of pending cultures."
+      },
       "avatarImageName": null,
       "icuAdmissionDate": "2026-04-25T14:00:00+10:00",
       "vitals": [
@@ -1590,6 +1614,12 @@
       },
       "allergies": [],
       "diagnosis": "Demo admission for dashboard testing",
+      "handoverSummaries": {
+        "situation": "This is a stable demonstration admission with deliberately incomplete records.",
+        "background": "Hypertension is recorded; other background details are limited in this demonstration case.",
+        "assessment": "Some observations and results are intentionally missing, so this case does not provide a complete assessment.",
+        "recommendation": "A demonstration ward-round task is recorded, with no detailed clinical plan supplied."
+      },
       "avatarImageName": null,
       "icuAdmissionDate": "2026-04-27T08:00:00+10:00",
       "vitals": [

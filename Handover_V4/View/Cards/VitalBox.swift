@@ -1,3 +1,4 @@
+// Flow: Patient records -> VitalBox -> DashboardTheme + SwiftUI presentation.
 //
 //  VitalBox.swift
 //  Handover_V4
@@ -25,7 +26,7 @@ struct VitalBox: View {
             HStack {
                 Text(vital.label)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DashboardTheme.secondary)
                 Spacer()
                 trendArrow
             }
@@ -34,10 +35,10 @@ struct VitalBox: View {
             HStack(alignment: .lastTextBaseline, spacing: 3) {
                 Text(vital.value)
                     .font(.system(size: 22, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(statusColor)
                 Text(vital.unit)
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DashboardTheme.secondary)
             }
 
             // Sparkline
@@ -47,12 +48,9 @@ struct VitalBox: View {
 
             // 12-hour range
             HStack(spacing: 4) {
-                // Text("12h")
-                //     .font(.system(size: 10))
-                //     .foregroundStyle(.tertiary)
                 Text(vital.rangeDisplay)
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DashboardTheme.secondary)
             }
         }
         .padding(12)
@@ -73,15 +71,15 @@ struct VitalBox: View {
         case .up:
             Image(systemName: "arrow.up")
                 .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DashboardTheme.secondary)
         case .down:
             Image(systemName: "arrow.down")
                 .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DashboardTheme.secondary)
         case .stable:
             Image(systemName: "arrow.right")
                 .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(DashboardTheme.tertiary)
         }
     }
 
@@ -89,25 +87,25 @@ struct VitalBox: View {
 
     private var statusColor: Color {
         switch vital.status {
-        case .normal:   return .green
-        case .warning:  return .orange
-        case .critical: return .red
+        case .normal:   return DashboardTheme.normal
+        case .warning:  return DashboardTheme.warning
+        case .critical: return DashboardTheme.critical
         }
     }
 
     private var statusBackground: Color {
         switch vital.status {
-        case .normal:   return Color.green.opacity(0.08)
-        case .warning:  return Color.orange.opacity(0.10)
-        case .critical: return Color.red.opacity(0.12)
+        case .normal:   return DashboardTheme.normal.opacity(0.08)
+        case .warning:  return DashboardTheme.warning.opacity(0.10)
+        case .critical: return DashboardTheme.critical.opacity(0.12)
         }
     }
 
     private var statusBorderColor: Color {
         switch vital.status {
-        case .normal:   return Color.green.opacity(0.25)
-        case .warning:  return Color.orange.opacity(0.35)
-        case .critical: return Color.red.opacity(0.40)
+        case .normal:   return DashboardTheme.normal.opacity(0.25)
+        case .warning:  return DashboardTheme.warning.opacity(0.35)
+        case .critical: return DashboardTheme.critical.opacity(0.40)
         }
     }
 }

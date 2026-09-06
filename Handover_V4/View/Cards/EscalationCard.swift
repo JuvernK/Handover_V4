@@ -1,3 +1,4 @@
+// Flow: Patient records -> EscalationCard -> DashboardTheme + SwiftUI presentation.
 //
 //  EscalationCard.swift
 //  Handover_V4
@@ -45,7 +46,7 @@ struct EscalationCard: View {
             }
             .padding(16)
         }
-        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+        .dashboardCardSurface(cornerRadius: 16)
     }
 }
 
@@ -63,12 +64,12 @@ private struct ConcernsSection: View {
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(DashboardTheme.warning)
                             .padding(.top, 3)
 
                         Text(concern)
                             .font(.system(size: 13))
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(DashboardTheme.foreground)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -92,12 +93,12 @@ private struct TriggersSection: View {
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "phone.fill")
                             .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(.red)
+                            .foregroundStyle(DashboardTheme.critical)
                             .padding(.top, 4)
 
                         Text(trigger)
                             .font(.system(size: 13))
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(DashboardTheme.foreground)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -114,7 +115,7 @@ private struct SectionLabel: View {
     var body: some View {
         Text(text.uppercased())
             .font(.system(size: 10, weight: .semibold))
-            .foregroundStyle(.secondary)
+            .foregroundStyle(DashboardTheme.secondary)
             .tracking(0.5)
     }
 }

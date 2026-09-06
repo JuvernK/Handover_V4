@@ -1,3 +1,4 @@
+// Flow: Patient records -> InfusionsCard -> DashboardTheme + SwiftUI presentation.
 //
 //  InfusionsCard.swift
 //  Handover_V4
@@ -39,7 +40,7 @@ struct InfusionsCard: View {
                 .padding(.vertical, 8)
             }
         }
-        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+        .dashboardCardSurface(cornerRadius: 16)
     }
 }
 
@@ -68,24 +69,24 @@ private struct InfusionRow: View {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(infusion.drugName)
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(DashboardTheme.foreground)
 
                     Text(infusion.dose)
                         .font(.system(size: 13, weight: .medium, design: .rounded))
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(DashboardTheme.foreground)
 
                     Spacer(minLength: 8)
 
                     Text(infusion.route)
                         .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(DashboardTheme.secondary)
                 }
 
                 // Purpose (optional, smaller, secondary)
                 if !infusion.purpose.isEmpty {
                     Text(infusion.purpose)
                         .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(DashboardTheme.secondary)
                         .lineLimit(2)
                 }
             }
@@ -101,10 +102,10 @@ private struct EmptyState: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "drop")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DashboardTheme.secondary)
             Text("No active infusions")
                 .font(.system(size: 13))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DashboardTheme.secondary)
             Spacer()
         }
     }

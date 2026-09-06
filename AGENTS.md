@@ -19,7 +19,7 @@ When a design decision or bug looks visionOS-specific, check the HIG page above 
 ## Agreed product direction
 
 - Build the native SwiftUI dashboard first; immersive integration is a later step.
-- Use five collapsible ISBAR sections, navigation shortcuts, and persistent vitals on wide windows.
+- Use a permanent patient introduction above two columns: summary-first SBAR sections and a head-to-toe systems assessment. Keep vitals in Assessment details; retain the left ISBAR shortcut rail and independent section disclosure.
 - Patient cases come from `Handover_V4/Data/PatientData.json`. The standalone HTML is a visual reference only.
 - Select the case manually with `AppModel(initialBedNumber:)`. Do not add a patient picker unless requested.
 - Keep clinical records in `Patient`; keep ISBAR focus and disclosure in dashboard presentation state.

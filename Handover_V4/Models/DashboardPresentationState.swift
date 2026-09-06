@@ -1,9 +1,8 @@
+// Flow: PatientDashboardView -> DashboardPresentationState -> section detail disclosure.
 import Foundation
 
-/// The five reading groups, in the order displayed by the dashboard.
-///
-/// These IDs describe presentation, not patient records. Existing `SectionID`
-/// values still identify individual cards in spatial content and SharePlay.
+/// Five navigation destinations; Introduction is a permanent header.
+/// Spatial `SectionID` and SharePlay card identities remain independent.
 enum ISBARSectionID: String, CaseIterable, Identifiable {
     case introduction
     case situation
@@ -12,56 +11,48 @@ enum ISBARSectionID: String, CaseIterable, Identifiable {
     case recommendation
 
     var id: String { rawValue }
+
+    static let detailSections: [Self] = [.situation, .background, .assessment, .recommendation]
 }
 
-/// Local reading state, independent of clinical records and spatial placement.
-///
-/// Owned by `PatientDashboardView` using SwiftUI's `@State`. Keeping this a
-/// plain value allows the interaction rules to be checked without SwiftUI.
-/// Changes are local to that view instance and are not broadcast by SharePlay.
+/// Local disclosure state; summaries remain visible regardless of detail state.
+/// Starts with an overview so participants can read all four main points first.
 struct DashboardPresentationState {
-    /// Several groups may be open at once; Situation is the starting point.
-    private(set) var expandedSections: Set<ISBARSectionID> = [.situation]
-
-    /// Last explicitly chosen navigation destination, not keyboard focus or
-    /// the section currently visible while manually scrolling.
-    /// A non-nil focused section must also be expanded.
-    private(set) var focusedSection: ISBARSectionID? = .situation
+    private(set) var expandedSections: Set<ISBARSectionID> = []
+    private(set) var focusedSection: ISBARSectionID? = .introduction
 
     var allExpanded: Bool {
-        expandedSections.count == ISBARSectionID.allCases.count
+        expandedSections == Set(ISBARSectionID.detailSections)
+    }
+
+    /// Navigation opens supporting details; Introduction only returns to the header.
+    mutating func focus(_ section: ISBARSectionID) {
+        focusedSection = section
+        if section != .introduction { expandedSections.insert(section) }
+    }
+
+    /// ALL affects the four detail groups, never the permanent patient header.
+    mutating func toggleAll() {
+        if allExpanded {
+            expandedSections.removeAll()
+            focusedSection = nil
+        } else {
+            expandedSections = Set(ISBARSectionID.detailSections)
+        }
     }
 
     func isExpanded(_ section: ISBARSectionID) -> Bool {
         expandedSections.contains(section)
     }
 
-    /// Applies a section-header toggle without changing other sections.
-    /// Closing the focused section clears focus; opening one does not scroll.
+    /// Changes one section without closing the supporting details of another.
     mutating func setExpanded(_ expanded: Bool, for section: ISBARSectionID) {
+        guard section != .introduction else { return }
         if expanded {
             expandedSections.insert(section)
         } else {
             expandedSections.remove(section)
             if focusedSection == section { focusedSection = nil }
-        }
-    }
-
-    /// Opens a navigation destination, preserving other expanded sections.
-    /// The view performs scrolling separately because it owns the layout.
-    mutating func focus(_ section: ISBARSectionID) {
-        expandedSections.insert(section)
-        focusedSection = section
-    }
-
-    /// Expands all unless all are already open, then collapses all.
-    /// Expanding all preserves existing focus; collapsing all clears it.
-    mutating func toggleAll() {
-        if allExpanded {
-            expandedSections.removeAll()
-            focusedSection = nil
-        } else {
-            expandedSections = Set(ISBARSectionID.allCases)
         }
     }
 }

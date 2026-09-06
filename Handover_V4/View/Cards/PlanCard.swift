@@ -1,3 +1,4 @@
+// Flow: Patient records -> PlanCard -> DashboardTheme + SwiftUI presentation.
 //
 //  PlanCard.swift
 //  Handover_V4
@@ -40,7 +41,7 @@ struct PlanCard: View {
                 .padding(.vertical, 8)
             }
         }
-        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+        .dashboardCardSurface(cornerRadius: 16)
     }
 }
 
@@ -59,7 +60,7 @@ private struct PlanRow: View {
             // Task text
             Text(item.task)
                 .font(.system(size: 14))
-                .foregroundStyle(.primary)
+                .foregroundStyle(DashboardTheme.foreground)
                 .fixedSize(horizontal: false, vertical: true)
 
             Spacer(minLength: 8)
@@ -68,7 +69,7 @@ private struct PlanRow: View {
             if let dueTime = item.dueTime {
                 Text(formatTime(dueTime))
                     .font(.system(size: 12, weight: .medium, design: .rounded))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DashboardTheme.secondary)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
                     .background(.secondary.opacity(0.12))
@@ -85,7 +86,7 @@ private struct PlanRow: View {
         case .urgent:
             Image(systemName: "flame.fill")
                 .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(.orange)
+                .foregroundStyle(DashboardTheme.warning)
                 .accessibilityLabel("Urgent")
         case .routine:
             Circle()
@@ -108,10 +109,10 @@ private struct EmptyState: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "list.bullet.clipboard")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DashboardTheme.secondary)
             Text("No tasks set")
                 .font(.system(size: 13))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DashboardTheme.secondary)
             Spacer()
         }
     }

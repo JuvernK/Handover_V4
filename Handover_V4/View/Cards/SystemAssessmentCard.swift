@@ -1,3 +1,4 @@
+// Flow: Patient records -> SystemAssessmentCard -> DashboardTheme + SwiftUI presentation.
 //
 //  SystemAssessmentCard.swift
 //  Handover_V4
@@ -12,24 +13,48 @@
 //    - Summary text
 //    - Optional concerns list (small warning lines beneath)
 //
-//  This is the largest card on the dashboard. It typically spans the full
-//  width of the grid rather than fitting in a single column.
+//  The handover sidebar uses a single head-to-toe column. Spatial cards retain
+//  their adaptive grid and fully visible concerns.
 //
 
 import SwiftUI
 
 struct SystemsAssessmentCard: View {
     let patient: Patient
+    /// Keeps narration in anatomical order and reveals additional concerns on demand.
+    var isHandoverSidebar = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            CardHeader(title: "Systems Assessment", systemImage: "stethoscope")
+            if isHandoverSidebar {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Systems assessment")
+                        .font(.system(size: 21, weight: .semibold))
+                        .accessibilityAddTraits(.isHeader)
+                    Text("Head-to-toe review")
+                        .font(.system(size: 13))
+                        .foregroundStyle(DashboardTheme.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(16)
+            } else {
+                CardHeader(title: "Systems Assessment", systemImage: "stethoscope")
+            }
 
             Divider().padding(.horizontal, 12)
 
             if patient.systems.isEmpty {
                 EmptyState()
                     .padding(16)
+            } else if isHandoverSidebar {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    ForEach(BodySystem.allCases, id: \.self) { bodySystem in
+                        ForEach(patient.systems.filter { $0.system == bodySystem }) { assessment in
+                            SystemRow(assessment: assessment, collapsesConcerns: true)
+                            Divider().padding(.horizontal, 16)
+                        }
+                    }
+                }
             } else {
                 LazyVGrid(
                     columns: [
@@ -45,7 +70,7 @@ struct SystemsAssessmentCard: View {
                 .padding(.vertical, 4)
             }
         }
-        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+        .dashboardCardSurface(cornerRadius: 16)
     }
 }
 
@@ -53,13 +78,14 @@ struct SystemsAssessmentCard: View {
 
 private struct SystemRow: View {
     let assessment: SystemAssessment
+    var collapsesConcerns = false
 
     var body: some View {
         HStack(alignment: .top, spacing: 14) {
             // System icon
             Image(systemName: assessment.system.iconName)
                 .font(.system(size: 18, weight: .medium))
-                .foregroundStyle(assessment.system.iconColor)
+                .foregroundStyle(DashboardTheme.accent)
                 .frame(width: 28, height: 28)
                 .padding(.top, 2)
 
@@ -67,32 +93,29 @@ private struct SystemRow: View {
                 // System name
                 Text(assessment.system.displayName)
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(DashboardTheme.foreground)
 
                 // Summary text
-                Text(assessment.summary)
+                Text(assessment.summary.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                     ? "No assessment recorded." : assessment.summary)
                     .font(.system(size: 13))
-                    .foregroundStyle(.primary.opacity(0.85))
+                    .foregroundStyle(DashboardTheme.foreground)
                     .fixedSize(horizontal: false, vertical: true)
 
                 // Concerns (if any)
                 if !assessment.concerns.isEmpty {
-                    VStack(alignment: .leading, spacing: 4) {
-                        ForEach(assessment.concerns, id: \.self) { concern in
-                            HStack(alignment: .top, spacing: 6) {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .font(.system(size: 9, weight: .semibold))
-                                    .foregroundStyle(.orange)
-                                    .padding(.top, 3)
-
-                                Text(concern)
-                                    .font(.system(size: 12))
-                                    .foregroundStyle(.secondary)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
+                    if collapsesConcerns {
+                        DisclosureGroup {
+                            concerns
+                        } label: {
+                            Text("\(assessment.concerns.count) concern\(assessment.concerns.count == 1 ? "" : "s")")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(DashboardTheme.warning)
+                                .frame(minHeight: 44)
                         }
+                    } else {
+                        concerns
                     }
-                    .padding(.top, 2)
                 }
             }
 
@@ -101,6 +124,26 @@ private struct SystemRow: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
     }
+
+    private var concerns: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ForEach(assessment.concerns, id: \.self) { concern in
+                HStack(alignment: .top, spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(DashboardTheme.warning)
+                        .padding(.top, 3)
+
+                    Text(concern)
+                        .font(.system(size: 12))
+                        .foregroundStyle(DashboardTheme.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+        .padding(.top, 2)
+    }
+
 }
 
 // MARK: - Empty state
@@ -109,17 +152,17 @@ private struct EmptyState: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "stethoscope")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DashboardTheme.secondary)
             Text("No systems assessment recorded")
                 .font(.system(size: 13))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DashboardTheme.secondary)
             Spacer()
         }
     }
 }
 
 // MARK: - BodySystem icon mapping
-// Provides SF Symbol icon and tint colour for each body system.
+// Provides an SF Symbol for each body system; the theme owns icon color.
 
 private extension BodySystem {
     var iconName: String {
@@ -131,18 +174,6 @@ private extension BodySystem {
         case .gastrointestinal: return "fork.knife"
         case .skin:             return "hand.raised.fill"
         case .infection:        return "bandage.fill"
-        }
-    }
-
-    var iconColor: Color {
-        switch self {
-        case .neuro:            return .purple
-        case .respiratory:      return .blue
-        case .cardiovascular:   return .red
-        case .renal:            return .yellow
-        case .gastrointestinal: return .brown
-        case .skin:             return .pink
-        case .infection:        return .green
         }
     }
 }

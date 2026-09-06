@@ -1,3 +1,4 @@
+// Flow: Patient records -> PatientHeaderView -> DashboardTheme + SwiftUI presentation.
 //
 //  PatientHeaderView.swift
 //  Handover_V4
@@ -18,46 +19,54 @@ struct PatientHeaderView: View {
     let patient: Patient
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Top row: avatar + identity
+        VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top, spacing: 16) {
                 AvatarView(patient: patient)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    // Name
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 6) {
                     Text(patient.name)
                         .font(.system(size: 28, weight: .bold))
-                        .foregroundStyle(.primary)
-
-                    // Diagnosis + LOS pill
-                    HStack(spacing: 8) {
-                        Text(patient.diagnosis)
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(.primary)
-
-                        LengthOfStayPill(text: patient.lengthOfStayDisplay)
-                        AcuityBadge(acuity: patient.acuity)
-                        TrajectoryBadge(trajectory: patient.trajectory)
-                    }
-
-                    // Demographics
-                    Text(demographicsLine)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 2)
+                        .foregroundStyle(DashboardTheme.foreground)
+                        .accessibilityAddTraits(.isHeader)
+                    Text(patient.diagnosis)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(DashboardTheme.foreground)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("\(demographicsLine)  ·  \(patient.lengthOfStayDisplay)")
+                        .font(.system(size: 13, design: .monospaced))
+                        .foregroundStyle(DashboardTheme.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-
-                Spacer()
+                Spacer(minLength: 0)
             }
 
-            // Bottom row: safety info (allergies + code status)
-            HStack(alignment: .center, spacing: 20) {
-                AllergiesRow(allergies: patient.allergies)
-                CodeStatusBadge(codeStatus: patient.codeStatus)
-                Spacer()
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top, spacing: 16) {
+                    statusBadges
+                    AllergiesRow(allergies: patient.allergies)
+                }
+                VStack(alignment: .leading, spacing: 10) {
+                    statusBadges
+                    AllergiesRow(allergies: patient.allergies)
+                }
             }
         }
         .padding(20)
+    }
+
+    private var statusBadges: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 8) {
+                AcuityBadge(acuity: patient.acuity)
+                TrajectoryBadge(trajectory: patient.trajectory)
+                CodeStatusBadge(codeStatus: patient.codeStatus)
+            }
+            VStack(alignment: .leading, spacing: 8) {
+                AcuityBadge(acuity: patient.acuity)
+                TrajectoryBadge(trajectory: patient.trajectory)
+                CodeStatusBadge(codeStatus: patient.codeStatus)
+            }
+        }
     }
 
     /// "62M  ·  BED-01  ·  MRN-202400341"
@@ -86,29 +95,13 @@ private struct AvatarView: View {
             // Fallback: initials in a coloured circle
             ZStack {
                 Circle()
-                    .fill(.tint.opacity(0.15))
+                    .fill(DashboardTheme.glassRaised)
                 Text(patient.initials)
                     .font(.system(size: 24, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.tint)
+                    .foregroundStyle(DashboardTheme.secondary)
             }
             .frame(width: size, height: size)
         }
-    }
-}
-
-// MARK: - Length of Stay pill
-
-private struct LengthOfStayPill: View {
-    let text: String
-
-    var body: some View {
-        Text(text)
-            .font(.system(size: 12, weight: .medium))
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
-            .background(.secondary.opacity(0.15))
-            .clipShape(Capsule())
     }
 }
 
@@ -124,10 +117,11 @@ private struct AcuityBadge: View {
             Text(acuity.displayText)
                 .font(.system(size: 12, weight: .semibold))
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(acuity.statusColor)
         .padding(.horizontal, 10)
         .padding(.vertical, 4)
-        .background(acuity.backgroundColor)
+        .background(acuity.statusColor.opacity(0.16))
+        .overlay(Capsule().strokeBorder(acuity.statusColor.opacity(0.65), lineWidth: 1))
         .clipShape(Capsule())
     }
 }
@@ -147,10 +141,10 @@ private extension AcuityLevel {
         }
     }
 
-    var backgroundColor: Color {
+    var statusColor: Color {
         switch self {
-        case .stable: return .green.opacity(0.85)
-        case .critical: return .red.opacity(0.85)
+        case .stable: return DashboardTheme.normal
+        case .critical: return DashboardTheme.critical
         }
     }
 }
@@ -167,10 +161,11 @@ private struct TrajectoryBadge: View {
             Text(trajectory.displayText)
                 .font(.system(size: 12, weight: .semibold))
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(trajectory.statusColor)
         .padding(.horizontal, 10)
         .padding(.vertical, 4)
-        .background(trajectory.backgroundColor)
+        .background(trajectory.statusColor.opacity(0.16))
+        .overlay(Capsule().strokeBorder(trajectory.statusColor.opacity(0.65), lineWidth: 1))
         .clipShape(Capsule())
     }
 }
@@ -192,11 +187,11 @@ private extension Trajectory {
         }
     }
 
-    var backgroundColor: Color {
+    var statusColor: Color {
         switch self {
-        case .improving: return .green.opacity(0.85)
-        case .stable: return .blue.opacity(0.85)
-        case .worsening: return .red.opacity(0.85)
+        case .improving: return DashboardTheme.normal
+        case .stable: return DashboardTheme.secondary
+        case .worsening: return DashboardTheme.warning
         }
     }
 }
@@ -210,18 +205,18 @@ private struct AllergiesRow: View {
         HStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(allergies.isEmpty ? .secondary : Color.red)
+                .foregroundStyle(allergies.isEmpty ? DashboardTheme.secondary : DashboardTheme.critical)
 
             if allergies.isEmpty {
                 Text("NKDA")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DashboardTheme.secondary)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
-                    .background(.secondary.opacity(0.15))
+                    .background(DashboardTheme.glassRaised)
                     .clipShape(Capsule())
             } else {
-                HStack(spacing: 6) {
+                VStack(alignment: .leading, spacing: 6) {
                     ForEach(allergies, id: \.substance) { allergy in
                         AllergyPill(allergy: allergy)
                     }
@@ -235,18 +230,20 @@ private struct AllergyPill: View {
     let allergy: Allergy
 
     var body: some View {
-        HStack(spacing: 4) {
+        VStack(alignment: .leading, spacing: 3) {
             Text(allergy.substance)
                 .font(.system(size: 13, weight: .semibold))
-            Text("(\(allergy.reaction))")
+            Text(allergy.reaction)
                 .font(.system(size: 12))
-                .foregroundStyle(.white.opacity(0.85))
+                .foregroundStyle(DashboardTheme.foreground)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(DashboardTheme.foreground)
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
-        .background(.red.opacity(0.85))
-        .clipShape(Capsule())
+        .background(DashboardTheme.critical.opacity(0.16))
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(DashboardTheme.critical, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }
 
@@ -279,17 +276,17 @@ private struct CodeStatusBadge: View {
 
     private var foregroundColor: Color {
         switch codeStatus {
-        case .fullCode: return .green
-        case .dnr:      return .orange
-        case .custom:   return .orange
+        case .fullCode: return DashboardTheme.secondary
+        case .dnr:      return DashboardTheme.warning
+        case .custom:   return DashboardTheme.warning
         }
     }
 
     private var backgroundColor: Color {
         switch codeStatus {
-        case .fullCode: return .green.opacity(0.15)
-        case .dnr:      return .orange.opacity(0.15)
-        case .custom:   return .orange.opacity(0.18)
+        case .fullCode: return DashboardTheme.secondary.opacity(0.15)
+        case .dnr:      return DashboardTheme.warning.opacity(0.15)
+        case .custom:   return DashboardTheme.warning.opacity(0.18)
         }
     }
 }
@@ -386,23 +383,6 @@ extension Patient {
     }
 }
 #endif
-
-// #Preview("patient header") {
-//    let patients = PatientDataLoader.loadOrEmpty()
-//    
-//    return Group {
-//        if let p = patients.first(where: { $0.bedNumber == "BED-03" }) {
-//            VStack(spacing: 16) {
-//                PatientHeaderView(patient: p)
-//                    .glassBackgroundEffect(in: .rect(cornerRadius: 16))
-//                VitalsCard(patient: p)
-//            }
-//            .padding()
-//        } else {
-//            Text("No patients loaded")
-//        }
-//    }
-// }
 
 #Preview("patient header") {
     let patients = PatientDataLoader.loadOrEmpty()
