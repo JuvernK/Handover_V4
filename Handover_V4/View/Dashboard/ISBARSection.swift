@@ -105,6 +105,10 @@ extension ISBARSectionID {
 
 /// A single collapsible ISBAR row: a tappable header (letter badge, title,
 /// subtitle, alert count, chevron) plus content shown only when expanded.
+///
+/// Uses a plain tap gesture rather than a `Button` — a `Button` here causes
+/// visionOS to render the row as a floating "hover platter" that detaches
+/// from its layout position and overlaps the row above it.
 struct ISBARSectionView: View {
     let section: ISBARSectionID
     let patient: Patient
@@ -112,16 +116,16 @@ struct ISBARSectionView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Button {
-                withAnimation(.snappy(duration: 0.25)) {
-                    isExpanded.toggle()
+            header
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    withAnimation(.snappy(duration: 0.25)) {
+                        isExpanded.toggle()
+                    }
                 }
-            } label: {
-                header
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(section.title)
-            .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
+                .accessibilityAddTraits(.isButton)
+                .accessibilityLabel(section.title)
+                .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
 
             if isExpanded {
                 Divider().padding(.horizontal, 12)
@@ -205,17 +209,17 @@ struct ISBARNavColumn: View {
                 Divider().padding(.vertical, 4)
             }
 
-            Button {
-                withAnimation(.snappy(duration: 0.25)) {
-                    presentation.toggleAll()
+            Text("ALL")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    withAnimation(.snappy(duration: 0.25)) {
+                        presentation.toggleAll()
+                    }
                 }
-            } label: {
-                Text("ALL")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(presentation.allExpanded ? "Collapse all sections" : "Expand all sections")
+                .accessibilityAddTraits(.isButton)
+                .accessibilityLabel(presentation.allExpanded ? "Collapse all sections" : "Expand all sections")
         }
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity)
@@ -230,26 +234,25 @@ private struct NavPill: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            ZStack(alignment: .topTrailing) {
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(isSelected ? Color.accentColor.opacity(0.3) : Color.secondary.opacity(0.12))
-                    .frame(width: 44, height: 44)
+        ZStack(alignment: .topTrailing) {
+            RoundedRectangle(cornerRadius: 14)
+                .fill(isSelected ? Color.accentColor.opacity(0.3) : Color.secondary.opacity(0.12))
+                .frame(width: 44, height: 44)
 
-                Text(letter)
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(isSelected ? Color.accentColor : .primary)
-                    .frame(width: 44, height: 44)
+            Text(letter)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(isSelected ? Color.accentColor : .primary)
+                .frame(width: 44, height: 44)
 
-                if hasAlert {
-                    Circle()
-                        .fill(.red)
-                        .frame(width: 8, height: 8)
-                        .offset(x: -2, y: 2)
-                }
+            if hasAlert {
+                Circle()
+                    .fill(.red)
+                    .frame(width: 8, height: 8)
+                    .offset(x: -2, y: 2)
             }
         }
-        .buttonStyle(.plain)
+        .contentShape(Rectangle())
+        .onTapGesture(perform: action)
     }
 }
 
