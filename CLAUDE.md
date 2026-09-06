@@ -25,6 +25,10 @@ When a design decision or bug looks visionOS-specific, check the HIG page above 
 - **`.hoverEffect()` should sit on the outermost tappable container**, not on a child view inside another tappable parent — nesting it can create two overlapping hover regions.
 - **Always verify in the simulator or on-device, not just SwiftUI previews.** Previews do not reproduce hover-lift, focus, or immersive-space behavior. The `Button` overlap bug above was invisible in preview and only showed when actually running the app — screenshot the running app before calling spatial UI work done.
 
+## Dead code audit (latest-prototype, 2026-09-06)
+
+Checked in a separate worktree so it doesn't clash with other agents working on this branch.
+
 ## Other project conventions
 
 See `AGENTS.md` in this repo for product direction, branch strategy, and documentation conventions.
