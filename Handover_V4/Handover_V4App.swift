@@ -13,7 +13,6 @@ import RealityKitContent
 struct Handover_V4App: App {
 
     @State private var appModel = AppModel()
-    @State private var avPlayerViewModel = AVPlayerViewModel()
 
     // register so RealityKit can use it at runtime
     init() {
@@ -34,11 +33,9 @@ struct Handover_V4App: App {
                 .environment(appModel.handoverViewModel)
                 .onAppear {
                     appModel.immersiveSpaceState = .open
-                    avPlayerViewModel.play()
                 }
                 .onDisappear {
                     appModel.immersiveSpaceState = .closed
-                    avPlayerViewModel.reset()
                 }
         }
         .immersionStyle(selection: .constant(.full), in: .full)
