@@ -9,6 +9,19 @@
 - Keep clinical records in `Patient`; keep ISBAR focus and disclosure in dashboard presentation state.
 - Preserve existing SharePlay messages and authored spatial point-of-interest names.
 
+## Branch strategy
+
+- `latest-prototype` is the active development and integration baseline for the new dashboard UI, rather than `main`.
+- `main` contains the more complete immersive-space features the user wants to retain, but that implementation is too buggy to use as the development baseline.
+- Use `main` as a reference for intended immersive behavior and useful implementation details. Bring those features into the new dashboard work gradually, reviewing and fixing them as needed.
+- Do not assume code on `main` is correct or merge it wholesale merely to recover features.
+- Always create a fresh task branch from `latest-prototype` before starting a new task. For ongoing work already on a task branch, continue there until that task is finished.
+- Each agent works in its assigned worktree and task branch. Do not switch another agent's branch or edit its worktree.
+- Integrate completed task branches into `latest-prototype` when the user authorizes the merge. This policy does not by itself authorize merging or pushing.
+- After a successful merge, verify that the task branch's changes are included in the integration branch, then delete the merged local task branch.
+- Before deletion, confirm the branch has no outstanding work and is not checked out in another active worktree. Coordinate with its owner if it is still in use; never force-delete a branch to bypass these checks.
+- Do not delete `main`, `latest-prototype`, remote branches, or another agent's worktree as routine task-branch cleanup.
+
 ## Working in this repository
 
 - Never use em dash "--". Use plain dash instead. 
@@ -31,3 +44,4 @@
 - Update `docs/dashboard-design.md` when presentation behavior, file responsibilities, or validation commands change.
 - Keep implementation status separate from future plans, and identify checks that have not been performed.
 - Documentation-only changes do not require rebuilding the app; check links, commands, and consistency against the code.
+
