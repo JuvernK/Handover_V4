@@ -64,7 +64,17 @@ separate hosts. This matches the current fixed-bed workflow.
 - Section headers toggle individual sections.
 - ALL expands all sections, or collapses them when all are open.
 - Wide windows keep the navigation and independently scrollable vitals beside the scrolling sections.
+- At widths of 1100 points and above, the dashboard has three visually separate glass surfaces:
+  a 76-point ISBAR rail, a flexible central reading pane, and a 300-point vitals panel.
+  Clear 24-point gaps separate the panes; the side panels start 32 points below the centre.
+  Scrolling the centre does not move either side panel. Vitals can scroll separately
+  when the window is too short to show all readings.
+- `Handover_V4App.swift` uses a plain dashboard window so no shared glass fills the
+  gaps. The panes remain part of one window and move and resize together.
+  `PatientDashboardView` supplies the central glass; the navigation and vitals
+  views supply their own glass. `DashboardView` supplies glass for the empty state.
 - Narrow windows keep vitals and navigation above the section list in the same scrolling content.
+  This compact layout has a single enclosing glass surface.
 - Counts describe actual records: allergies, main concerns, systems, and urgent tasks.
 
 ## Verification
@@ -90,7 +100,7 @@ Build the application using a worktree-specific derived-data directory:
 ```sh
 xcodebuild -project Handover_V4.xcodeproj -scheme Handover_V4 \
   -destination 'generic/platform=visionOS Simulator' \
-  -derivedDataPath /private/tmp/handover-codex-isbar-derived-data \
+  -derivedDataPath /private/tmp/handover-separated-panels-derived-data \
   CODE_SIGNING_ALLOWED=NO build
 ```
 
@@ -103,6 +113,13 @@ narrow/wide windows, navigation after collapse-all, and vitals visibility while 
 The initial implementation passed the standalone checks and a generic visionOS
 Simulator build on 6 September 2026. Device/simulator visual interaction review
 has not yet been performed. These results do not verify future merged UI changes.
+
+The separated-panel update passed the standalone presentation checks and a generic
+visionOS Simulator build on 6 September 2026. The app was installed and launched
+in the visionOS 26.2 simulator. A screenshot review confirmed the three separate
+glass surfaces and clear gaps at the initial wide size. Manual scrolling,
+resizing, all-case visual review, and device gaze/pinch testing have not been
+performed for this update. The scroll regions remain siblings in the wide layout.
 
 ## Integration with the UI worktree
 

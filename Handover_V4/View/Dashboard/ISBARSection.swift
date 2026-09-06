@@ -11,6 +11,7 @@
 //  at-a-glance alert count.
 //
 
+// Flow: PatientDashboardView -> ISBARSection views -> Patient records + DashboardPresentationState.
 import SwiftUI
 
 extension ISBARSectionID {
@@ -265,7 +266,7 @@ struct LiveVitalsSidebar: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            CardHeader(title: "Vitals", systemImage: "waveform.path.ecg")
+            CardHeader(title: "Current Vitals", systemImage: "waveform.path.ecg")
 
             Divider().padding(.horizontal, 12)
 

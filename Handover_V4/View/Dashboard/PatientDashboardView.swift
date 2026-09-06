@@ -1,3 +1,4 @@
+// Flow: DashboardView -> PatientDashboardView -> DashboardPresentationState + ISBARSection views.
 import SwiftUI
 
 /// Patient reading experience with no window controls or RealityKit dependencies.
@@ -21,19 +22,24 @@ struct PatientDashboardView: View {
                     if geometry.size.width >= 1100 {
                         // Sibling scroll regions keep vitals visible while the
                         // reading column scrolls, without clipping tall vitals.
-                        HStack(alignment: .top, spacing: 16) {
+                        HStack(alignment: .top, spacing: 24) {
                             navigation(isHorizontal: false)
                                 .frame(width: 76)
+                                .padding(.top, 32)
 
                             ScrollView {
                                 sections
+                                    .padding(20)
                             }
                             .frame(maxWidth: .infinity)
+                            .glassBackgroundEffect(in: .rect(cornerRadius: 32))
 
                             ScrollView {
                                 LiveVitalsSidebar(patient: patient)
                             }
+                            .scrollBounceBehavior(.basedOnSize)
                             .frame(width: 300)
+                            .padding(.top, 32)
                         }
                     } else {
                         // On narrow windows everything remains reachable in
@@ -44,7 +50,9 @@ struct PatientDashboardView: View {
                                 LiveVitalsSidebar(patient: patient)
                                 sections
                             }
+                            .padding(20)
                         }
+                        .glassBackgroundEffect(in: .rect(cornerRadius: 32))
                     }
                 }
                 .padding(14)

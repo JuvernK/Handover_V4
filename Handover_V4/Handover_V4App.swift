@@ -5,6 +5,7 @@
 //  Created by Juvern Khor on 29/4/2026.
 //
 
+// Flow: Handover_V4App -> DashboardView -> PatientDashboardView; AppModel -> ImmersiveView.
 import SwiftUI
 import RealityKit
 import RealityKitContent
@@ -26,6 +27,8 @@ struct Handover_V4App: App {
             DashboardView(viewModel: appModel.handoverViewModel)
                 .environment(appModel)
         }
+        // Individual dashboard panes supply glass, leaving clear space between them.
+        .windowStyle(.plain)
         .defaultSize(width: 1700, height: 980)
 
         ImmersiveSpace(id: appModel.immersiveSpaceID) {

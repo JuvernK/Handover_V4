@@ -12,6 +12,7 @@
 //  Patient selection remains configured by AppModel's initial bed number.
 //
 
+// Flow: AppModel -> DashboardView -> PatientDashboardView + DashboardControls.
 import SwiftUI
 
 struct DashboardView: View {
@@ -24,6 +25,7 @@ struct DashboardView: View {
                 PatientDashboardView(patient: patient)
             } else {
                 EmptyDashboardState()
+                    .glassBackgroundEffect(in: .rect(cornerRadius: 32))
             }
         }
         .dynamicTypeSize(.medium)
