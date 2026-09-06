@@ -52,6 +52,7 @@ struct VitalsCard: View {
 
 #if DEBUG
 extension VitalSign {
+    // swiftlint:disable:next function_parameter_count
     static func mock(
         label: String,
         value: String,

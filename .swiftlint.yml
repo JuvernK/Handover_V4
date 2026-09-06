@@ -17,6 +17,6 @@ disabled_rules:
 opt_in_rules:
   - empty_count
   - redundant_type_annotation
-  - unused_import
 
-analyzer_rules: []
+analyzer_rules:
+  - unused_import

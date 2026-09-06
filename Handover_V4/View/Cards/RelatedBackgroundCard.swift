@@ -22,7 +22,8 @@ struct RelatedBackgroundCard: View {
     private var isEmpty: Bool {
         background.presentingComplaint.isEmpty &&
         background.pastMedicalHistory.isEmpty &&
-        background.socialHistory.isEmpty
+        background.socialHistory.isEmpty &&
+        background.relevantContext.isEmpty
     }
 
     var body: some View {
@@ -63,6 +64,15 @@ struct RelatedBackgroundCard: View {
                             systemImage: "house.and.flag.fill"
                         ) {
                             BulletList(items: background.socialHistory)
+                        }
+                    }
+
+                    if !background.relevantContext.isEmpty {
+                        BackgroundSection(
+                            title: "Relevant context",
+                            systemImage: "info.circle.fill"
+                        ) {
+                            BulletList(items: background.relevantContext)
                         }
                     }
                 }

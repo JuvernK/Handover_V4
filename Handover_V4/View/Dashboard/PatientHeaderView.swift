@@ -122,9 +122,9 @@ private struct AcuityBadge: View {
             Image(systemName: acuity.iconName)
                 .font(.system(size: 11, weight: .semibold))
             Text(acuity.displayText)
-                .font(.system(size: 12, weight: .medium))
+                .font(.system(size: 12, weight: .semibold))
         }
-        .foregroundStyle(acuity.foregroundColor)
+        .foregroundStyle(.white)
         .padding(.horizontal, 10)
         .padding(.vertical, 4)
         .background(acuity.backgroundColor)
@@ -147,17 +147,10 @@ private extension AcuityLevel {
         }
     }
 
-    var foregroundColor: Color {
-        switch self {
-        case .stable: return .green
-        case .critical: return .red
-        }
-    }
-
     var backgroundColor: Color {
         switch self {
-        case .stable: return .green.opacity(0.15)
-        case .critical: return .red.opacity(0.14)
+        case .stable: return .green.opacity(0.85)
+        case .critical: return .red.opacity(0.85)
         }
     }
 }
@@ -172,9 +165,9 @@ private struct TrajectoryBadge: View {
             Image(systemName: trajectory.iconName)
                 .font(.system(size: 11, weight: .semibold))
             Text(trajectory.displayText)
-                .font(.system(size: 12, weight: .medium))
+                .font(.system(size: 12, weight: .semibold))
         }
-        .foregroundStyle(trajectory.foregroundColor)
+        .foregroundStyle(.white)
         .padding(.horizontal, 10)
         .padding(.vertical, 4)
         .background(trajectory.backgroundColor)
@@ -199,19 +192,11 @@ private extension Trajectory {
         }
     }
 
-    var foregroundColor: Color {
-        switch self {
-        case .improving: return .green
-        case .stable: return .blue
-        case .worsening: return .red
-        }
-    }
-
     var backgroundColor: Color {
         switch self {
-        case .improving: return .green.opacity(0.15)
-        case .stable: return .blue.opacity(0.14)
-        case .worsening: return .red.opacity(0.14)
+        case .improving: return .green.opacity(0.85)
+        case .stable: return .blue.opacity(0.85)
+        case .worsening: return .red.opacity(0.85)
         }
     }
 }
@@ -255,15 +240,12 @@ private struct AllergyPill: View {
                 .font(.system(size: 13, weight: .semibold))
             Text("(\(allergy.reaction))")
                 .font(.system(size: 12))
-                .foregroundStyle(.red.opacity(0.85))
+                .foregroundStyle(.white.opacity(0.85))
         }
-        .foregroundStyle(.red)
+        .foregroundStyle(.white)
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
-        .background(.red.opacity(0.12))
-        .overlay(
-            Capsule().stroke(.red.opacity(0.3), lineWidth: 0.5)
-        )
+        .background(.red.opacity(0.85))
         .clipShape(Capsule())
     }
 }

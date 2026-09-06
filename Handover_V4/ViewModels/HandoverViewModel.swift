@@ -69,18 +69,6 @@ final class HandoverViewModel {
 
     // MARK: - Section ordering
 
-    /// Moves a section from one index to another within the section order. (Index`based))
-    // @discardableResult
-    // func moveSection(from source: Int, to destination: Int) -> Bool {
-    //     guard source >= 0, source < sectionOrder.count else { return false }
-    //     guard destination >= 0, destination <= sectionOrder.count else { return false }
-
-    //     let item = sectionOrder.remove(at: source)
-    //     let insertionIndex = destination > source ? destination - 1 : destination
-    //     sectionOrder.insert(item, at: insertionIndex)
-    //     return true
-    // }
-
     /// Moves the dragged section into the destination section's current position. (ID based)
     /// Used by .dropDestination handlers in DashboardView.
     ///

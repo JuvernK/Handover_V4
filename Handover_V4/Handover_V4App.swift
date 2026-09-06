@@ -28,14 +28,6 @@ struct Handover_V4App: App {
         }
         .defaultSize(width: 1700, height: 980)
 
-        // Controls window (used & visible during immersive space)
-            WindowGroup(id: "controls") {
-                ImmersiveControlsView()
-                    .environment(appModel)
-            }
-            .defaultSize(width: 320, height: 100)  // just the buttons
-            .windowResizability(.contentSize)        // sized to its content
-
         ImmersiveSpace(id: appModel.immersiveSpaceID) {
             ImmersiveView()
                 .environment(appModel)
