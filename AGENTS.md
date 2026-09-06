@@ -1,5 +1,21 @@
 # Handover V4
 
+## visionOS development guidelines
+
+Apple's official references for spatial UI work on this project:
+
+- **Human Interface Guidelines — Designing for visionOS**
+  https://developer.apple.com/design/human-interface-guidelines/designing-for-visionos
+  Read this before designing any new window, ornament, or immersive interaction.
+- **visionOS developer documentation (SwiftUI, RealityKit, ARKit for visionOS)**
+  https://developer.apple.com/documentation/visionos
+- **RealityKit framework reference**
+  https://developer.apple.com/documentation/realitykit
+- **SwiftUI framework reference**
+  https://developer.apple.com/documentation/swiftui
+
+When a design decision or bug looks visionOS-specific, check the HIG page above before guessing — spatial interaction rules (hover, gaze, ornaments, immersion styles) often behave differently from iOS/macOS assumptions.
+
 ## Agreed product direction
 
 - Build the native SwiftUI dashboard first; immersive integration is a later step.
