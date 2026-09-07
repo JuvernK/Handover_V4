@@ -84,10 +84,8 @@ Paths are relative to the repository root.
 | `Handover_V4/Data/PatientData.json` | Authored cases and draft section summaries |
 | `Handover_V4/Models/Patient.swift` | Clinical record schema, including optional summaries |
 | `Handover_V4/Models/DashboardPresentationState.swift` | Five navigation destinations, four detail groups, focus, and independent disclosure state |
-| `Handover_V4/View/Dashboard/PatientDashboardView.swift` | Header, responsive columns, and local state ownership |
+| `Handover_V4/View/Dashboard/PatientDashboardView.swift` | Header, responsive columns, local state ownership, and private ISBAR shortcut and section views; section presentation includes authored-summary fallback and clinical-card grouping |
 | `Handover_V4/View/Dashboard/PatientHeaderView.swift` | Permanent patient identity and safety context |
-| `Handover_V4/View/Dashboard/ISBARNavColumn.swift` | Familiar ISBAR shortcuts and ALL control |
-| `Handover_V4/View/Dashboard/ISBARSection.swift` | Summary selection, missing-text fallback, detail controls, and clinical-card grouping |
 | `Handover_V4/View/Cards/SystemAssessmentCard.swift` | Head-to-toe sidebar; retains adaptive grid and visible concerns for standalone spatial cards |
 | `Handover_V4/View/Dashboard/DashboardTheme.swift` | HTML palette, dark outer panes, nested card surfaces |
 | `Handover_V4/View/Dashboard/DashboardView.swift` | Window controls, SharePlay alert, empty state |
@@ -174,6 +172,18 @@ the patient header sits outside the main scroll region. Automated mouse-based
 scroll/toggle verification could not run because macOS denied assistive access
 to System Events. On-screen toggle persistence, repeated scrolling/navigation,
 resizing, and device interaction still require manual review.
+
+Dashboard composition consolidation (7 September 2026): navigation shortcuts,
+section presentation, and responsive layout now live in `PatientDashboardView.swift`.
+The navigation and section views and their presentation extension are private;
+`DashboardPresentationState` remains separate with its existing checks unchanged.
+Source comparison confirmed that view bodies, state ownership, modifiers, and
+scrolling logic were preserved. Both documented model checks and a generic
+visionOS Simulator build passed, using `/private/tmp/handover-consolidation-*`
+output paths. Build log: `/private/tmp/handover-consolidation-build.log`.
+Visual comparison, manual navigation/disclosure, resizing, appearance persistence,
+and device interaction were not repeated for this consolidation; the outstanding
+interaction checks above still apply.
 
 ## Next evaluation
 
