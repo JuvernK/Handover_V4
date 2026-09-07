@@ -1,121 +1,92 @@
 # Handover dashboard
 
-## Current design
+Current implementation contract. Repository-wide rules live in [AGENTS.md](../AGENTS.md).
 
-The prototype supports giving a structured handover. Patient identity and diagnosis
-form a permanent introduction at the top of the wider SBAR reading pane. A narrower
-systems assessment pane sits beside it, like the former Current Vitals panel. The familiar ISBAR shortcut rail sits to the left of the reading column; systems
-occupy the former vitals side panel.
+## Behavior to preserve
 
-Each SBAR section leads with an authored, patient-specific sentence. Supporting
-records expand by tapping the section header and its chevron, matching the original
-interaction. All four summaries are
-visible initially; detail sections start closed and open independently.
+- Patient identity, diagnosis, demographics, acuity, trajectory, code status, and
+  allergies form a permanent introduction with no disclosure control.
+- At least 1100 pt wide and 650 pt high: header pinned above the main scroll region,
+  ISBAR rail on the left, independently scrolling systems pane on the right.
+  Rail and systems start 32 pt below the main pane; all panes share one window.
+- Narrower or shorter: one scroll region, scrolling header, horizontal shortcuts,
+  and systems between Assessment and Recommendation.
+- Situation, Background, Assessment, Recommendation each show a full authored
+  summary. Details start closed and expand independently by tapping the header.
+- S/B/A/R opens and scrolls to its section without closing others. I returns to
+  the reader's top when wide or the header when compact. ALL expands/collapses
+  the four detail groups. Disclosure stays local to the view lifetime.
+- Assessment details contain vitals with 12-hour histories, labs, infusions, and
+  invasive devices. Systems follow `BodySystem.allCases` head-to-toe order;
+  summaries remain visible and concerns expand independently. Spatial systems
+  cards retain their adaptive grid and fully visible concerns.
+- Appearance defaults dark, persists under `dashboardUsesDarkAppearance`, and
+  applies locally to dashboard views. Switching must preserve disclosure and
+  scroll position. Shared cards retain standalone glass outside the dashboard.
 
-The approach borrows the main-point-first structure of the
-[Minto Pyramid Principle](https://barbaraminto.com/). Improved comprehension and
-lower cognitive load are design hypotheses, not validated outcomes.
+## Data and ownership
 
-## Layout and interaction
+Cases come from `PatientData.json`, selected manually through
+`AppModel(initialBedNumber:)`. Optional `Patient.handoverSummaries` fields accept
+missing/null values. Missing or blank summaries show “No handover summary recorded.”;
+blank system summaries show “No assessment recorded.” Never synthesize clinical
+conclusions. All five cases have draft summaries requiring case-author review,
+including whenever their underlying records change.
 
-- The patient header contains name, main diagnosis, demographics, bed, MRN, ICU day,
-  acuity, trajectory, code status, and allergies. It has no disclosure control.
-- At widths of at least 1100 points and heights of at least 650 points, the header
-  stays at the top of the main pane, above its scroll region. The systems pane
-  is a sibling scroll region; main-content scrolling cannot move it. The rail and
-  systems panel start 32 points below the main pane, with clear gaps between them.
-  All panes belong to the same window and move/resize together.
-- The ISBAR rail includes I, S, B, A, R, and ALL. Selecting S/B/A/R opens and scrolls
-  to that section without closing others. I returns the reading pane to the top in
-  wide windows (the patient header is already visible); in compact windows it
-  scrolls to the patient header. ALL expands or collapses the four detail sections.
-  Introduction remains permanently available.
-- The left column follows Situation, Background, Assessment, Recommendation.
-  Summaries wrap without line limits, even with details closed.
-- Assessment details contain current vitals with 12-hour histories, labs,
-  infusions, and invasive devices. Systems are not duplicated inside this section.
-- The right column follows the fixed `BodySystem.allCases` head-to-toe order.
-  Full authored system summaries remain visible; additional concern lists can
-  expand individually. A blank system summary says “No assessment recorded.”
-- In narrow or short windows, all content shares one scroll region. The patient
-  header scrolls with it, shortcuts form a horizontal row, and systems appear after
-  Assessment, before Recommendation.
-  This keeps content reachable when a pinned header would consume too much height.
-- Selecting the patient remains a manual `AppModel(initialBedNumber:)` configuration.
-  No patient picker, runtime summary generation, or clinical note editor is included.
-- Disclosure is local to the view lifetime and is not shared through SharePlay.
-  Existing spatial card IDs, authored POI names, and SharePlay messages are unchanged.
+Paths below are relative to `Handover_V4/`.
 
-## Authored summary data
+| File | Owns |
+| --- | --- |
+| `Models/Patient.swift`, `Data/PatientData.json` | Clinical records and authored summaries |
+| `Models/DashboardPresentationState.swift` | Local ISBAR focus and disclosure rules |
+| `View/Dashboard/PatientDashboardView.swift` | Responsive layout, state ownership, private navigation and section views, summary fallback and card grouping |
+| `View/Dashboard/PatientHeaderView.swift` | Shared patient introduction |
+| `View/Cards/SystemAssessmentCard.swift` | Dashboard and spatial systems presentations |
+| `View/Dashboard/DashboardView.swift` | Window controls, appearance preference, SharePlay alert, empty state |
+| `View/Dashboard/DashboardTheme.swift` | Asset palette and dashboard/standalone surfaces |
 
-`Patient.handoverSummaries` contains optional `situation`, `background`,
-`assessment`, and `recommendation` strings. Each is one concise main point, with
-supporting facts retained in the existing structured records. These are case
-content, while expansion state belongs to `DashboardPresentationState`.
+## Current ownership and relationships
 
-All five bundled cases have draft summaries based on their existing records.
-No original observations, treatments, or thresholds were changed. The intentionally
-incomplete demonstration case explicitly describes its missing information.
-The summaries need case-author review before participant evaluation. They are
-not signed nursing notes and carry no invented authorship or time.
+The app owns shared state and hosts two view trees. Indentation below shows
+ownership or composition; arrows show data flow or rendering delegation.
 
-Missing `handoverSummaries`, missing individual fields, and null fields decode
-without breaking older cases. Missing or whitespace-only text displays
-“No handover summary recorded.” The UI does not synthesize a clinical conclusion.
-When case records change, their authored summaries must be reviewed as well.
-
-Example from the septic-shock case:
-
-```json
-"handoverSummaries": {
-  "situation": "Septic shock from pneumonia is worsening, with high vasopressor requirements and declining renal function.",
-  "background": "Pneumonia followed fever and productive cough, against a background of diabetes, obesity, asthma, and recurrent respiratory infections.",
-  "assessment": "Oxygenation is deteriorating, with rising lactate and creatinine.",
-  "recommendation": "The plan prioritises repeat lactate, review of sputum cultures, and reassessment of organ support needs."
-}
+```text
+Handover_V4App
+├─ AppModel (shared state)
+│  ├─ HandoverViewModel → PatientDataLoader → PatientData.json
+│  ├─ SessionController ↔ SharePlay messages
+│  └─ Immersive lifecycle, card states/positions, sync conflict counters
+├─ DashboardView (window)
+│  ├─ DashboardControls → ToggleImmersiveSpaceButton
+│  └─ PatientDashboardView
+│     ├─ DashboardPresentationState + pending scroll request
+│     ├─ ISBARNavColumn (private shortcuts)
+│     ├─ ISBARSectionView (private summaries/disclosure) → clinical cards
+│     ├─ PatientHeaderView
+│     └─ SystemsAssessmentCard (sidebar)
+└─ ImmersiveView (RealityKit scene, attachments, gestures)
+   └─ AttachmentsProvider → SpatialCardView
+      ├─ PatientHeaderView (basic information)
+      └─ SectionID.view(for:) → shared clinical cards
 ```
 
-## File responsibilities
+`HandoverViewModel` owns the displayed patient and shared section order; both view
+trees read it. `AppModel` coordinates remote updates and catch-up through
+`SessionController`. Local ISBAR disclosure is separate from shared spatial card
+disclosure. `SectionID` remains a spatial/SharePlay identifier, distinct from
+`ISBARSectionID`, even though the dashboard no longer renders the shared order.
 
-Paths are relative to the repository root.
+Clinical cards own their rows and empty states. `VitalsCard` delegates to
+`VitalBox` → `Sparkline`; `CardHeader` and `DashboardTheme` supply shared styling.
+Situation and Family currently render only in dashboard sections; the other
+clinical cards and patient header also render spatially. Authored POI names map
+through `SpatialCardView`; preserve those names and SharePlay message types.
 
-| File | Responsibility |
-| --- | --- |
-| `Handover_V4/Data/PatientData.json` | Authored cases and draft section summaries |
-| `Handover_V4/Models/Patient.swift` | Clinical record schema, including optional summaries |
-| `Handover_V4/Models/DashboardPresentationState.swift` | Five navigation destinations, four detail groups, focus, and independent disclosure state |
-| `Handover_V4/View/Dashboard/PatientDashboardView.swift` | Header, responsive columns, local state ownership, and private ISBAR shortcut and section views; section presentation includes authored-summary fallback and clinical-card grouping |
-| `Handover_V4/View/Dashboard/PatientHeaderView.swift` | Permanent patient identity and safety context |
-| `Handover_V4/View/Cards/SystemAssessmentCard.swift` | Head-to-toe sidebar; retains adaptive grid and visible concerns for standalone spatial cards |
-| `Handover_V4/View/Dashboard/DashboardTheme.swift` | HTML palette, dark outer panes, nested card surfaces |
-| `Handover_V4/View/Dashboard/DashboardView.swift` | Window controls, SharePlay alert, empty state |
-| `Tests/DashboardPresentationStateChecks.swift` | Initial overview and independent detail transitions |
-| `Tests/PatientSummaryChecks.swift` | All-case decoding, legacy/partial schema compatibility, and round-trip preservation |
+## Validation
 
-The theme retains the HTML's lavender accent, coral critical indicators, amber
-warnings, mint normal readings, and layered white text. Its OKLCH colors are
-converted to sRGB (coral clipped to gamut). Dark violet/blue washes sit beneath
-native outer glass; inner cards use quiet white fills and hairlines. Shared
-clinical cards retain standalone native glass outside the dashboard.
-
-## Appearance
-
-The bottom ornament includes a **Light mode** / **Dark mode** button labelled with
-its next action. Dark is the initial default; `@AppStorage` stores the choice under
-`dashboardUsesDarkAppearance`. Changing appearance does not reset disclosure,
-scroll position, or the systems panel. The preference is local to dashboard views,
-not SharePlay or immersive-space presentation.
-
-`Assets.xcassets/Dashboard*.colorset` stores light/dark variants of every palette
-token, including text, borders, panel washes, and clinical colors. The light palette
-uses the HTML's pale glass and deeper critical/warning/normal colors. Its purple
-accent is also deepened, and secondary text darkened, for contrast on pale surfaces.
-`DashboardTheme` resolves those assets using the dashboard's local color scheme.
-
-## Validation commands
-
-Run from the repository root. Tests live outside the synchronized app folder to
-avoid including a second executable entry point in the application.
+Run from the repository root. Keep tests outside the synchronized app folder to
+avoid a second executable entry point. Use separate output paths per worktree;
+never compile precondition-based checks with `-Ounchecked`.
 
 ```sh
 swiftc -module-cache-path /private/tmp/handover-summary-module-cache \
@@ -138,60 +109,20 @@ xcodebuild -project Handover_V4.xcodeproj -scheme Handover_V4 \
   CODE_SIGNING_ALLOWED=NO build
 ```
 
-Compile checks without `-Ounchecked`, as they use preconditions. Other worktrees
-must use separate derived-data and test-output paths.
+Last code validation (7 September 2026): presentation-state and patient-summary
+checks and a generic visionOS Simulator build passed after file consolidation.
+The 6 September BED-02 simulator screenshots covered wide layout and both palettes;
+visual checks were not repeated after consolidation.
 
-## Validation status
+Still unverified: all-case appearance, manual detail/concern disclosure, repeated
+navigation and scrolling, narrow/short resizing, appearance persistence during
+interaction, immersive visuals, and device gaze/pinch. Automated mouse interaction
+was blocked by macOS assistive-access permissions. Passing model checks does not
+establish these behaviors or participant comprehension.
 
-The previous palette prototype passed model checks, built, and was reviewed in a
-visionOS 26.2 simulator screenshot on 6 September 2026. That review does not validate
-this new layout.
+## Deferred work
 
-The summary-first update passed presentation-state and patient-summary checks
-and a generic visionOS Simulator build on 6 September 2026. The app was installed
-and launched in the visionOS 26.2 simulator. Screenshot review of the configured
-BED-02 case confirmed the permanent header, all four untruncated summaries at the
-default wide size, and the separate systems column. Screenshot:
-`/private/tmp/handover-summary-first.png`. Existing SwiftLint configuration and
-AppIntents metadata warnings remain; there were no build errors.
-
-All-case visual review, manual detail/concern disclosure and scrolling,
-narrow/short window interaction, immersive visual review, device gaze/pinch
-testing, and participant comprehension testing have not yet been performed.
-
-Navigation and appearance update: presentation checks passed, including focus,
-returning to Introduction without disclosing it, repeat navigation, and ALL.
-A generic visionOS Simulator build passed on 6 September 2026. The configured
-BED-02 case was launched in each appearance using temporary launch arguments;
-screenshots confirmed both palettes, the ISBAR rail, and the systems pane beside
-the main reader. Captures: `/private/tmp/handover-restored-dark.png` and
-`/private/tmp/handover-restored-light.png`. The app was relaunched normally afterward.
-
-The main reader and systems pane have sibling scroll regions inside one window;
-the patient header sits outside the main scroll region. Automated mouse-based
-scroll/toggle verification could not run because macOS denied assistive access
-to System Events. On-screen toggle persistence, repeated scrolling/navigation,
-resizing, and device interaction still require manual review.
-
-Dashboard composition consolidation (7 September 2026): navigation shortcuts,
-section presentation, and responsive layout now live in `PatientDashboardView.swift`.
-The navigation and section views and their presentation extension are private;
-`DashboardPresentationState` remains separate with its existing checks unchanged.
-Source comparison confirmed that view bodies, state ownership, modifiers, and
-scrolling logic were preserved. Both documented model checks and a generic
-visionOS Simulator build passed, using `/private/tmp/handover-consolidation-*`
-output paths. Build log: `/private/tmp/handover-consolidation-build.log`.
-Visual comparison, manual navigation/disclosure, resizing, appearance persistence,
-and device interaction were not repeated for this consolidation; the outstanding
-interaction checks above still apply.
-
-## Next evaluation
-
-Ask participants to identify the main problem, current concerns, and next actions,
-then give a structured handover. Observe searching, hesitation, omitted information,
-and repetition. In particular, assess whether the persistent systems column aids
-head-to-toe narration or divides attention, and whether summaries are sufficient
-without opening every section. Use feedback to revisit density and vitals placement.
-
-Immersive dashboard mounting, shared disclosure, note authorship/editing, loader
-redesign, and simulation-time changes remain separate work.
+Immersive dashboard mounting, shared disclosure, note editing/authorship, loader
+redesign, and simulation-time changes remain separate work. Evaluate whether users
+can identify the main problem, concerns, and next actions, and whether the systems
+pane helps narration or divides attention. Comprehension benefits are unvalidated.
