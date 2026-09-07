@@ -28,7 +28,7 @@ struct Handover_V4App: App {
         }
         // Individual dashboard panes supply glass, leaving clear space between them.
         .windowStyle(.plain)
-        .defaultSize(width: 1700, height: 980)
+        .defaultSize(width: 1440, height: 860)
 
         ImmersiveSpace(id: appModel.immersiveSpaceID) {
             ImmersiveView()

@@ -18,6 +18,7 @@ import SwiftUI
 
 struct LabsCard: View {
     let patient: Patient
+    @Environment(\.isDashboardSurface) private var isDashboardSurface
 
     /// Only labs with status .warning or .critical.
     private var abnormalLabs: [LabResult] {
@@ -33,6 +34,11 @@ struct LabsCard: View {
             if abnormalLabs.isEmpty {
                 AllNormalState()
                     .padding(16)
+            } else if isDashboardSurface {
+                DashboardTileGrid(items: abnormalLabs, minimumWidth: 220) { lab in
+                    LabTile(lab: lab)
+                }
+                .padding(16)
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(abnormalLabs.enumerated()), id: \.element.id) { index, lab in
@@ -47,6 +53,57 @@ struct LabsCard: View {
             }
         }
         .dashboardCardSurface(cornerRadius: 16)
+    }
+}
+
+/// Keeps the measurement prominent, with an explicit severity label alongside color.
+private struct LabTile: View {
+    let lab: LabResult
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top) {
+                Text(lab.name.uppercased())
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .tracking(1)
+                    .foregroundStyle(DashboardTheme.secondary)
+                Spacer(minLength: 8)
+                if let trend = lab.trend {
+                    Image(systemName: trend == .up ? "arrow.up" : trend == .down ? "arrow.down" : "arrow.right")
+                        .foregroundStyle(statusColor)
+                        .accessibilityLabel(trend == .up ? "Rising" : trend == .down ? "Falling" : "Stable")
+                }
+            }
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .lastTextBaseline, spacing: 6) { value; unit }
+                VStack(alignment: .leading, spacing: 4) { value; unit }
+            }
+            Text(lab.status.rawValue.uppercased())
+                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                .tracking(1)
+                .foregroundStyle(DashboardTheme.secondary)
+        }
+        .frame(minHeight: 108, alignment: .topLeading)
+    }
+
+    private var value: some View {
+        Text(lab.value)
+            .font(.system(size: 32, weight: .semibold, design: .rounded))
+            .foregroundStyle(statusColor)
+    }
+
+    private var unit: some View {
+        Text(lab.unit)
+            .font(.system(size: 12, design: .monospaced))
+            .foregroundStyle(DashboardTheme.secondary)
+    }
+
+    private var statusColor: Color {
+        switch lab.status {
+        case .normal: DashboardTheme.normal
+        case .warning: DashboardTheme.warning
+        case .critical: DashboardTheme.critical
+        }
     }
 }
 

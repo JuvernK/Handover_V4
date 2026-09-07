@@ -8,14 +8,30 @@ Current implementation contract. Repository-wide rules live in [AGENTS.md](../AG
   allergies form a permanent introduction with no disclosure control.
 - At least 1100 pt wide and 650 pt high: header pinned above the main scroll region,
   ISBAR rail on the left, independently scrolling systems pane on the right.
-  Rail and systems start 32 pt below the main pane; all panes share one window.
+  The rail is vertically centered, 8 pt from the reader. The systems panel is
+  400 pt wide, starts 46 pt below the reader, and overlaps its right edge by
+  26 pt, matching the standalone HTML sidebar composition. A 12 pt forward depth
+  offset separates overlapping native glass surfaces. Reader content reserves
+  that edge so no text or disclosure target is covered. Systems height follows
+  its content, capped at the smaller of 720 pt or window height minus 120 pt;
+  overflow scrolls independently. The panel uses 16 pt padding and individual
+  rounded rows. All panes share one window.
+  New windows default to 1440 × 860 pt.
 - Narrower or shorter: one scroll region, scrolling header, horizontal shortcuts,
-  and systems between Assessment and Recommendation.
+  and systems between Assessment and Recommendation. The shortcut row scrolls
+  horizontally when its enlarged controls exceed the available width.
 - Situation, Background, Assessment, Recommendation each show a full authored
   summary. Details start closed and expand independently by tapping the header.
-- S/B/A/R opens and scrolls to its section without closing others. I returns to
-  the reader's top when wide or the header when compact. ALL expands/collapses
-  the four detail groups. Disclosure stays local to the view lifetime.
+- Rail buttons use 60 × 60 pt targets, 24 pt letters, and rounded native hover
+  highlights matching their visible shapes. ALL uses the same target size.
+- The rail contains S/B/A/R and ALL; the redundant I shortcut is removed in both
+  layouts. S/B/A/R opens and scrolls to its section without closing others. ALL
+  expands/collapses the four detail groups. Disclosure stays local to the view lifetime.
+- Expanded labs, infusions, devices, and treatment tasks use adaptive grids of
+  rounded tiles. Labs emphasize values with units, trend arrows, and explicit
+  severity text. Infusions keep dose, route, purpose, and high-alert labels together.
+  Task tiles retain authored priority order and due times. Narrative sections remain
+  full-width. Spatial cards retain their existing row presentations.
 - Assessment details contain vitals with 12-hour histories, labs, infusions, and
   invasive devices. Systems follow `BodySystem.allCases` head-to-toe order;
   summaries remain visible and concerns expand independently. Spatial systems
@@ -44,6 +60,7 @@ Paths below are relative to `Handover_V4/`.
 | `View/Cards/SystemAssessmentCard.swift` | Dashboard and spatial systems presentations |
 | `View/Dashboard/DashboardView.swift` | Window controls, appearance preference, SharePlay alert, empty state |
 | `View/Dashboard/DashboardTheme.swift` | Asset palette and dashboard/standalone surfaces |
+| `View/Dashboard/DashboardTileGrid.swift` | Responsive columns and rounded item surfaces for dashboard records |
 
 ## Current ownership and relationships
 
@@ -105,18 +122,25 @@ swiftc -module-cache-path /private/tmp/handover-summary-module-cache \
 
 xcodebuild -project Handover_V4.xcodeproj -scheme Handover_V4 \
   -destination 'generic/platform=visionOS Simulator' \
-  -derivedDataPath /private/tmp/handover-html-colors-derived-data \
+  -derivedDataPath /private/tmp/handover-compact-layout-derived-data \
   CODE_SIGNING_ALLOWED=NO build
 ```
 
-Last code validation (7 September 2026): presentation-state and patient-summary
-checks and a generic visionOS Simulator build passed after file consolidation.
-The 6 September BED-02 simulator screenshots covered wide layout and both palettes;
-visual checks were not repeated after consolidation.
+Last code validation (7 September 2026, compact-layout task): presentation-state
+checks and the generic visionOS Simulator build passed. BED-02 dark appearance
+was launched and inspected before and after the change: the rail is centered,
+the systems pane overlaps the reader at a lower top position and ends above its
+bottom edge, and summaries wrap without truncation. The I shortcut is absent. Systems beyond
+the viewport remain in the independent scroll region; scrolling was not exercised.
+Screenshots: `/private/tmp/handover-layout-before.png` and
+`/private/tmp/handover-layout-overlap.png` (local temporary artifacts).
+Patient-summary checks last passed after consolidation earlier on 7 September;
+clinical data was not changed. The 6 September screenshots covered both palettes;
+light appearance was not rechecked for this layout change.
 
 Still unverified: all-case appearance, manual detail/concern disclosure, repeated
 navigation and scrolling, narrow/short resizing, appearance persistence during
-interaction, immersive visuals, and device gaze/pinch. Automated mouse interaction
+interaction, immersive visuals, and device gaze/pinch, including the enlarged rail hover highlights. Automated mouse interaction
 was blocked by macOS assistive-access permissions. Passing model checks does not
 establish these behaviors or participant comprehension.
 

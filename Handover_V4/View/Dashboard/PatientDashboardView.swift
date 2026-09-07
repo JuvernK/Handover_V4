@@ -6,6 +6,9 @@ struct PatientDashboardView: View {
     let patient: Patient
     @State private var presentation = DashboardPresentationState()
     @State private var navigationRequest: ISBARSectionID?
+    @State private var systemsContentHeight: CGFloat = 0
+
+    private let systemsOverlap: CGFloat = 26
 
     var body: some View {
         GeometryReader { geometry in
@@ -13,31 +16,28 @@ struct PatientDashboardView: View {
                 let isWide = geometry.size.width >= 1100 && geometry.size.height >= 650
                 Group {
                     if isWide {
-                        HStack(alignment: .top, spacing: 20) {
+                        HStack(alignment: .top, spacing: 8) {
                             navigation(isHorizontal: false)
-                                .frame(width: 76)
-                                .padding(.top, 32)
+                                .frame(width: 84)
+                                .frame(maxHeight: .infinity, alignment: .center)
 
-                            VStack(spacing: 0) {
-                                PatientHeaderView(patient: patient)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                Divider().padding(.horizontal, 20)
-                                ScrollView {
-                                    sections.padding(18)
+                            HStack(alignment: .top, spacing: -systemsOverlap) {
+                                VStack(spacing: 0) {
+                                    PatientHeaderView(patient: patient)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .padding(.trailing, systemsOverlap)
+                                    Divider().padding(.horizontal, 20)
+                                    ScrollView {
+                                        sections
+                                            .padding(12)
+                                            .padding(.trailing, systemsOverlap)
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 }
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            }
-                            .dashboardPanel(cornerRadius: 28)
+                                .dashboardPanel(cornerRadius: 28)
 
-                            // A sibling scroll region keeps the systems overview stationary
-                            // while the main reader scrolls, like the former vitals panel.
-                            ScrollView {
-                                systems.padding(16)
+                                systemsPanel(availableHeight: geometry.size.height)
                             }
-                            .frame(width: min(460, geometry.size.width * 0.34), alignment: .top)
-                            .frame(maxHeight: .infinity)
-                            .dashboardPanel(cornerRadius: 28)
-                            .padding(.top, 32)
                         }
                         .padding(14)
                     } else {
@@ -45,7 +45,9 @@ struct PatientDashboardView: View {
                         ScrollView {
                             VStack(spacing: 16) {
                                 patientHeader.id(ISBARSectionID.introduction)
-                                navigation(isHorizontal: true)
+                                ScrollView(.horizontal) {
+                                    navigation(isHorizontal: true)
+                                }
                                 ForEach(ISBARSectionID.detailSections) { section in
                                     sectionView(section)
                                     if section == .assessment { systems }
@@ -74,6 +76,29 @@ struct PatientDashboardView: View {
         .environment(\.isDashboardSurface, true)
         .foregroundStyle(DashboardTheme.foreground)
         .tint(DashboardTheme.accent)
+    }
+
+    /// Overlaps only the reader's reserved edge, keeping text and disclosure targets clear.
+    /// Short assessments hug their content; longer ones scroll within a separate height limit.
+    private func systemsPanel(availableHeight: CGFloat) -> some View {
+        let maximumHeight = min(720, availableHeight - 120)
+        return ScrollView {
+            systems
+                .padding(16)
+                .onGeometryChange(for: CGFloat.self) { geometry in
+                    geometry.size.height
+                } action: { height in
+                    systemsContentHeight = height
+                }
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .frame(width: 400,
+               height: systemsContentHeight > 0 ? min(systemsContentHeight, maximumHeight) : maximumHeight)
+        .dashboardPanel(cornerRadius: 28)
+        .padding(.top, 46)
+        // Native glass needs physical separation where the two pane surfaces overlap.
+        .offset(z: 12)
+        .zIndex(1)
     }
 
     private func navigation(isHorizontal: Bool) -> some View {
@@ -126,7 +151,7 @@ private struct ISBARNavColumn: View {
             ? AnyLayout(HStackLayout(spacing: 10))
             : AnyLayout(VStackLayout(spacing: 10))
         layout {
-            ForEach(ISBARSectionID.allCases) { section in
+            ForEach(ISBARSectionID.detailSections) { section in
                 Button {
                     withAnimation(.snappy(duration: 0.25)) {
                         presentation.focus(section)
@@ -134,17 +159,19 @@ private struct ISBARNavColumn: View {
                     }
                 } label: {
                     Text(section.letter)
-                        .font(.system(size: 19, weight: .semibold))
+                        .font(.system(size: 24, weight: .semibold))
                         .foregroundStyle(isHighlighted(section) ? DashboardTheme.accent : DashboardTheme.secondary)
-                        .frame(width: 44, height: 44)
+                        .frame(width: 60, height: 60)
                         .background(isHighlighted(section) ? DashboardTheme.accentSoft : DashboardTheme.glassRaised,
-                                    in: .rect(cornerRadius: 14))
+                                    in: .rect(cornerRadius: 18))
                         .overlay {
-                            RoundedRectangle(cornerRadius: 14)
+                            RoundedRectangle(cornerRadius: 18)
                                 .strokeBorder(DashboardTheme.stroke, lineWidth: 1)
                         }
                 }
                 .buttonStyle(.plain)
+                .contentShape(.interaction, RoundedRectangle(cornerRadius: 18))
+                .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 18))
                 .hoverEffect(.highlight)
                 .accessibilityLabel(section.title)
                 .accessibilityValue(presentation.focusedSection == section ? "Selected" : "")
@@ -154,15 +181,22 @@ private struct ISBARNavColumn: View {
                 withAnimation(.snappy(duration: 0.25)) { presentation.toggleAll() }
             } label: {
                 Text("ALL")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(DashboardTheme.secondary)
-                    .frame(width: 44, height: 44)
+                    .frame(width: 60, height: 60)
+                    .background(DashboardTheme.glassRaised, in: .rect(cornerRadius: 18))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 18)
+                            .strokeBorder(DashboardTheme.stroke, lineWidth: 1)
+                    }
             }
             .buttonStyle(.plain)
+            .contentShape(.interaction, RoundedRectangle(cornerRadius: 18))
+            .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 18))
             .hoverEffect(.highlight)
             .accessibilityLabel(presentation.allExpanded ? "Collapse all sections" : "Expand all sections")
         }
-        .padding(16)
+        .padding(12)
         .dashboardPanel(cornerRadius: 26)
     }
 
@@ -216,13 +250,13 @@ private extension ISBARSectionID {
         case .assessment:
             VStack(spacing: 12) {
                 VitalsCard(patient: patient)
-                LabsCard(patient: patient)
-                InfusionsCard(patient: patient)
-                LinesAccessCard(patient: patient)
+                LabsCard(patient: patient).id("labs-preview")
+                InfusionsCard(patient: patient).id("infusions-preview")
+                LinesAccessCard(patient: patient).id("lines-preview")
             }
         case .recommendation:
             VStack(spacing: 12) {
-                PlanCard(patient: patient)
+                PlanCard(patient: patient).id("plan-preview")
                 EscalationCard(patient: patient)
                 FamilyCard(patient: patient)
             }

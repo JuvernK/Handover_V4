@@ -13,6 +13,7 @@ import SwiftUI
 
 struct LinesAccessCard: View {
     let patient: Patient
+    @Environment(\.isDashboardSurface) private var isDashboardSurface
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -23,6 +24,11 @@ struct LinesAccessCard: View {
             if patient.lines.isEmpty {
                 EmptyState(message: "No lines or access in situ")
                     .padding(16)
+            } else if isDashboardSurface {
+                DashboardTileGrid(items: patient.lines) { item in
+                    LineTile(item: item)
+                }
+                .padding(16)
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(patient.lines.enumerated()), id: \.element.id) { index, line in
@@ -37,6 +43,22 @@ struct LinesAccessCard: View {
             }
         }
         .dashboardCardSurface(cornerRadius: 16)
+    }
+}
+
+/// Associates the device with its location in a single compact visual group.
+private struct LineTile: View {
+    let item: LineAccess
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(item.type)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(DashboardTheme.foreground)
+            Text(item.location)
+                .font(.system(size: 13))
+                .foregroundStyle(DashboardTheme.secondary)
+        }
     }
 }
 

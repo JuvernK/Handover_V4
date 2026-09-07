@@ -17,6 +17,7 @@ import SwiftUI
 
 struct InfusionsCard: View {
     let patient: Patient
+    @Environment(\.isDashboardSurface) private var isDashboardSurface
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -27,6 +28,11 @@ struct InfusionsCard: View {
             if patient.infusions.isEmpty {
                 EmptyState()
                     .padding(16)
+            } else if isDashboardSurface {
+                DashboardTileGrid(items: patient.infusions) { item in
+                    InfusionTile(item: item)
+                }
+                .padding(16)
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(patient.infusions.enumerated()), id: \.element.id) { index, infusion in
@@ -41,6 +47,35 @@ struct InfusionsCard: View {
             }
         }
         .dashboardCardSurface(cornerRadius: 16)
+    }
+}
+
+/// Keeps each drug's dose, route and purpose together without truncating instructions.
+private struct InfusionTile: View {
+    let item: Infusion
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(item.drugName)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(DashboardTheme.foreground)
+            Text(item.dose)
+                .font(.system(size: 18, weight: .medium, design: .rounded))
+                .foregroundStyle(DashboardTheme.accent)
+            Text(item.route)
+                .font(.system(size: 12, design: .monospaced))
+                .foregroundStyle(DashboardTheme.secondary)
+            if item.isHighAlert {
+                Label("High-alert medication", systemImage: "exclamationmark.triangle.fill")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(DashboardTheme.critical)
+            }
+            if !item.purpose.isEmpty {
+                Text(item.purpose)
+                    .font(.system(size: 13))
+                    .foregroundStyle(DashboardTheme.secondary)
+            }
+        }
     }
 }
 

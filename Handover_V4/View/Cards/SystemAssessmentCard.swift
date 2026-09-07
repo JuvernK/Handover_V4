@@ -25,6 +25,15 @@ struct SystemsAssessmentCard: View {
     var isHandoverSidebar = false
 
     var body: some View {
+        if isHandoverSidebar {
+            assessmentContent
+        } else {
+            assessmentContent.dashboardCardSurface(cornerRadius: 16)
+        }
+    }
+
+    /// The sidebar pane supplies its own surface; individual rows provide scan boundaries.
+    private var assessmentContent: some View {
         VStack(alignment: .leading, spacing: 0) {
             if isHandoverSidebar {
                 VStack(alignment: .leading, spacing: 6) {
@@ -36,22 +45,25 @@ struct SystemsAssessmentCard: View {
                         .foregroundStyle(DashboardTheme.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(16)
+                .padding(.horizontal, 4)
+                .padding(.top, 8)
+                .padding(.bottom, 16)
             } else {
                 CardHeader(title: "Systems Assessment", systemImage: "stethoscope")
             }
 
-            Divider().padding(.horizontal, 12)
+            if !isHandoverSidebar { Divider().padding(.horizontal, 12) }
 
             if patient.systems.isEmpty {
                 EmptyState()
                     .padding(16)
             } else if isHandoverSidebar {
-                LazyVStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: 6) {
                     ForEach(BodySystem.allCases, id: \.self) { bodySystem in
                         ForEach(patient.systems.filter { $0.system == bodySystem }) { assessment in
                             SystemRow(assessment: assessment, collapsesConcerns: true)
-                            Divider().padding(.horizontal, 16)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .dashboardCardSurface(cornerRadius: 16)
                         }
                     }
                 }
@@ -70,7 +82,6 @@ struct SystemsAssessmentCard: View {
                 .padding(.vertical, 4)
             }
         }
-        .dashboardCardSurface(cornerRadius: 16)
     }
 }
 

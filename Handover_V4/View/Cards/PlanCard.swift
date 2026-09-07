@@ -18,6 +18,7 @@ import SwiftUI
 
 struct PlanCard: View {
     let patient: Patient
+    @Environment(\.isDashboardSurface) private var isDashboardSurface
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -28,6 +29,11 @@ struct PlanCard: View {
             if patient.plan.isEmpty {
                 EmptyState()
                     .padding(16)
+            } else if isDashboardSurface {
+                DashboardTileGrid(items: patient.plan, minimumWidth: 280) { item in
+                    PlanRow(item: item, isTile: true)
+                }
+                .padding(16)
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(patient.plan.enumerated()), id: \.element.id) { index, item in
@@ -49,8 +55,33 @@ struct PlanCard: View {
 
 private struct PlanRow: View {
     let item: PlanItem
+    var isTile = false
 
     var body: some View {
+        if isTile {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    priorityIndicator
+                    Text(item.priority == .urgent ? "Urgent" : "Routine")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(DashboardTheme.secondary)
+                    Spacer(minLength: 8)
+                    if let dueTime = item.dueTime {
+                        Text(formatTime(dueTime))
+                            .font(.system(size: 12, weight: .medium, design: .monospaced))
+                            .foregroundStyle(DashboardTheme.secondary)
+                    }
+                }
+                Text(item.task)
+                    .font(.system(size: 14))
+                    .foregroundStyle(DashboardTheme.foreground)
+            }
+        } else {
+            row
+        }
+    }
+
+    private var row: some View {
         HStack(alignment: .top, spacing: 10) {
             // Priority indicator (flame for urgent; subtle dot for routine)
             priorityIndicator
