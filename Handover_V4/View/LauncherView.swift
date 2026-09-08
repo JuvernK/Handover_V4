@@ -26,10 +26,23 @@ struct LauncherView: View {
                 .font(.title2)
                 .fontWeight(.semibold)
 
-            Text("Enter the immersive space to view the dashboard.")
+            Text(appModel.immersiveSpaceState == .open
+                 ? "Choose how to present the handover."
+                 : "Enter the immersive space to view the dashboard.")
                 .font(.subheadline)
                 .foregroundStyle(DashboardTheme.secondary)
                 .multilineTextAlignment(.center)
+
+            if appModel.immersiveSpaceState == .open {
+                Picker("Presentation mode", selection: Bindable(appModel).presentationMode) {
+                    ForEach(AppModel.PresentationMode.allCases) { mode in
+                        Text(mode.displayName).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.top, 4)
+                .transition(.opacity)
+            }
 
             VStack(spacing: 12) {
                 ToggleImmersiveSpaceButton()

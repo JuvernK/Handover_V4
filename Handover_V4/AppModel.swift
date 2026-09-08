@@ -21,6 +21,26 @@ class AppModel {
     }
     var immersiveSpaceState = ImmersiveSpaceState.closed
 
+    /// One of three mutually exclusive ways to present a handover in the immersive space.
+    /// Spatial and Orbit are not implemented yet; only Dashboard mode currently hides/shows
+    /// spatial cards. See docs/presentation-modes.md.
+    enum PresentationMode: String, CaseIterable, Identifiable {
+        case dashboard
+        case spatial
+        case orbit
+
+        var id: String { rawValue }
+
+        var displayName: String {
+            switch self {
+            case .dashboard: return "Dashboard"
+            case .spatial: return "Spatial"
+            case .orbit: return "Orbit"
+            }
+        }
+    }
+    var presentationMode = PresentationMode.dashboard
+
     let handoverViewModel: HandoverViewModel
     let patients = PatientDataLoader.loadOrEmpty()
     var isActivatingSharePlay = false

@@ -123,6 +123,9 @@ struct ImmersiveView: View {
                         let offsetPosition = worldPos + SIMD3<Float>(0, 0, 0)
                         let syncedPosition = appModel.cardPositions[runtimeComponent.cardName]
                         attachmentEntity.setPosition(syncedPosition ?? offsetPosition, relativeTo: nil)
+
+                        // Dashboard mode hides spatial cards; match current mode as soon as this attaches.
+                        attachmentEntity.isEnabled = appModel.presentationMode != .dashboard
                     }
                 }
             }
@@ -189,6 +192,11 @@ struct ImmersiveView: View {
                 for entity in attachmentEntities {
                     entity.generateCollisionShapes(recursive: true)
                 }
+            }
+        }
+        .onChange(of: appModel.presentationMode) { _, newMode in
+            for entity in attachmentEntities {
+                entity.isEnabled = newMode != .dashboard
             }
         }
         .onChange(of: appModel.cardPositions) { _, newPositions in

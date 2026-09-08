@@ -1,10 +1,15 @@
 # Presentation modes
 
-Agreed design, not implemented. Updated 8 September 2026.
+Agreed design. Updated 8 September 2026.
 
-Do not implement the mode switch until Orbit has landed on `latest-prototype`
-and the user explicitly requests implementation. Recheck this plan against that
-branch when work resumes. Use `main` as a reference, not as code to merge wholesale.
+A minimal version of the mode switch (dummy Spatial/Orbit buttons, working
+Dashboard toggle) has been implemented on `feature/presentation-mode-switch`
+ahead of Orbit landing, at the user's explicit request — see the deviations
+below. The remaining scope (Orbit itself, SharePlay sync, disclosure reset,
+the `Presentation/` source reorganization) is still not implemented. Recheck
+this plan against `latest-prototype` when that work resumes. Use `main` as a
+reference, not as code to merge wholesale.
+
 
 ## Modes and controls
 
@@ -17,9 +22,9 @@ The three mutually exclusive modes support a headset user study:
   the orbit ring, keeping the ICU room visible. No standalone dashboard outside
   immersion.
 
-Default to Spatial on entering immersion outside an existing shared session.
-A participant-visible `Spatial | Orbit | Dashboard` segmented control lives in
-the persistent launcher/control window. Any participant can switch modes.
+Default to Dashboard on entering immersion outside an existing shared session. A participant-visible
+` Dashboard | Spatial | Orbit ` segmented control lives in the persistent
+launcher/control window. Any participant can switch modes.
 
 Show only the active mode's controls in that window: SBAR in Spatial, carousel
 controls in Orbit, and no extra card controls in Dashboard (which has its own
@@ -41,7 +46,7 @@ These are future requirements, not current synchronization behavior. TODOs at
 `DashboardPresentationState.expandedSections` and `AppModel.cardStates` mark the
 follow-up. Simultaneous-action conflict rules remain undecided.
 
-Use a distinct `PresentationMode { spatial, orbit, dashboard }`; do not put mode
+Use a distinct `PresentationMode { dashboard, spatial, orbit }`; do not put mode
 selection into Orbit-only state carrying rotation or focused-card fields.
 The original reference is `main`'s
 `Handover_V4/SharedState/SharedHandoverReplicator.swift`: replicate a presentation

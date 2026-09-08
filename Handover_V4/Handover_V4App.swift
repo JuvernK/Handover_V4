@@ -31,6 +31,7 @@ struct Handover_V4App: App {
                 .environment(appModel)
         }
         .windowStyle(.plain)
+        .windowResizability(.contentSize)
         .defaultSize(width: 480, height: 320)
 
         Window("Dashboard", id: "dashboard") {
