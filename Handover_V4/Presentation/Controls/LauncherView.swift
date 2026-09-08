@@ -16,6 +16,10 @@ struct LauncherView: View {
     @Environment(\.openWindow) private var openWindow
     @Environment(\.dismissWindow) private var dismissWindow
 
+    // Same key Handover_V4App reads to set colorScheme on every window/scene,
+    // so this toggle controls appearance across Dashboard, Spatial, and Orbit.
+    @AppStorage("handoverUsesDarkAppearance") private var usesDarkAppearance = true
+
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: "bed.double.fill")
@@ -67,6 +71,14 @@ struct LauncherView: View {
                     )
                 }
                 .disabled(appModel.isActivatingSharePlay)
+
+                Button {
+                    usesDarkAppearance.toggle()
+                } label: {
+                    Label(usesDarkAppearance ? "Light mode" : "Dark mode",
+                          systemImage: usesDarkAppearance ? "sun.max" : "moon")
+                }
+                .accessibilityValue(usesDarkAppearance ? "Dark mode active" : "Light mode active")
             }
             .padding(.top, 8)
         }

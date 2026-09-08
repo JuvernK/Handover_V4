@@ -15,10 +15,19 @@ struct Handover_V4App: App {
 
     @State private var appModel = AppModel()
 
+    // Controls dark/light appearance across all three presentation modes, toggled
+    // from the persistent launcher/control window (see LauncherView). @AppStorage
+    // shares this single value across every window/scene in the app.
+    @AppStorage("handoverUsesDarkAppearance") private var usesDarkAppearance = true
+
     // register so RealityKit can use it at runtime
     init() {
         PointOfInterestComponent.registerComponent()
         PointOfInterestRuntimeComponent.registerComponent()
+    }
+
+    private var colorScheme: ColorScheme {
+        usesDarkAppearance ? .dark : .light
     }
 
     var body: some SwiftUI.Scene {
@@ -29,6 +38,7 @@ struct Handover_V4App: App {
         Window("Launcher", id: "launcher") {
             LauncherView()
                 .environment(appModel)
+                .environment(\.colorScheme, colorScheme)
         }
         .windowStyle(.plain)
         .windowResizability(.contentSize)
@@ -37,6 +47,7 @@ struct Handover_V4App: App {
         Window("Dashboard", id: "dashboard") {
             DashboardView(viewModel: appModel.handoverViewModel)
                 .environment(appModel)
+                .environment(\.colorScheme, colorScheme)
         }
         // Individual dashboard panes supply glass, leaving clear space between them.
         .windowStyle(.plain)
@@ -53,6 +64,7 @@ struct Handover_V4App: App {
             ImmersiveView()
                 .environment(appModel)
                 .environment(appModel.handoverViewModel)
+                .environment(\.colorScheme, colorScheme)
                 .onAppear {
                     appModel.immersiveSpaceState = .open
                 }

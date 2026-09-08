@@ -29,29 +29,41 @@ extension EnvironmentValues {
 extension View {
     /// Gives a separate pane a scheme-aware wash beneath native glass.
     func dashboardPanel(cornerRadius: CGFloat) -> some View {
-        background {
-            RoundedRectangle(cornerRadius: cornerRadius)
-                .fill(DashboardTheme.panelBase)
-                .overlay {
-                    RoundedRectangle(cornerRadius: cornerRadius)
-                        .fill(LinearGradient(
-                            colors: [DashboardTheme.poolStart,
-                                     DashboardTheme.poolEnd],
-                            startPoint: .topLeading, endPoint: .bottomTrailing
-                        ))
-                }
-        }
-        .glassBackgroundEffect(in: .rect(cornerRadius: cornerRadius))
-        .overlay {
-            RoundedRectangle(cornerRadius: cornerRadius)
-                .strokeBorder(DashboardTheme.stroke, lineWidth: 1)
-                .allowsHitTesting(false)
-        }
+        modifier(DashboardPanelWash(cornerRadius: cornerRadius))
     }
 
     /// Avoids stacking system glass inside the dashboard's enclosing pane.
     func dashboardCardSurface(cornerRadius: CGFloat) -> some View {
         modifier(DashboardCardSurface(cornerRadius: cornerRadius))
+    }
+}
+
+/// The purple gradient wash + glass + stroke shared by every top-level panel:
+/// the launcher, and (via `DashboardCardSurface` below) every Spatial card,
+/// since each one floats alone with nothing behind it to provide that wash.
+private struct DashboardPanelWash: ViewModifier {
+    let cornerRadius: CGFloat
+
+    func body(content: Content) -> some View {
+        content
+            .background {
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(DashboardTheme.panelBase)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: cornerRadius)
+                            .fill(LinearGradient(
+                                colors: [DashboardTheme.poolStart,
+                                         DashboardTheme.poolEnd],
+                                startPoint: .topLeading, endPoint: .bottomTrailing
+                            ))
+                    }
+            }
+            .glassBackgroundEffect(in: .rect(cornerRadius: cornerRadius))
+            .overlay {
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .strokeBorder(DashboardTheme.stroke, lineWidth: 1)
+                    .allowsHitTesting(false)
+            }
     }
 }
 
@@ -69,15 +81,7 @@ private struct DashboardCardSurface: ViewModifier {
                         .allowsHitTesting(false)
                 }
         } else {
-            // Same stroke treatment as the dashboard surface, so Spatial cards read
-            // as the same visual system floating in the room rather than bare glass.
-            content
-                .glassBackgroundEffect(in: .rect(cornerRadius: cornerRadius))
-                .overlay {
-                    RoundedRectangle(cornerRadius: cornerRadius)
-                        .strokeBorder(DashboardTheme.stroke, lineWidth: 1)
-                        .allowsHitTesting(false)
-                }
+            content.modifier(DashboardPanelWash(cornerRadius: cornerRadius))
         }
     }
 }

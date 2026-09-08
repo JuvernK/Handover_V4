@@ -13,7 +13,6 @@ import SwiftUI
 
 struct DashboardView: View {
     @State var viewModel: HandoverViewModel
-    @AppStorage("dashboardUsesDarkAppearance") private var usesDarkAppearance = true
     @Environment(AppModel.self) private var appModel
     @Environment(\.openWindow) private var openWindow
     @Environment(\.dismissWindow) private var dismissWindow
@@ -29,36 +28,11 @@ struct DashboardView: View {
         }
         .tint(DashboardTheme.accent)
         .dynamicTypeSize(.medium)
-        .ornament(attachmentAnchor: .scene(.bottom)) {
-            DashboardControls(usesDarkAppearance: $usesDarkAppearance)
-                .environment(\.colorScheme, usesDarkAppearance ? .dark : .light)
-        }
-        .environment(\.colorScheme, usesDarkAppearance ? .dark : .light)
         .onChange(of: appModel.immersiveSpaceState) { _, newState in
             guard newState == .closed else { return }
             openWindow(id: "launcher")
             dismissWindow(id: "dashboard")
         }
-    }
-}
-
-// MARK: - Dashboard controls
-
-private struct DashboardControls: View {
-    @Binding var usesDarkAppearance: Bool
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Button {
-                usesDarkAppearance.toggle()
-            } label: {
-                Label(usesDarkAppearance ? "Light mode" : "Dark mode",
-                      systemImage: usesDarkAppearance ? "sun.max" : "moon")
-            }
-            .accessibilityValue(usesDarkAppearance ? "Dark mode active" : "Light mode active")
-        }
-        .padding(12)
-        .glassBackgroundEffect()
     }
 }
 
