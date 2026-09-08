@@ -39,6 +39,9 @@ class AppModel {
             }
         }
     }
+    // TODO: After the user's explicit SharePlay implementation go-ahead, synchronize
+    // mode changes with disclosure resets and Orbit navigation; late joining must not reset peers.
+    // See docs/orbit-source-outlines.md for the deferred scope.
     var presentationMode = PresentationMode.dashboard
 
     let handoverViewModel: HandoverViewModel
@@ -131,7 +134,10 @@ class AppModel {
     // MARK: - Card State Management
 
     // State Dictionaries
-    // TODO: Reconcile spatial disclosure with the future shared presentation state so participants see matching card states.
+    // TODO: After the user's explicit SharePlay implementation go-ahead, reconcile
+    // individual/group disclosure with shared mode resets and late-join state.
+    // Preserve existing card messages; derive source outlines locally from active cards.
+    // See docs/orbit-source-outlines.md for the deferred scope.
     var cardStates: [String: Bool] = [:]
     var cardPositions: [String: SIMD3<Float>] = [:]
 

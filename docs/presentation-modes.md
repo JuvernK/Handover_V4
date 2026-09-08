@@ -1,6 +1,6 @@
 # Presentation modes
 
-Agreed design. Updated 8 September 2026.
+Agreed design. Updated 9 September 2026.
 
 A minimal version of the mode switch (dummy Spatial/Orbit buttons, working
 Dashboard toggle) has been implemented on `feature/presentation-mode-switch`
@@ -17,7 +17,10 @@ The three mutually exclusive modes support a headset user study:
 
 - **Spatial**: cards at fixed patient/room points of interest. Card behavior and
   pending visual design are in [spatial-cards.md](spatial-cards.md).
-- **Orbit**: cards arranged in a rotating carousel.
+- **Orbit**: nine clinical cards, including Situation, arranged in a rotating
+  carousel, with Basic Information permanently visible separately. The
+  [Orbit and source-outline interview](orbit-source-outlines.md) records the
+  confirmed migration decisions and remaining questions.
 - **Dashboard**: the dashboard window inside immersion. Hide spatial cards and
   the orbit ring, keeping the ICU room visible. No standalone dashboard outside
   immersion.
@@ -32,8 +35,11 @@ SBAR rail). Hide inactive controls. Mode switch, Exit, and SharePlay remain visi
 
 ## State and SharePlay
 
-Each mode entry resets disclosure to expanded, including returning to a mode
-within the same session. Do not persist disclosure across app restarts.
+Entering Spatial or Dashboard resets all clinical sections to expanded,
+including returning to a mode within the same session. Orbit is the exception:
+each entry starts on Situation with all nine clinical cards collapsed, then
+expands only Situation after the carousel settles. Basic Information remains
+permanently visible separately. Do not persist disclosure across app restarts.
 
 Future SharePlay synchronizes mode changes, individual/group card toggles,
 scrolling, and Orbit navigation. Any participant's actions update everyone.
@@ -43,8 +49,13 @@ scroll position, and Orbit navigation without resetting anyone. The reset occurs
 on a shared mode change, not on joining.
 
 These are future requirements, not current synchronization behavior. TODOs at
-`DashboardPresentationState.expandedSections` and `AppModel.cardStates` mark the
-follow-up. Simultaneous-action conflict rules remain undecided.
+`DashboardPresentationState.expandedSections`, `AppModel.cardStates`, and
+`AppModel.presentationMode` mark the follow-up. On 9 September the user confirmed
+mode, Orbit navigation, disclosure, and late-join synchronization as desired but
+explicitly deferred implementation until they say it is time to implement.
+Dashboard scrolling synchronization remains separate. See the
+[deferred SharePlay scope](orbit-source-outlines.md#agreed-shareplay-follow-up-implementation-deferred).
+Simultaneous-action conflict rules remain undecided.
 
 Use a distinct `PresentationMode { dashboard, spatial, orbit }`; do not put mode
 selection into Orbit-only state carrying rotation or focused-card fields.

@@ -18,7 +18,9 @@ enum ISBARSectionID: String, CaseIterable, Identifiable {
 /// Local disclosure state; summaries remain visible regardless of detail state.
 /// Starts with every detail section expanded so a fresh handover shows full context immediately.
 struct DashboardPresentationState {
-    // TODO: Synchronize disclosure across participants when refining SharePlay; no persistence across app restarts is required.
+    // TODO: After the user's explicit SharePlay implementation go-ahead, synchronize
+    // individual/ALL disclosure and inherit it on late join without a mode-entry reset.
+    // No restart persistence; scrolling sync is separate. See docs/orbit-source-outlines.md.
     private(set) var expandedSections: Set<ISBARSectionID> = Set(ISBARSectionID.detailSections)
     private(set) var focusedSection: ISBARSectionID? = .introduction
 
