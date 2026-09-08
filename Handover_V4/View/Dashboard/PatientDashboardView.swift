@@ -1,19 +1,28 @@
 // Flow: DashboardView -> PatientDashboardView -> ISBAR navigation + patient summaries + systems assessment.
 import SwiftUI
 
-/// Owns disclosure and navigation while the patient header and systems panel stay in view.
+/// Owns a masonry SBAR board, with a pinned introduction and separate systems reader.
 struct PatientDashboardView: View {
     let patient: Patient
     @State private var presentation = DashboardPresentationState()
     @State private var navigationRequest: ISBARSectionID?
     @State private var systemsContentHeight: CGFloat = 0
+    /// Drag-to-reorder swaps positions within this array; the masonry board renders in this
+    /// order, so a swap here is what actually moves cards. Not persisted across app launches.
+    @State private var sectionOrder = ISBARSectionID.detailSections
 
     private let systemsOverlap: CGFloat = 26
 
     var body: some View {
         GeometryReader { geometry in
             ScrollViewReader { proxy in
-                let isWide = geometry.size.width >= 1100 && geometry.size.height >= 650
+                // The rail + shared header/board panel + floating systems panel composition holds
+                // down to whatever width still leaves the board a readable single column; the systems
+                // panel's fixed 400pt width can't shrink further, so only below that floor — or when
+                // the window is too short for a pinned header — does the layout switch to the plainer
+                // single-scroll fallback with an inline systems card and a horizontal rail.
+                let boardWidth = geometry.size.width - 84 - 8 - 400 - 28
+                let isWide = geometry.size.height >= 650 && boardWidth >= 280
                 Group {
                     if isWide {
                         HStack(alignment: .top, spacing: 8) {
@@ -23,15 +32,15 @@ struct PatientDashboardView: View {
 
                             HStack(alignment: .top, spacing: -systemsOverlap) {
                                 VStack(spacing: 0) {
-                                    PatientHeaderView(patient: patient)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    patientHeader
                                         .padding(.trailing, systemsOverlap)
                                     Divider().padding(.horizontal, 20)
                                     ScrollView {
-                                        sections
+                                        sectionBoard(availableWidth: boardWidth)
                                             .padding(12)
                                             .padding(.trailing, systemsOverlap)
                                     }
+                                    .scrollBounceBehavior(.basedOnSize)
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 }
                                 .dashboardPanel(cornerRadius: 28)
@@ -44,18 +53,22 @@ struct PatientDashboardView: View {
                         // One scroll region keeps short windows fully reachable.
                         ScrollView {
                             VStack(spacing: 16) {
-                                patientHeader.id(ISBARSectionID.introduction)
+                                PatientHeaderView(patient: patient)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .dashboardPanel(cornerRadius: 28)
+                                    .id(ISBARSectionID.introduction)
                                 ScrollView(.horizontal) {
                                     navigation(isHorizontal: true)
                                 }
-                                ForEach(ISBARSectionID.detailSections) { section in
+                                ForEach(sectionOrder) { section in
                                     sectionView(section)
-                                    if section == .assessment { systems }
+                                    if section == .assessment {
+                                        systems.padding(16).dashboardPanel(cornerRadius: 28)
+                                    }
                                 }
                             }
                             .padding(18)
                         }
-                        .dashboardPanel(cornerRadius: 28)
                         .padding(14)
                     }
                 }
@@ -110,17 +123,28 @@ struct PatientDashboardView: View {
     private var patientHeader: some View {
         PatientHeaderView(patient: patient)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .dashboardPanel(cornerRadius: 28)
     }
 
     private var systems: some View {
         SystemsAssessmentCard(patient: patient, isHandoverSidebar: true)
     }
 
-    private var sections: some View {
-        VStack(spacing: 14) {
-            ForEach(ISBARSectionID.detailSections) { section in
+    /// Masonry board: cards drop into whichever column has the least height so far, and can
+    /// change column when a sibling's expand/collapse frees or claims space. Assessment always
+    /// spans two columns — it carries vitals/labs/infusion grids that need the extra width — and
+    /// automatically clamps to one column's width once there's only one column to give it.
+    /// Three columns once there is enough room, two is the normal case, one when narrow.
+    /// Cards render in `sectionOrder`, which the user can change by dragging a card's grip handle
+    /// onto another card to swap their positions.
+    private func sectionBoard(availableWidth: CGFloat) -> some View {
+        let columns: Int
+        if availableWidth > 1400 { columns = 3 }
+        else if availableWidth > 600 { columns = 2 }
+        else { columns = 1 }
+        return FlowBoardLayout(columns: columns, gap: 12) {
+            ForEach(sectionOrder) { section in
                 sectionView(section)
+                    .flowSpan(section == .assessment ? 2 : 1)
             }
         }
     }
@@ -129,12 +153,23 @@ struct PatientDashboardView: View {
         ISBARSectionView(
             section: section,
             patient: patient,
+            isFocused: presentation.focusedSection == section,
             isExpanded: Binding(
                 get: { presentation.isExpanded(section) },
                 set: { presentation.setExpanded($0, for: section) }
-            )
+            ),
+            onSwap: { dragged in
+                withAnimation(.snappy(duration: 0.3)) { swapPositions(dragged, section) }
+            }
         )
         .id(section)
+    }
+
+    private func swapPositions(_ a: ISBARSectionID, _ b: ISBARSectionID) {
+        guard a != b,
+              let indexA = sectionOrder.firstIndex(of: a),
+              let indexB = sectionOrder.firstIndex(of: b) else { return }
+        sectionOrder.swapAt(indexA, indexB)
     }
 }
 
@@ -266,47 +301,70 @@ private extension ISBARSectionID {
 
 /// Familiar disclosure header with an always-visible patient-specific main point.
 /// The summary wraps in full so collapsing details never hides the clinical headline.
+/// Dragging the grip handle onto another card swaps the two cards' positions in the board.
 private struct ISBARSectionView: View {
     let section: ISBARSectionID
     let patient: Patient
+    let isFocused: Bool
     @Binding var isExpanded: Bool
+    let onSwap: (ISBARSectionID) -> Void
+
+    @State private var isDropTarget = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top, spacing: 16) {
-                Text(section.letter)
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(DashboardTheme.accent)
-                    .frame(width: 44, height: 44)
-                    .background(DashboardTheme.accentSoft, in: .rect(cornerRadius: 14))
-                    .accessibilityHidden(true)
+            // The grip handle is a sibling of the Button, not nested inside its label — a
+            // draggable view nested inside a tappable one loses the gesture race to the parent's
+            // tap recognizer, the same class of bug as the hover-nesting gotcha in this repo's
+            // CLAUDE.md. Keeping it outside lets the drag start before the button ever sees a tap.
+            HStack(alignment: .top, spacing: 0) {
+                Button {
+                    withAnimation(.snappy(duration: 0.25)) { isExpanded.toggle() }
+                } label: {
+                    HStack(alignment: .top, spacing: 12) {
+                        Text(section.letter)
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(DashboardTheme.accent)
+                            .frame(width: 44, height: 44)
+                            .background(DashboardTheme.accentSoft, in: .rect(cornerRadius: 14))
+                            .accessibilityHidden(true)
 
-                VStack(alignment: .leading, spacing: 7) {
-                    Text(section.title)
-                        .font(.system(size: 21, weight: .semibold))
-                        .accessibilityAddTraits(.isHeader)
-                    Text(section.summary(for: patient))
-                        .font(.system(size: 16))
-                        .foregroundStyle(DashboardTheme.foreground)
-                        .fixedSize(horizontal: false, vertical: true)
+                        VStack(alignment: .leading, spacing: 7) {
+                            Text(section.title)
+                                .font(.system(size: 21, weight: .semibold))
+                                .accessibilityAddTraits(.isHeader)
+                            Text(section.summary(for: patient))
+                                .font(.system(size: 16))
+                                .foregroundStyle(DashboardTheme.foreground)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 16, weight: .light))
+                            .foregroundStyle(DashboardTheme.secondary)
+                            .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                            .padding(.top, 12)
+                    }
+                    .padding(.vertical, 20)
+                    .padding(.leading, 20)
+                    .contentShape(.rect(cornerRadius: 26))
                 }
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 16, weight: .light))
+                .buttonStyle(.plain)
+                .contentShape(.hoverEffect, .rect(cornerRadius: 26))
+                .hoverEffect(.highlight)
+                .accessibilityLabel("\(section.title). \(section.summary(for: patient))")
+                .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
+
+                // Drag handle: a dedicated grab target, outside the button, so reordering
+                // never fights the header's own tap-to-expand gesture.
+                Image(systemName: "line.3.horizontal")
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(DashboardTheme.secondary)
-                    .rotationEffect(.degrees(isExpanded ? 180 : 0))
-                    .padding(.top, 12)
-            }
-            .padding(20)
-            .contentShape(Rectangle())
-            .onTapGesture {
-                withAnimation(.snappy(duration: 0.25)) { isExpanded.toggle() }
-            }
-            .accessibilityElement(children: .combine)
-            .accessibilityAddTraits(.isButton)
-            .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
-            .accessibilityAction {
-                withAnimation(.snappy(duration: 0.25)) { isExpanded.toggle() }
+                    .padding(.top, 33)
+                    .padding(.trailing, 20)
+                    .padding(.leading, 4)
+                    .accessibilityHidden(true)
+                    .draggable(section.rawValue)
             }
 
             if isExpanded {
@@ -315,6 +373,18 @@ private struct ISBARSectionView: View {
                     .padding(16)
             }
         }
-        .dashboardCardSurface(cornerRadius: 24)
+        .dashboardPanel(cornerRadius: 26)
+        .overlay {
+            RoundedRectangle(cornerRadius: 26)
+                .strokeBorder(isDropTarget ? DashboardTheme.accent
+                              : (isFocused ? DashboardTheme.accent : .clear),
+                              lineWidth: isDropTarget ? 2.5 : 1.5)
+                .allowsHitTesting(false)
+        }
+        .dropDestination(for: String.self) { items, _ in
+            guard let raw = items.first, let dragged = ISBARSectionID(rawValue: raw) else { return false }
+            onSwap(dragged)
+            return true
+        } isTargeted: { isDropTarget = $0 }
     }
 }

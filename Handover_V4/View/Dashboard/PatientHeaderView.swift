@@ -18,40 +18,58 @@ import SwiftUI
 struct PatientHeaderView: View {
     let patient: Patient
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top, spacing: 16) {
-                AvatarView(patient: patient)
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(patient.name)
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundStyle(DashboardTheme.foreground)
-                        .accessibilityAddTraits(.isHeader)
-                    Text(patient.diagnosis)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(DashboardTheme.foreground)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Text("\(demographicsLine)  ·  \(patient.lengthOfStayDisplay)")
-                        .font(.system(size: 13, design: .monospaced))
-                        .foregroundStyle(DashboardTheme.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer(minLength: 0)
-            }
+    @Environment(\.isDashboardSurface) private var isDashboardSurface
 
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .top, spacing: 16) {
-                    statusBadges
-                    AllergiesRow(allergies: patient.allergies)
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            if isDashboardSurface {
+                HStack(alignment: .top, spacing: 24) {
+                    identity.frame(minWidth: 420)
+                    VStack(alignment: .trailing, spacing: 12) {
+                        statusBadges
+                        AllergiesRow(allergies: patient.allergies)
+                    }
+                    .fixedSize(horizontal: true, vertical: false)
                 }
-                VStack(alignment: .leading, spacing: 10) {
-                    statusBadges
-                    AllergiesRow(allergies: patient.allergies)
+            }
+            VStack(alignment: .leading, spacing: 14) {
+                identity
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .top, spacing: 16) {
+                        statusBadges
+                        AllergiesRow(allergies: patient.allergies)
+                    }
+                    VStack(alignment: .leading, spacing: 10) {
+                        statusBadges
+                        AllergiesRow(allergies: patient.allergies)
+                    }
                 }
             }
         }
-        .padding(20)
+        .padding(24)
+    }
+
+    /// Safety information moves beside identity only when both can fit without clipping.
+    private var identity: some View {
+        HStack(alignment: .top, spacing: 16) {
+            AvatarView(patient: patient)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 7) {
+                Text(patient.name)
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundStyle(DashboardTheme.foreground)
+                    .accessibilityAddTraits(.isHeader)
+                Text(patient.diagnosis)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(DashboardTheme.foreground)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("\(demographicsLine)  ·  \(patient.lengthOfStayDisplay)")
+                    .font(.system(size: 13, design: .monospaced))
+                    .foregroundStyle(DashboardTheme.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+        }
     }
 
     private var statusBadges: some View {
