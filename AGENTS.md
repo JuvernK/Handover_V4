@@ -25,18 +25,17 @@ When a design decision or bug looks visionOS-specific, check the HIG page above 
 - Keep clinical records in `Patient`; keep ISBAR focus and disclosure in dashboard presentation state.
 - Preserve existing SharePlay messages and authored spatial point-of-interest names.
 
-## Pending design: spatial/orbit/dashboard mode switch
+## Presentation modes
 
-A design for a 3-way presentation mode switch (`Dashboard | Spatial | Orbit `,
-mutually exclusive, SharePlay-synced) has been agreed with the user but is
-**not implemented**. Full writeup: `docs/presentation-modes.md`.
+The local `Dashboard | Spatial | Orbit` switch, nine-card Orbit carousel, and
+source outlines are implemented on `design/orbit-source-outlines`.
+See `docs/orbit-source-outlines.md` for behavior and validation, and
+`docs/presentation-modes.md` for the remaining synchronization plan.
 
-- Blocked on: this branch not yet having Orbit functionality (see `main` for
-  the reference implementation). Do not start this work until Orbit has
-  landed on `latest-prototype` and the user explicitly asks for it.
-- When picking this up, check whether `docs/presentation-modes.md`
-  is still accurate before implementing — it may need updating once Orbit's
-  actual shape on this branch is known.
+- Keep mode changes, Orbit navigation/disclosure, and new SharePlay catch-up
+  synchronization deferred until the user explicitly authorizes that follow-up.
+- Orbit placement comes from the scene's `OrbitAnchor` and slot components.
+  Preserve user-authored transforms when changing carousel behavior.
 
 ## Branch strategy
 

@@ -2,14 +2,12 @@
 
 Agreed design. Updated 9 September 2026.
 
-A minimal version of the mode switch (dummy Spatial/Orbit buttons, working
-Dashboard toggle) has been implemented on `feature/presentation-mode-switch`
-ahead of Orbit landing, at the user's explicit request — see the deviations
-below. The remaining scope (Orbit itself, SharePlay sync, disclosure reset,
-the `Presentation/` source reorganization) is still not implemented. Recheck
-this plan against `latest-prototype` when that work resumes. Use `main` as a
-reference, not as code to merge wholesale.
-
+The local three-way mode switch, Spatial cards, Orbit carousel, disclosure resets,
+source outlines, and `Presentation/` source organization are implemented on the
+current task branch. SharePlay synchronization of these new behaviors remains
+explicitly deferred. See [Orbit and source outlines](orbit-source-outlines.md) for
+implementation and validation details. Integration into `latest-prototype` remains
+subject to user-authorized merge.
 
 ## Modes and controls
 
@@ -19,8 +17,8 @@ The three mutually exclusive modes support a headset user study:
   pending visual design are in [spatial-cards.md](spatial-cards.md).
 - **Orbit**: nine clinical cards, including Situation, arranged in a rotating
   carousel, with Basic Information permanently visible separately. The
-  [Orbit and source-outline interview](orbit-source-outlines.md) records the
-  confirmed migration decisions and remaining questions.
+  [Orbit and source-outline implementation](orbit-source-outlines.md) records the
+  migration decisions and validation.
 - **Dashboard**: the dashboard window inside immersion. Hide spatial cards and
   the orbit ring, keeping the ICU room visible. No standalone dashboard outside
   immersion.
@@ -87,8 +85,8 @@ view, tile grid, board/presentation state), `Spatial/` (`SpatialCard.swift`,
 `SBARGroup.swift`), `Shared/` (`CardHeader`, `DashboardTheme`,
 `PatientHeaderView`, `SectionID`, and `Cards/` — reused by both Dashboard and
 Spatial), `Immersive/` (`ImmersiveView`, attachment/POI plumbing), `Controls/`
-(`LauncherView`, `ToggleImmersiveSpaceButton`). `Orbit/` doesn't exist yet —
-no Orbit code exists to put there. `AppModel.swift`, `Handover_V4App.swift`,
+(`LauncherView`, `ToggleImmersiveSpaceButton`). `Orbit/` now contains navigation controls, controller/state, and authored-path
+geometry. `AppModel.swift`, `Handover_V4App.swift`,
 `Models/Patient.swift`, `Models/Enums.swift`, `Data/`, `SharePlay/`, and
 `ViewModels/` stayed put, per "remain outside individual modes" above.
 Canonical terms live in [CONTEXT.md](../CONTEXT.md).

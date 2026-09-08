@@ -18,6 +18,8 @@ struct ImmersiveView: View {
                 let room = try await Entity(named: "Immersive", in: realityKitContentBundle)
                 content.add(room)
                 content.add(runtime.prepare(room))
+                // Reopening an Orbit scene starts its entry only once the authored geometry exists.
+                if appModel.presentationMode == .orbit { appModel.orbit.enter() }
                 frameSubscription = content.subscribe(to: SceneEvents.Update.self) { event in
                     MainActor.assumeIsolated {
                         runtime.update(deltaTime: event.deltaTime, appModel: appModel)
@@ -74,7 +76,8 @@ struct ImmersiveView: View {
             .onChanged { value in
                 guard appModel.presentationMode == .orbit, OrbitGeometry.isRing(value.entity) else { return }
                 let point = value.convert(value.location3D, from: .local, to: .scene)
-                if let position = ringDrag.update(point: point, position: appModel.orbit.state.position) {
+                if let pathPosition = runtime.ringPosition(nearest: point),
+                   let position = ringDrag.update(pathPosition: pathPosition, position: appModel.orbit.state.position) {
                     appModel.orbit.scrub(to: position)
                 }
             }
@@ -83,9 +86,6 @@ struct ImmersiveView: View {
                 ringDrag = OrbitRingDrag()
             })
         .onChange(of: appModel.presentationMode) { _, _ in ringDrag = OrbitRingDrag() }
-        .onAppear {
-            if appModel.presentationMode == .orbit { appModel.orbit.enter() }
-        }
         .onDisappear {
             frameSubscription?.cancel()
             frameSubscription = nil

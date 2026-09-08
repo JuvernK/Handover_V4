@@ -93,15 +93,15 @@ below is copied from that comment so this table and the code can't drift apart s
 | File | Flow | Owns |
 | --- | --- | --- |
 | `Models/Patient.swift`, `Data/PatientData.json` | — | Clinical records and authored summaries |
-| `Models/DashboardPresentationState.swift` | `PatientDashboardView -> DashboardPresentationState -> section detail disclosure` | Local ISBAR focus and disclosure rules; sections start expanded, and focusing an already-expanded section collapses it |
-| `View/Dashboard/PatientDashboardView.swift` | `DashboardView -> PatientDashboardView -> ISBAR navigation + patient summaries + systems assessment` | Responsive layout, state ownership, private navigation and section views, summary fallback and card grouping |
-| `Models/DashboardBoardState.swift` | `PatientDashboardView -> DashboardBoardState -> local section order; FlowBoardLayout -> DashboardBoardGeometry -> measured frames` | Main-style order transitions, finite-width resolution, content-driven spans, and collision-free packing |
-| `View/Dashboard/FlowBoardLayout.swift` | `PatientDashboardView -> FlowBoardLayout -> DashboardBoardGeometry -> measured SBAR frames` | SwiftUI measurement at one and two columns and placement through the shared geometry solver |
-| `View/Dashboard/PatientHeaderView.swift` | `Patient records -> PatientHeaderView -> DashboardTheme + SwiftUI presentation` | Shared patient introduction with a dashboard-only side-by-side safety layout when space permits |
-| `View/Cards/SystemAssessmentCard.swift` | `Patient records -> SystemAssessmentCard -> DashboardTheme + SwiftUI presentation` | Dashboard and spatial systems presentations |
-| `View/Dashboard/DashboardView.swift` | `AppModel -> DashboardView -> PatientDashboardView + DashboardControls` | Window controls, appearance preference, SharePlay alert, empty state |
-| `View/Dashboard/DashboardTheme.swift` | `HTML reference -> DashboardTheme -> dashboard panels, badges and clinical cards` | Asset palette and dashboard/standalone surfaces |
-| `View/Dashboard/DashboardTileGrid.swift` | `Clinical cards -> DashboardTileGrid -> DashboardTheme item surfaces` | Responsive columns and rounded item surfaces for dashboard records |
+| `Presentation/Dashboard/DashboardPresentationState.swift` | `PatientDashboardView -> DashboardPresentationState -> section detail disclosure` | Local ISBAR focus and disclosure rules; sections start expanded, and focusing an already-expanded section collapses it |
+| `Presentation/Dashboard/PatientDashboardView.swift` | `DashboardView -> PatientDashboardView -> ISBAR navigation + patient summaries + systems assessment` | Responsive layout, state ownership, private navigation and section views, summary fallback and card grouping |
+| `Presentation/Dashboard/DashboardBoardState.swift` | `PatientDashboardView -> DashboardBoardState -> local section order; FlowBoardLayout -> DashboardBoardGeometry -> measured frames` | Main-style order transitions, finite-width resolution, content-driven spans, and collision-free packing |
+| `Presentation/Dashboard/FlowBoardLayout.swift` | `PatientDashboardView -> FlowBoardLayout -> DashboardBoardGeometry -> measured SBAR frames` | SwiftUI measurement at one and two columns and placement through the shared geometry solver |
+| `Presentation/Shared/PatientHeaderView.swift` | `Patient records -> PatientHeaderView -> DashboardTheme + SwiftUI presentation` | Shared patient introduction with a dashboard-only side-by-side safety layout when space permits |
+| `Presentation/Shared/Cards/SystemAssessmentCard.swift` | `Patient records -> SystemAssessmentCard -> DashboardTheme + SwiftUI presentation` | Dashboard and spatial systems presentations |
+| `Presentation/Dashboard/DashboardView.swift` | `AppModel -> DashboardView -> PatientDashboardView + DashboardControls` | Window controls, appearance preference, SharePlay alert, empty state |
+| `Presentation/Shared/DashboardTheme.swift` | `HTML reference -> DashboardTheme -> dashboard panels, badges and clinical cards` | Asset palette and dashboard/standalone surfaces |
+| `Presentation/Dashboard/DashboardTileGrid.swift` | `Clinical cards -> DashboardTileGrid -> DashboardTheme item surfaces` | Responsive columns and rounded item surfaces for dashboard records |
 
 ## Current ownership and relationships
 
@@ -113,9 +113,10 @@ Handover_V4App
 ├─ AppModel (shared state)
 │  ├─ HandoverViewModel → PatientDataLoader → PatientData.json
 │  ├─ SessionController ↔ SharePlay messages
+│  ├─ OrbitController → OrbitPresentationState
 │  └─ Immersive lifecycle, card states/positions, sync conflict counters
+├─ LauncherView → mode switch + OrbitNavigationView + SBAR controls + ToggleImmersiveSpaceButton
 ├─ DashboardView (window)
-│  ├─ DashboardControls → ToggleImmersiveSpaceButton
 │  └─ PatientDashboardView
 │     ├─ DashboardPresentationState + DashboardBoardState + pending scroll request
 │     ├─ ISBARNavColumn (private shortcuts) — S/B/A/R toggle their section; ALL toggles all four
@@ -123,7 +124,8 @@ Handover_V4App
 │     ├─ PatientHeaderView
 │     └─ SystemsAssessmentCard (floating, overlapping panel)
 └─ ImmersiveView (RealityKit scene, attachments, gestures)
-   └─ AttachmentsProvider → SpatialCardView
+   ├─ ImmersiveSceneController → OrbitGeometry + SourceOutlineController
+   └─ SpatialCardView
       ├─ PatientHeaderView (basic information)
       └─ SectionID.view(for:) → shared clinical cards
 ```
@@ -136,9 +138,81 @@ disclosure. `SectionID` remains a spatial/SharePlay identifier, distinct from
 
 Clinical cards own their rows and empty states. `VitalsCard` delegates to
 `VitalBox` → `Sparkline`; `CardHeader` and `DashboardTheme` supply shared styling.
-Situation and Family currently render only in dashboard sections; the other
+Family currently renders only in dashboard sections; Situation and the other
 clinical cards and patient header also render spatially. Authored POI names map
 through `SpatialCardView`; preserve those names and SharePlay message types.
+
+## Orbit and source outlines (9 September 2026)
+
+All three presentation modes now work locally. Orbit has nine clinical cards in
+fixed SBAR reading order and a permanent, separate patient introduction. Entering
+Orbit collapses all nine cards, settles on Situation, and expands it. Ring dragging,
+Previous/Next, and the nine-position slider share the same navigation state.
+Movement collapses the front card; settling expands the destination. Tapping the
+front card toggles disclosure; tapping another card brings it forward.
+
+Entering Spatial expands all clinical cards. Returning to Dashboard resets its
+four clinical detail sections without changing board order. The existing mode
+switch keeps the dashboard window hidden in Spatial and Orbit.
+
+Only an expanded, settled Orbit front card activates an equipment outline. Spatial
+activates every expanded card's equipment; Dashboard activates none. Situation,
+Background, Labs, Plan, Escalation, and Basic Information have no equipment source.
+See [source mappings and rendering](orbit-source-outlines.md) for the exact names.
+New mode/navigation/disclosure synchronization remains deferred; existing SharePlay
+message types and authored POI names are preserved.
+
+Additional file responsibilities, relative to `Handover_V4/`:
+
+| File | Owns |
+| --- | --- |
+| `Presentation/Orbit/OrbitPresentationState.swift` | Nine-card identity/order, navigation transitions, exclusive disclosure, source eligibility |
+| `Presentation/Orbit/OrbitController.swift` | Local navigation API and cancellable settling task |
+| `Presentation/Orbit/OrbitNavigationView.swift` | Native Previous/Next and position slider |
+| `Presentation/Orbit/OrbitPath.swift` | Closed curve sampling, gesture projection, seam-safe ring drag interpretation |
+| `Presentation/Orbit/OrbitGeometry.swift` | Authored marker resolution and ring entities |
+| `Presentation/Immersive/ImmersiveSceneController.swift` | POI discovery, attachment placement, movement, collision bounds and outline eligibility |
+| `Presentation/Immersive/SourceOutlineController.swift` | Cached, normally occluded equipment silhouette shells |
+| `Presentation/Immersive/ImmersiveView.swift` | Scene lifecycle, live patient attachments, tap and ring gestures |
+
+`Packages/RealityKitContent/Sources/RealityKitContent/OrbitSlotComponent.swift`
+registers the authored slot indices. The user's `OrbitAnchor` and patient marker
+control placement. Eight authored markers are sampled for nine cards; the scene
+asset does not need nine fixed card entities. `AttachmentsProvider` was removed
+because attachments now read the patient directly through the scene's POIs.
+
+```sh
+swiftc -module-cache-path /private/tmp/handover-orbit-module-cache \
+  Handover_V4/Presentation/Orbit/OrbitPresentationState.swift \
+  Handover_V4/Presentation/Orbit/OrbitController.swift \
+  Handover_V4/Presentation/Orbit/OrbitPath.swift \
+  Tests/OrbitPresentationStateChecks.swift \
+  -o /private/tmp/handover-orbit-checks
+/private/tmp/handover-orbit-checks
+
+xcodebuild -project Handover_V4.xcodeproj -scheme Handover_V4 \
+  -destination 'generic/platform=visionOS Simulator' \
+  -derivedDataPath /private/tmp/handover-orbit-derived \
+  CODE_SIGNING_ALLOWED=NO build
+```
+
+Validation: Orbit state/controller/path checks and Dashboard presentation checks
+passed. The generic visionOS Simulator build passed. Native simulator checks
+confirmed immersive entry, mode switching, Situation entry, Next navigation to
+Vitals, a monitor outline only while Vitals is active, and multiple equipment
+outlines in Spatial. The first rendering used a hard-coded Orbit location and
+very thin outlines; the user supplied an authored anchor and reported missing
+outlines, prompting the authored-path integration and increased outline visibility.
+The revised build was installed and launched on visionOS 26.2. Screenshots confirm
+that the ring/card path and separate patient information now use the authored
+markers, and Lines & Access produces a visible cyan IV-stand outline. The IV stand
+was outside the earlier camera view. Standard occlusion remains intentional.
+Simulator camera movement changes which apparatus are visible; headset placement
+comfort still needs review. Final native ring dragging, slider release, front-card
+collapse, all-patient card fit, and headset gaze/pinch have not been validated.
+Navigation, drag interpretation, and cancellation are covered by standalone checks;
+these do not substitute for headset gesture acceptance. New SharePlay behavior
+remains unimplemented.
 
 ## Validation
 
@@ -157,14 +231,14 @@ never compile precondition-based checks with `-Ounchecked`.
 
 ```sh
 swiftc -module-cache-path /private/tmp/handover-drag-module-cache \
-  Handover_V4/Models/DashboardPresentationState.swift \
-  Handover_V4/Models/DashboardBoardState.swift \
+  Handover_V4/Presentation/Dashboard/DashboardPresentationState.swift \
+  Handover_V4/Presentation/Dashboard/DashboardBoardState.swift \
   Tests/DashboardBoardChecks.swift \
   -o /private/tmp/handover-board-checks
 /private/tmp/handover-board-checks
 
 swiftc -module-cache-path /private/tmp/handover-summary-module-cache \
-  Handover_V4/Models/DashboardPresentationState.swift \
+  Handover_V4/Presentation/Dashboard/DashboardPresentationState.swift \
   Tests/DashboardPresentationStateChecks.swift \
   -o /private/tmp/handover-summary-state-checks
 /private/tmp/handover-summary-state-checks

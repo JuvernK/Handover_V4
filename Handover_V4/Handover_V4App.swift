@@ -23,6 +23,7 @@ struct Handover_V4App: App {
     // register so RealityKit can use it at runtime
     init() {
         PointOfInterestComponent.registerComponent()
+        OrbitSlotComponent.registerComponent()
         PointOfInterestRuntimeComponent.registerComponent()
     }
 

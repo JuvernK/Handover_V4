@@ -1,12 +1,14 @@
 // Flow: ImmersiveSceneController -> SourceOutlineController -> equipment silhouette shells.
 import RealityKit
 import UIKit
+import OSLog
 
 /// Caches front-culled shells without changing equipment materials or interaction components.
 /// Standard depth testing lets nearer equipment and cards occlude the outlines naturally.
 @MainActor
 final class SourceOutlineController {
     private var shells: [String: [Entity]] = [:]
+    private var visibleSources = Set<String>()
 
     /// Resolve every matching apparatus, including meshes nested below its named transform.
     func prepare(in root: Entity) {
@@ -24,12 +26,16 @@ final class SourceOutlineController {
             }
             shells[name] = models.compactMap { makeShell(for: $0) }
             if shells[name]?.isEmpty != false {
-                print("Source outline unavailable: \(name)")
+                Logger(subsystem: "com.monash.Handover-V4", category: "SourceOutline")
+                    .error("Source outline unavailable: \(name, privacy: .public)")
             }
         }
     }
 
+    /// Apply only changes in source eligibility, avoiding material work on every scene frame.
     func show(_ equipmentNames: Set<String>) {
+        guard equipmentNames != visibleSources else { return }
+        visibleSources = equipmentNames
         for (name, entities) in shells {
             for entity in entities { entity.isEnabled = equipmentNames.contains(name) }
         }
@@ -38,6 +44,7 @@ final class SourceOutlineController {
     func clear() {
         for entity in shells.values.flatMap({ $0 }) { entity.removeFromParent() }
         shells.removeAll()
+        visibleSources.removeAll()
     }
 
     private func makeShell(for entity: Entity) -> Entity? {
@@ -49,11 +56,12 @@ final class SourceOutlineController {
 
         // Expand around the mesh's own center, accounting for the imported ICU's 0.01 scale.
         // The front faces are culled; the unchanged equipment hides the shell's interior.
-        let thickness: Float = 0.003
+        let thickness: Float = 0.006
         let padding = SIMD3<Float>(repeating: thickness * 2) / simd_abs(worldScale)
         let scale = SIMD3<Float>(repeating: 1) + padding / extents
         guard scale.x.isFinite, scale.y.isFinite, scale.z.isFinite else { return nil }
-        var material = UnlitMaterial(color: .systemCyan)
+        var material = UnlitMaterial(applyPostProcessToneMap: false)
+        material.color = .init(tint: UIColor(red: 0.15, green: 0.95, blue: 1, alpha: 1))
         material.faceCulling = .front
         let shell = ModelEntity(mesh: model.mesh, materials: Array(repeating: material, count: max(1, model.materials.count)))
         shell.name = "SourceOutline_\(entity.name)"

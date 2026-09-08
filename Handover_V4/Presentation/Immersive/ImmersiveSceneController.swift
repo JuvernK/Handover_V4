@@ -11,6 +11,7 @@ final class ImmersiveSceneController {
     @ObservationIgnored private var homes: [String: SIMD3<Float>] = [:]
     @ObservationIgnored private var collisionBounds: [String: BoundingBox] = [:]
     @ObservationIgnored private var ring: Entity?
+    @ObservationIgnored private var geometry: OrbitGeometry?
     @ObservationIgnored private var outlines = SourceOutlineController()
     @ObservationIgnored private var displayedPosition: Double = 0
     @ObservationIgnored private var movementStart: Double = 0
@@ -31,7 +32,9 @@ final class ImmersiveSceneController {
         }
         pointsOfInterest = points
         outlines.prepare(in: root)
-        let ring = OrbitGeometry.makeRing()
+        let geometry = OrbitGeometry(in: root)
+        self.geometry = geometry
+        let ring = geometry.makeRing()
         self.ring = ring
         return ring
     }
@@ -50,6 +53,7 @@ final class ImmersiveSceneController {
 
     /// Advance only navigation transforms; measured collision bounds follow SwiftUI disclosure size.
     func update(deltaTime: Double, appModel: AppModel) {
+        guard let geometry else { return }
         let state = appModel.orbit.state
         let isOrbit = appModel.presentationMode == .orbit
         ring?.isEnabled = isOrbit
@@ -74,12 +78,12 @@ final class ImmersiveSceneController {
             guard card.isEnabled else { continue }
             if isOrbit, let clinicalCard = OrbitCard(rawValue: name),
                let index = OrbitCard.allCases.firstIndex(of: clinicalCard) {
-                card.position = OrbitGeometry.point(at: Double(index) - displayedPosition) + SIMD3<Float>(0, 0.45, 0)
+                card.position = geometry.path.point(at: Double(index) - displayedPosition) + SIMD3<Float>(0, 0.08, 0)
                 let focused = state.frontCard == clinicalCard
                 card.scale = SIMD3<Float>(repeating: focused ? 1 : 0.72)
                 card.components.set(OpacityComponent(opacity: state.expandedCard == nil || focused ? 1 : 0.3))
             } else {
-                card.position = isOrbit ? OrbitGeometry.patientPosition : (appModel.cardPositions[name] ?? homes[name] ?? .zero)
+                card.position = isOrbit ? geometry.patientPosition : (appModel.cardPositions[name] ?? homes[name] ?? .zero)
                 card.scale = .one
                 card.components.set(OpacityComponent(opacity: 1))
             }
@@ -104,6 +108,11 @@ final class ImmersiveSceneController {
         }
     }
 
+    /// Uses the actual authored curve, including its translation, rotation, and scale.
+    func ringPosition(nearest point: SIMD3<Float>) -> Double? {
+        geometry?.path.position(nearest: point)
+    }
+
     func clear() {
         outlines.clear()
         cards.removeAll()
@@ -111,6 +120,7 @@ final class ImmersiveSceneController {
         collisionBounds.removeAll()
         pointsOfInterest.removeAll()
         ring = nil
+        geometry = nil
         lastRevision = -1
     }
 }

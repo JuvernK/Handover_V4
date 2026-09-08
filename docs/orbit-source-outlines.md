@@ -1,7 +1,7 @@
 # Orbit and source outlines
 
-Design interview in progress, updated 9 September 2026. This document records the requested
-scope and confirmed decisions; it does not describe implemented behavior.
+Implemented locally on `design/orbit-source-outlines`, updated 9 September 2026.
+This document records the behavior and the separately deferred SharePlay work.
 Related plans: [presentation modes](presentation-modes.md) and
 [Spatial cards](spatial-cards.md). Domain terms live in [CONTEXT.md](../CONTEXT.md).
 
@@ -54,8 +54,8 @@ implementation. Equipment highlighting must use outlines only.
 | Systems Assessment | `Ventilator` |
 | Situation, Related Background, Abnormal Labs, Treatment Plan, Escalation, Basic Information | None |
 
-Entity names are preserved from the reference; their availability and visual
-boundaries in the current scene still require validation.
+Entity names are preserved from the reference. Native scene checks are recorded
+in the validation section below.
 
 ## Agreed SharePlay follow-up, implementation deferred
 
@@ -67,13 +67,12 @@ highlight message. Dashboard scrolling synchronization remains a separate task.
 
 Do not implement this SharePlay follow-up until the user explicitly says it is
 time to implement it. Existing SharePlay behavior and messages remain in place.
-The current authorization covers documentation and TODO comments only; this
-interview has not authorized feature implementation.
+The user subsequently authorized Orbit and source-outline implementation. That
+authorization leaves this SharePlay follow-up deferred.
 
 TODO comments mark `AppModel.presentationMode`, `AppModel.cardStates`, and
-`DashboardPresentationState.expandedSections`. Orbit state does not exist on this
-branch yet; mark its navigation/disclosure state with the same deferred follow-up
-when Orbit is implemented. Conflict resolution and synchronization validation
+`DashboardPresentationState.expandedSections`. `OrbitController.state` carries the same deferred follow-up for local
+navigation/disclosure. Conflict resolution and synchronization validation
 still need to be settled before the deferred work begins.
 
 ## Reference findings
@@ -94,15 +93,39 @@ Inspected local `main` on 8 September 2026:
   accepted outline design in `main`'s `docs/adr/0005-selectable-source-highlight-style.md`,
   the inspected controller does not implement an outline renderer.
 
-## Decisions still open
+## Implementation
 
-- Outline appearance and rendering validation.
-- Nine-card placement.
-- Deferred SharePlay conflict resolution, integration, and validation details.
+- `Presentation/Orbit/OrbitPresentationState.swift` fixes the nine-card order and
+  owns pure navigation, exclusive disclosure, and source eligibility.
+- `OrbitController` cancels superseded settling tasks; revision checks reject stale
+  completions. Ring and slider scrubbing collapse the front card immediately.
+- `OrbitGeometry` reads `OrbitAnchor` and its `OrbitSlotComponent` markers from the
+  scene. `OrbitPath` samples a closed Catmull-Rom curve through those markers.
+  Eight authored markers define the curve for nine cards; a ninth marker is not
+  required. Slot zero stays the front reading position. Moving/rotating/scaling
+  the anchor in Reality Composer Pro moves the ring and carousel together.
+- `PatientInformationSlot` is used exactly as authored, independently of the
+  carousel. Clinical cards sit 8 cm above the ring path, matching the reference
+  offset. The prior hard-coded scene placement is only a fallback for older
+  scenes without usable markers.
+- `ImmersiveSceneController` discovers loaded POIs directly, mounts attachments at
+  scene root, updates collision bounds during disclosure, and restores Spatial
+  positions on exit. Dynamic attachments read the current patient.
+- Source outlines are cyan front-culled copies of each equipment mesh, expanded
+  about its own center by 6 mm per side in world scale. Original materials stay
+  intact. Standard depth testing preserves scene occlusion. There is no box halo,
+  equipment fill, emissive recoloring, or separate highlight message.
+- Sources without resolvable meshes are logged. Rendering reuses cached shells
+  and only changes visibility when the eligible equipment set changes.
 
-## Validation status
+## Validation
 
-Repository code and reference documentation inspected. Only documentation and
-Swift TODO comments changed; executable code and scene assets are unchanged.
-Whitespace checks passed. No app build or runtime validation performed during
-this design interview; the comment-only changes do not require a rebuild.
+State/controller checks cover nine-card reading order, entry and re-entry,
+Previous/Next wraparound, scrubbing/snapping, cancellation on exit and newer input,
+front-card collapse, source mapping, no-source cards, nonfinite input, eight-marker
+sampling for nine cards, and ring drag continuity across the closing seam.
+The generic visionOS Simulator build and dashboard disclosure checks pass.
+
+Native validation and remaining headset checks are recorded in
+[dashboard validation](dashboard-design.md#orbit-and-source-outlines-9-september-2026).
+SharePlay mode/navigation/disclosure catch-up and conflict resolution remain deferred.

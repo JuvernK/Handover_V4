@@ -60,6 +60,29 @@ struct OrbitPresentationStateChecks {
         state.enter()
         precondition(state.frontCard == .situation && state.expandedCard == nil)
 
+        // Eight authored markers still provide nine distinct positions on a closed path.
+        let points = (0..<8).map { index -> SIMD3<Float> in
+            let angle = Float(index) * 2 * .pi / 8
+            return SIMD3<Float>(-sin(angle), 1.3, cos(angle)) + SIMD3<Float>(-1.55, 0.6, -1.84)
+        }
+        let path = OrbitPath(points: points, cardCount: 9)
+        precondition(path.point(at: 0) == points[0])
+        precondition(path.point(at: 9) == points[0])
+        for index in 0..<9 {
+            let position = Double(index)
+            let point = path.point(at: position)
+            precondition(point.x.isFinite && point.y.isFinite && point.z.isFinite)
+            precondition(abs(path.position(nearest: point) - position) < 0.02)
+            precondition(path.point(at: position) != path.point(at: position + 1))
+        }
+        var drag = OrbitRingDrag()
+        precondition(drag.update(pathPosition: 8.95, position: 0) == nil)
+        precondition(drag.update(pathPosition: 8.97, position: 0) == nil)
+        let acrossSeam = drag.update(pathPosition: 0.1, position: 0)!
+        precondition(abs(acrossSeam + 0.15) < 0.001 && drag.isDragging)
+        let backAcrossSeam = drag.update(pathPosition: 8.9, position: acrossSeam)!
+        precondition(abs(backAcrossSeam - 0.05) < 0.001)
+
         // Exercise the actual cancellable scheduler, including exit/re-entry and rapid control changes.
         let controller = OrbitController()
         controller.enter()

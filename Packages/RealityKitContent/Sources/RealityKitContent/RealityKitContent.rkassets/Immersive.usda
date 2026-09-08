@@ -401,5 +401,142 @@ def Xform "Root"
             }
         }
     }
+
+    def Xform "OrbitAnchor"
+    {
+        reorder nameChildren = ["PatientInformationSlot", "OrbitSlot_0", "OrbitSlot_1", "OrbitSlot_2", "OrbitSlot_3", "OrbitSlot_4", "OrbitSlot_5", "OrbitSlot_6", "OrbitSlot_7"]
+        float2 ui:nodegraph:node:pos = (40, 40)
+        int ui:nodegraph:node:stackingOrder = 2
+        quatf xformOp:orient = (1, 0, 0, 0)
+        float3 xformOp:scale = (1, 1, 1)
+        float3 xformOp:translate = (-1.5506932, 0.65749073, -1.8447568)
+        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+        def Xform "PatientInformationSlot"
+        {
+            quatf xformOp:orient = (1, 0, 0, 0)
+            float3 xformOp:scale = (1, 1, 1)
+            float3 xformOp:translate = (0, 0.70000005, 0.8530723)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+            def RealityKitCustomComponent "RealityKitContent_OrbitSlotComponent"
+            {
+                uniform token info:id = "RealityKitContent.OrbitSlotComponent"
+                int slotIndex = -1
+            }
+        }
+
+        def Xform "OrbitSlot_0"
+        {
+            quatf xformOp:orient = (1, 0, 0, 0)
+            float3 xformOp:scale = (1, 1, 1)
+            float3 xformOp:translate = (0, 0.70000005, 2.2530723)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+            def RealityKitCustomComponent "RealityKitContent_OrbitSlotComponent"
+            {
+                uniform token info:id = "RealityKitContent.OrbitSlotComponent"
+                int slotIndex = 0
+            }
+        }
+
+        def Xform "OrbitSlot_1"
+        {
+            quatf xformOp:orient = (1, 0, 0, 0)
+            float3 xformOp:scale = (1, 1, 1)
+            float3 xformOp:translate = (-0.70700014, 0.70000005, 1.5600723)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+            def RealityKitCustomComponent "RealityKitContent_OrbitSlotComponent"
+            {
+                uniform token info:id = "RealityKitContent.OrbitSlotComponent"
+                int slotIndex = 1
+            }
+        }
+
+        def Xform "OrbitSlot_2"
+        {
+            quatf xformOp:orient = (1, 0, 0, 0)
+            float3 xformOp:scale = (1, 1, 1)
+            float3 xformOp:translate = (-0.9999999, 0.70000005, 0.8530723)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+            def RealityKitCustomComponent "RealityKitContent_OrbitSlotComponent"
+            {
+                uniform token info:id = "RealityKitContent.OrbitSlotComponent"
+                int slotIndex = 2
+            }
+        }
+
+        def Xform "OrbitSlot_3"
+        {
+            quatf xformOp:orient = (1, 0, 0, 0)
+            float3 xformOp:scale = (1, 1, 1)
+            float3 xformOp:translate = (-0.70700014, 0.70000005, 0.14607239)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+            def RealityKitCustomComponent "RealityKitContent_OrbitSlotComponent"
+            {
+                uniform token info:id = "RealityKitContent.OrbitSlotComponent"
+                int slotIndex = 3
+            }
+        }
+
+        def Xform "OrbitSlot_4"
+        {
+            quatf xformOp:orient = (1, 0, 0, 0)
+            float3 xformOp:scale = (1, 1, 1)
+            float3 xformOp:translate = (0, 0.70000005, -0.14692783)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+            def RealityKitCustomComponent "RealityKitContent_OrbitSlotComponent"
+            {
+                uniform token info:id = "RealityKitContent.OrbitSlotComponent"
+                int slotIndex = 4
+            }
+        }
+
+        def Xform "OrbitSlot_5"
+        {
+            quatf xformOp:orient = (1, 0, 0, 0)
+            float3 xformOp:scale = (1, 1, 1)
+            float3 xformOp:translate = (0.707, 0.70000005, 0.14607239)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+            def RealityKitCustomComponent "RealityKitContent_OrbitSlotComponent"
+            {
+                uniform token info:id = "RealityKitContent.OrbitSlotComponent"
+                int slotIndex = 5
+            }
+        }
+
+        def Xform "OrbitSlot_6"
+        {
+            quatf xformOp:orient = (1, 0, 0, 0)
+            float3 xformOp:scale = (1, 1, 1)
+            float3 xformOp:translate = (1, 0.70000005, 0.8530723)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+            def RealityKitCustomComponent "RealityKitContent_OrbitSlotComponent"
+            {
+                uniform token info:id = "RealityKitContent.OrbitSlotComponent"
+                int slotIndex = 6
+            }
+        }
+
+        def Xform "OrbitSlot_7"
+        {
+            quatf xformOp:orient = (1, 0, 0, 0)
+            float3 xformOp:scale = (1, 1, 1)
+            float3 xformOp:translate = (0.71246755, 0.7378651, 1.8485208)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+
+            def RealityKitCustomComponent "RealityKitContent_OrbitSlotComponent"
+            {
+                uniform token info:id = "RealityKitContent.OrbitSlotComponent"
+                int slotIndex = 7
+            }
+        }
+    }
 }
 
