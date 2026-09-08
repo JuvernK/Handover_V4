@@ -111,6 +111,7 @@ class AppModel {
     // MARK: - Card State Management
 
     // State Dictionaries
+    // TODO: Reconcile spatial disclosure with the future shared presentation state so participants see matching card states.
     var cardStates: [String: Bool] = [:]
     var cardPositions: [String: SIMD3<Float>] = [:]
 

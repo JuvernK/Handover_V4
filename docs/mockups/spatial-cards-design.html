@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spatial Cards — Design Reference</title>
+<style>
+  :root {
+    --accent: #C3A6F9;
+    --critical: #FF7A73;
+    --warning: #FBC456;
+    --normal: #80E2B9;
+    --fg: rgba(255,255,255,0.95);
+    --fg-secondary: rgba(255,255,255,0.60);
+    --fg-tertiary: rgba(255,255,255,0.56);
+    --glass: rgba(255,255,255,0.08);
+    --glass-raised: rgba(255,255,255,0.12);
+    --stroke: rgba(255,255,255,0.14);
+    --hairline: rgba(255,255,255,0.075);
+    --panel: rgba(8,8,10,0.88);
+    --pool-start: rgba(126,94,168,0.22);
+    --pool-end: rgba(56,96,132,0.20);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    color: var(--fg);
+    background:
+      radial-gradient(ellipse at 50% 20%, rgba(70,60,90,0.35), transparent 60%),
+      linear-gradient(180deg, #16151b 0%, #0a0a0d 55%, #060607 100%);
+    overflow-x: hidden;
+  }
+
+  /* ————— Notice banner ————— */
+  .notice {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: #1c1420;
+    border-bottom: 1px solid rgba(195,166,249,0.35);
+    color: var(--fg);
+    font-size: 13px;
+    padding: 10px 20px;
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    flex-wrap: wrap;
+  }
+  .notice b { color: var(--accent); }
+  .notice span.dim { color: var(--fg-secondary); }
+
+  /* ————— Scene ————— */
+  .scene {
+    position: relative;
+    width: 100%;
+    height: 900px;
+    perspective: 1800px;
+    overflow: hidden;
+  }
+
+  .room-floor {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 260px;
+    background: linear-gradient(180deg, transparent, rgba(255,255,255,0.03));
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .patient-silhouette {
+    position: absolute;
+    left: 50%;
+    top: 340px;
+    width: 120px;
+    height: 320px;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.03));
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 60px 60px 20px 20px;
+  }
+  .patient-silhouette::before {
+    content: "";
+    position: absolute;
+    top: -70px; left: 50%;
+    transform: translateX(-50%);
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.10);
+  }
+  .poi-label {
+    position: absolute;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--fg-tertiary);
+  }
+
+  /* ————— Spatial card ————— */
+  .spatial-card {
+    position: absolute;
+    width: 300px;
+    border-radius: 20px;
+    background: var(--glass);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid var(--stroke);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.06) inset;
+    transition: transform .25s ease, box-shadow .25s ease;
+    transform-style: preserve-3d;
+  }
+  .spatial-card:hover { box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.08) inset; }
+
+  .billboard-hint {
+    /* subtle per-card tilt to suggest each card is facing the viewer from its own
+       fixed point (billboard), not a uniform tilt across the whole scene. */
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .badge {
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+  .badge-S { background: rgba(195,166,249,0.20); color: var(--accent); border: 1px solid rgba(195,166,249,0.35); }
+  .badge-B { background: rgba(128,226,185,0.18); color: var(--normal); border: 1px solid rgba(128,226,185,0.32); }
+  .badge-A { background: rgba(251,196,86,0.18); color: var(--warning); border: 1px solid rgba(251,196,86,0.32); }
+  .badge-R { background: rgba(255,122,115,0.18); color: var(--critical); border: 1px solid rgba(255,122,115,0.32); }
+
+  .card-title-group { flex: 1 1 auto; min-width: 0; }
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--fg);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .card-subtitle {
+    font-size: 11px;
+    color: var(--fg-tertiary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .chevron {
+    flex: 0 0 auto;
+    width: 22px; height: 22px;
+    color: var(--fg-secondary);
+    transition: transform .2s ease;
+  }
+  .spatial-card.collapsed .chevron { transform: rotate(180deg); }
+
+  .card-body {
+    padding: 0 16px 16px 16px;
+    font-size: 12.5px;
+    color: var(--fg-secondary);
+    border-top: 1px solid var(--hairline);
+    padding-top: 12px;
+  }
+  .spatial-card.collapsed .card-body { display: none; }
+  .spatial-card.collapsed .card-header { padding-bottom: 12px; }
+
+  .card-body p { margin: 0 0 8px 0; line-height: 1.5; }
+  .card-body p:last-child { margin-bottom: 0; }
+  .card-body ul { margin: 0 0 8px 0; padding-left: 16px; }
+  .card-body li { margin-bottom: 3px; line-height: 1.4; }
+
+  .row { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; border-bottom: 1px solid var(--hairline); }
+  .row:last-child { border-bottom: none; }
+  .row .k { color: var(--fg-tertiary); }
+  .row .v { color: var(--fg); font-weight: 500; text-align: right; }
+  .v.status-normal { color: var(--normal); }
+  .v.status-warning { color: var(--warning); }
+  .v.status-critical { color: var(--critical); }
+
+  .pill {
+    display: inline-block;
+    font-size: 10.5px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.08);
+    color: var(--fg-secondary);
+    margin: 0 4px 4px 0;
+  }
+  .pill.high-alert { background: rgba(255,122,115,0.18); color: var(--critical); }
+  .pill.urgent { background: rgba(251,196,86,0.18); color: var(--warning); }
+
+  /* ————— Basic Information: permanent, no disclosure, no badge ————— */
+  .basic-info {
+    width: 340px;
+  }
+  .basic-info .card-header { cursor: default; padding-bottom: 12px; border-bottom: 1px solid var(--hairline); }
+  .avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(195,166,249,0.35), rgba(126,94,168,0.25));
+    border: 1px solid var(--stroke);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: var(--fg);
+  }
+  .basic-info .name { font-size: 16px; font-weight: 700; }
+  .basic-info .meta { font-size: 11.5px; color: var(--fg-tertiary); }
+  .basic-info .diagnosis-line {
+    font-size: 12.5px;
+    color: var(--accent);
+    padding: 10px 16px 0 16px;
+    font-weight: 500;
+  }
+
+  /* Card positions (fixed points of interest around the patient) */
+  #card-basic     { left: 60px;  top: 330px; }
+  #card-situation { left: 420px; top: 60px; }
+  #card-background{ left: 800px; top: 60px; }
+  #card-vitals    { left: 1140px; top: 60px; }
+  #card-infusions { left: 1140px; top: 330px; }
+  #card-lines     { left: 800px; top: 480px; }
+  #card-labs      { left: 420px; top: 560px; }
+  #card-systems   { left: 60px;  top: 640px; }
+  #card-plan      { left: 800px; top: 700px; }
+  #card-escalation{ left: 1140px; top: 620px; }
+
+  .connector {
+    position: absolute;
+    width: 1px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.14), transparent);
+    z-index: -1;
+  }
+
+  /* ————— Persistent control window ————— */
+  .control-window {
+    position: sticky;
+    bottom: 16px;
+    z-index: 40;
+    margin: 0 auto 16px auto;
+    width: fit-content;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 14px;
+    border-radius: 22px;
+    background: rgba(20,18,24,0.72);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid var(--stroke);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  }
+
+  .mode-switch {
+    display: flex;
+    background: rgba(255,255,255,0.06);
+    border-radius: 14px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .mode-switch button {
+    border: none;
+    background: transparent;
+    color: var(--fg-secondary);
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 11px;
+    cursor: pointer;
+  }
+  .mode-switch button.active {
+    background: var(--glass-raised);
+    color: var(--fg);
+  }
+
+  .divider { width: 1px; height: 24px; background: var(--stroke); }
+
+  .sbar-rail { display: flex; gap: 6px; }
+  .sbar-rail button {
+    border: 1px solid var(--stroke);
+    background: rgba(255,255,255,0.05);
+    color: var(--fg-secondary);
+    font-size: 12.5px;
+    font-weight: 700;
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .sbar-rail button:hover { background: rgba(255,255,255,0.09); color: var(--fg); }
+  .sbar-rail button.all { width: auto; padding: 0 12px; font-weight: 600; }
+
+  .exit-btn {
+    border: 1px solid rgba(255,122,115,0.35);
+    background: rgba(255,122,115,0.12);
+    color: var(--critical);
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 11px;
+    cursor: pointer;
+  }
+
+  .shareplay-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--normal);
+    box-shadow: 0 0 8px var(--normal);
+  }
+
+  .legend {
+    max-width: 900px;
+    margin: 28px auto 60px auto;
+    padding: 0 20px;
+    font-size: 12.5px;
+    color: var(--fg-secondary);
+    line-height: 1.6;
+  }
+  .legend h2 { color: var(--fg); font-size: 15px; margin-bottom: 8px; }
+  .legend code { background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px; font-size: 11.5px; }
+</style>
+</head>
+<body>
+
+  <div class="notice">
+    <b>Design reference only</b>
+    <span class="dim">— visual styling is pending approval. Layout, positions and 3D depth here are illustrative for a flat page, not the authored Reality Composer Pro placement. Click card headers and the SBAR rail below to try disclosure.</span>
+  </div>
+
+  <div class="scene" id="scene">
+    <div class="room-floor"></div>
+    <div class="patient-silhouette"></div>
+    <div class="poi-label" style="left:395px; top:410px;">Bed / patient POI</div>
+
+    <!-- Basic Information — permanent, no badge, no disclosure -->
+    <div class="spatial-card basic-info" id="card-basic">
+      <div class="card-header">
+        <div class="avatar">JM</div>
+        <div class="card-title-group">
+          <div class="name">John Mitchell</div>
+          <div class="meta">BED-01 · MRN-202400341 · 62M · ICU Day 1</div>
+        </div>
+      </div>
+      <div class="diagnosis-line">Post-coronary artery bypass grafting x3</div>
+      <div class="card-body" style="border-top:none; padding-top:8px;">
+        <div class="row"><span class="k">Code status</span><span class="v">Full code</span></div>
+        <div class="row"><span class="k">Allergies</span><span class="v status-warning">Penicillin — rash</span></div>
+      </div>
+    </div>
+
+    <!-- S: Situation -->
+    <div class="spatial-card" id="card-situation">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="badge badge-S">S</div>
+        <div class="card-title-group">
+          <div class="card-title">Situation</div>
+          <div class="card-subtitle">Working diagnosis</div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="card-body">
+        <p>Recovering after CABG x3, with noradrenaline being weaned and ongoing monitoring for arrhythmia and bleeding.</p>
+      </div>
+    </div>
+
+    <!-- B: Related Background -->
+    <div class="spatial-card" id="card-background">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="badge badge-B">B</div>
+        <div class="card-title-group">
+          <div class="card-title">Related Background</div>
+          <div class="card-subtitle">History &amp; context</div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="card-body">
+        <p>Elective CABG followed progressive angina from triple-vessel disease, with diabetes and hypertension in the background.</p>
+        <ul>
+          <li>Triple-vessel coronary artery disease</li>
+          <li>Hypertension · Type 2 diabetes</li>
+          <li>Ex-smoker, ~30 pack-years, stopped 5y ago</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- A: Vitals -->
+    <div class="spatial-card" id="card-vitals">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="badge badge-A">A</div>
+        <div class="card-title-group">
+          <div class="card-title">Vitals</div>
+          <div class="card-subtitle">HR 88 · SpO2 97% · MAP 87</div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="card-body">
+        <div class="row"><span class="k">HR</span><span class="v status-normal">88 bpm ↓</span></div>
+        <div class="row"><span class="k">SpO₂</span><span class="v status-normal">97 % ↑</span></div>
+        <div class="row"><span class="k">RR</span><span class="v status-normal">16 /min ↓</span></div>
+        <div class="row"><span class="k">Temp</span><span class="v status-normal">37.1 °C</span></div>
+        <div class="row"><span class="k">MAP</span><span class="v status-normal">87 mmHg ↑</span></div>
+      </div>
+    </div>
+
+    <!-- A: Infusions -->
+    <div class="spatial-card" id="card-infusions">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="badge badge-A">A</div>
+        <div class="card-title-group">
+          <div class="card-title">Active Infusions</div>
+          <div class="card-subtitle">3 running · 3 high-alert</div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="card-body">
+        <div class="row"><span class="k">Noradrenaline <span class="pill high-alert">high-alert</span></span><span class="v">0.05 mcg/kg/min</span></div>
+        <div class="row"><span class="k">Morphine PCA <span class="pill high-alert">high-alert</span></span><span class="v">1 mg/hr basal</span></div>
+        <div class="row"><span class="k">Insulin <span class="pill high-alert">high-alert</span></span><span class="v">2 U/hr</span></div>
+      </div>
+    </div>
+
+    <!-- A: Lines & Access -->
+    <div class="spatial-card" id="card-lines">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="badge badge-A">A</div>
+        <div class="card-title-group">
+          <div class="card-title">Lines &amp; Access</div>
+          <div class="card-subtitle">5 devices</div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="card-body">
+        <div class="row"><span class="k">Radial arterial line</span><span class="v">Right</span></div>
+        <div class="row"><span class="k">Triple-lumen CVC</span><span class="v">Right IJV</span></div>
+        <div class="row"><span class="k">Urinary catheter</span><span class="v">Urethral</span></div>
+        <div class="row"><span class="k">Chest drain</span><span class="v">Right pleural</span></div>
+        <div class="row"><span class="k">Chest drain</span><span class="v">Left pleural</span></div>
+      </div>
+    </div>
+
+    <!-- A: Labs -->
+    <div class="spatial-card" id="card-labs">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="badge badge-A">A</div>
+        <div class="card-title-group">
+          <div class="card-title">Abnormal Labs</div>
+          <div class="card-subtitle">4 flagged</div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="card-body">
+        <div class="row"><span class="k">Hb</span><span class="v status-warning">9.8 g/dL ↓</span></div>
+        <div class="row"><span class="k">K⁺</span><span class="v status-warning">3.5 mmol/L</span></div>
+        <div class="row"><span class="k">Creatinine</span><span class="v status-warning">112 µmol/L ↑</span></div>
+        <div class="row"><span class="k">Lactate</span><span class="v status-normal">1.4 mmol/L</span></div>
+        <div class="row"><span class="k">INR</span><span class="v status-warning">1.6</span></div>
+      </div>
+    </div>
+
+    <!-- A: Systems Assessment -->
+    <div class="spatial-card" id="card-systems" style="width:340px;">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="badge badge-A">A</div>
+        <div class="card-title-group">
+          <div class="card-title">Systems Assessment</div>
+          <div class="card-subtitle">2 concerns flagged</div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="card-body">
+        <p><b style="color:var(--fg)">Respiratory —</b> Extubated, on face mask O₂ 6L/min. Bilateral chest drains, serosanguinous fluid.
+          <span class="pill urgent">watch haemothorax</span></p>
+        <p><b style="color:var(--fg)">Cardiovascular —</b> NSR on telemetry, weaning noradrenaline.
+          <span class="pill urgent">watch post-op AF</span></p>
+        <p><b style="color:var(--fg)">Renal —</b> UO 0.8 mL/kg/hr, IDC in situ, mild AKI watch.</p>
+      </div>
+    </div>
+
+    <!-- R: Treatment Plan -->
+    <div class="spatial-card" id="card-plan">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="badge badge-R">R</div>
+        <div class="card-title-group">
+          <div class="card-title">Treatment Plan</div>
+          <div class="card-subtitle">2 urgent · 5 routine</div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="card-body">
+        <p><span class="pill urgent">urgent</span> Wean noradrenaline — target OFF if MAP stable</p>
+        <p><span class="pill urgent">urgent</span> K⁺ replacement per sliding scale (target &gt;4.0)</p>
+        <p>Remove chest drains if drainage &lt;100 mL/24hr</p>
+        <p>Cardiology review · Chest X-ray</p>
+      </div>
+    </div>
+
+    <!-- R: Escalation -->
+    <div class="spatial-card" id="card-escalation">
+      <div class="card-header" onclick="toggleCard(this)">
+        <div class="badge badge-R">R</div>
+        <div class="card-title-group">
+          <div class="card-title">Escalation</div>
+          <div class="card-subtitle">Escalate to ICU Registrar</div>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="card-body">
+        <p><b style="color:var(--fg)">Watch for:</b> post-op AF, chest drain output for haemothorax.</p>
+        <p><b style="color:var(--fg)">Trigger escalation on:</b> sudden rise in drain output, new-onset AF, any haemodynamic deterioration.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Persistent control window -->
+  <div class="control-window">
+    <div class="mode-switch">
+      <button class="active">Spatial</button>
+      <button>Orbit</button>
+      <button>Dashboard</button>
+    </div>
+    <div class="divider"></div>
+    <div class="sbar-rail" id="sbar-rail">
+      <button data-group="S">S</button>
+      <button data-group="B">B</button>
+      <button data-group="A">A</button>
+      <button data-group="R">R</button>
+      <button class="all" data-group="ALL">ALL</button>
+    </div>
+    <div class="divider"></div>
+    <div class="shareplay-dot" title="SharePlay active"></div>
+    <button class="exit-btn">Exit</button>
+  </div>
+
+  <div class="legend">
+    <h2>What this shows</h2>
+    <p>
+      This is a flat-page stand-in for the <code>ImmersiveView</code> billboard cards described in
+      <code>docs/dashboard-immersive-mode-design.md</code>. Card positions here are laid out on a 2D
+      grid around a patient placeholder purely so every card is visible at once — the real layout
+      comes from authored points of interest in <code>Immersive.usda</code>, with each card facing
+      the viewer via <code>BillboardComponent</code>.
+    </p>
+    <p>
+      <b style="color:var(--fg)">Basic Information</b> (left) has no S/B/A/R badge, no collapse
+      control, and stays fully visible in Spatial mode, matching the agreed spec. Every other card
+      carries its group badge and collapses to badge + title only. The SBAR rail and mode switch
+      sit in the persistent control window, which is what a real launcher/control window would show
+      while in Spatial mode.
+    </p>
+    <p>
+      Colors are pulled directly from this project's existing <code>DashboardTheme</code> color
+      assets (dark-appearance values), not invented — <code>DashboardWarning</code>,
+      <code>DashboardCritical</code>, <code>DashboardNormal</code>, <code>DashboardAccent</code>,
+      and the existing glass/stroke tokens. Everything else (card layout, spacing, the SBAR badge
+      shapes) is still open for you to redirect — this is the starting proposal for review, not a
+      locked design.
+    </p>
+  </div>
+
+  <script>
+    function toggleCard(headerEl) {
+      headerEl.closest('.spatial-card').classList.toggle('collapsed');
+    }
+
+    document.getElementById('sbar-rail').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-group]');
+      if (!btn) return;
+      const group = btn.dataset.group;
+      const groups = group === 'ALL' ? ['S','B','A','R'] : [group];
+      const cards = Array.from(document.querySelectorAll('.spatial-card:not(.basic-info)'))
+        .filter(c => groups.includes(c.querySelector('.badge')?.textContent.trim()));
+      const anyCollapsed = cards.some(c => c.classList.contains('collapsed'));
+      cards.forEach(c => c.classList.toggle('collapsed', !anyCollapsed));
+    });
+  </script>
+
+</body>
+</html>

@@ -27,14 +27,14 @@ When a design decision or bug looks visionOS-specific, check the HIG page above 
 
 ## Pending design: spatial/orbit/dashboard mode switch
 
-A design for a 3-way presentation mode switch (`Spatial | Orbit | Dashboard`,
+A design for a 3-way presentation mode switch (`Dashboard | Spatial | Orbit `,
 mutually exclusive, SharePlay-synced) has been agreed with the user but is
-**not implemented**. Full writeup: `docs/dashboard-immersive-mode-design.md`.
+**not implemented**. Full writeup: `docs/presentation-modes.md`.
 
 - Blocked on: this branch not yet having Orbit functionality (see `main` for
   the reference implementation). Do not start this work until Orbit has
   landed on `latest-prototype` and the user explicitly asks for it.
-- When picking this up, check whether `docs/dashboard-immersive-mode-design.md`
+- When picking this up, check whether `docs/presentation-modes.md`
   is still accurate before implementing — it may need updating once Orbit's
   actual shape on this branch is known.
 
@@ -65,6 +65,14 @@ mutually exclusive, SharePlay-synced) has been agreed with the user but is
 - There is other AI agent working on the other worktree
 
 ## Documentation
+
+Read only the documents relevant to the task; follow their links when a shared
+rule is needed. These entry points distinguish current behavior from plans:
+
+- [docs/dashboard-design.md](docs/dashboard-design.md): current dashboard implementation and validation.
+- [docs/presentation-modes.md](docs/presentation-modes.md): planned mode switching, controls, source organization, and SharePlay behavior.
+- [docs/spatial-cards.md](docs/spatial-cards.md): planned Spatial card behavior, SBAR mapping, Situation POI TODO, and pending visual design.
+- [CONTEXT.md](CONTEXT.md): short glossary of agreed product terms.
 
 - At the top the swift file, briefly shows the flow in arrow about how it will interact with other file.
 - Document the purpose, ownership, and meaningful behavior of new modules and public-facing methods with concise Swift documentation comments.

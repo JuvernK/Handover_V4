@@ -18,6 +18,7 @@ enum ISBARSectionID: String, CaseIterable, Identifiable {
 /// Local disclosure state; summaries remain visible regardless of detail state.
 /// Starts with every detail section expanded so a fresh handover shows full context immediately.
 struct DashboardPresentationState {
+    // TODO: Synchronize disclosure across participants when refining SharePlay; no persistence across app restarts is required.
     private(set) var expandedSections: Set<ISBARSectionID> = Set(ISBARSectionID.detailSections)
     private(set) var focusedSection: ISBARSectionID? = .introduction
 
