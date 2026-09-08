@@ -4,6 +4,12 @@ Current implementation contract. Repository-wide rules live in [AGENTS.md](../AG
 
 ## Behavior to preserve
 
+- The launcher remains open as the immersive entry/exit and SharePlay control
+  window. Entering immersion opens the dashboard with an initial placement to
+  the launcher's trailing side and a 1440 × 860 pt size. If the launcher is
+  unavailable, placement falls back to the system default. This rule applies to
+  initial placement, not repositioning an already-open window. Exiting immersion
+  closes the dashboard and retains the launcher.
 - Patient identity, diagnosis, demographics, acuity, trajectory, code status, and
   allergies form a permanent introduction with no disclosure control.
 - When the window is at least 650 pt high and leaves 280 pt for the board, the
@@ -135,6 +141,15 @@ clinical cards and patient header also render spatially. Authored POI names map
 through `SpatialCardView`; preserve those names and SharePlay message types.
 
 ## Validation
+
+Window placement change (8 September 2026): `DashboardPresentationStateChecks`
+and the generic visionOS Simulator build passed (outputs under
+`/private/tmp/handover-placement-*`). Code review confirmed that opening immersion
+opens the dashboard without dismissing the launcher, while closing immersion
+dismisses the dashboard. A pre-change simulator screenshot showed the launcher;
+the overlap was not independently reproduced. Native enter/exit interaction and
+the resulting side-by-side placement remain unverified. Manually enter immersion,
+check both windows and the Exit control, exit, and re-enter to check reopening.
 
 Run from the repository root. Keep tests outside the synchronized app folder to
 avoid a second executable entry point. Use separate output paths per worktree;

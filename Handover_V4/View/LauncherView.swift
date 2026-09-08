@@ -4,17 +4,13 @@
 //
 //  Created by Juvern Khor on 8/9/2026.
 //
-//  Shown at launch and after exiting the immersive space. Its only job is
-//  getting the user into the ICU immersive space — the dashboard itself
-//  only opens once that space is open (see Handover_V4App / DashboardView).
-//
-//  The launcher dismisses itself and opens the dashboard once immersiveSpaceState
-//  flips to .open, driven from here rather than from ImmersiveView — ImmersiveView
-//  is mid-teardown during the exit transition, so window calls made from its
-//  onAppear/onDisappear are unreliable and can leave the dashboard window stuck open.
+// Flow: Handover_V4App -> LauncherView -> AppModel + ToggleImmersiveSpaceButton + DashboardView.
+// Window transitions belong to the persistent windows because ImmersiveView
+// may be tearing down when the immersive space closes.
 
 import SwiftUI
 
+/// Persistent entry, exit, and SharePlay controls beside the immersive dashboard.
 struct LauncherView: View {
     @Environment(AppModel.self) private var appModel
     @Environment(\.openWindow) private var openWindow
