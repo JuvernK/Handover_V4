@@ -1,3 +1,4 @@
+// Flow: ImmersiveView -> SpatialCardView -> AppModel disclosure + shared clinical cards.
 //
 //  SpatialCardView.swift
 //  Handover_V4
@@ -37,7 +38,7 @@ struct SpatialCardView: View {
 
     var body: some View {
         cardContent
-            .scaleEffect(immersiveCardScale)
+            .scaleEffect(appModel.presentationMode == .orbit ? 1 : immersiveCardScale)
     }
 
     @ViewBuilder
@@ -86,11 +87,11 @@ struct SpatialCardView: View {
     }
 
     private func isExpanded(cardName: String) -> Bool {
-        appModel.cardStates[cardName] ?? true
+        appModel.isCardExpanded(cardName)
     }
 
     private func isExpanded(_ sectionID: SectionID) -> Bool {
-        appModel.cardStates[poiName] ?? appModel.cardStates[sectionID.rawValue] ?? true
+        appModel.isCardExpanded(poiName)
     }
 
     /// Systems keeps its own extra-wide tier since its internal grid needs the

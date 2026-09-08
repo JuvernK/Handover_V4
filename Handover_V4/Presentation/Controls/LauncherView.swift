@@ -47,6 +47,10 @@ struct LauncherView: View {
                 .padding(.top, 4)
                 .transition(.opacity)
 
+                if appModel.presentationMode == .orbit {
+                    OrbitNavigationView()
+                }
+
                 if appModel.presentationMode == .spatial {
                     SBARRail()
                         .padding(.top, 4)
@@ -107,7 +111,6 @@ struct LauncherView: View {
             if appModel.presentationMode == .dashboard {
                 openWindow(id: "dashboard")
             }
-//            dismissWindow(id: "launcher")
         }
         // Dashboard mode shows the dashboard window; Spatial and Orbit hide it,
         // keeping the ICU room visible behind the launcher/control window.

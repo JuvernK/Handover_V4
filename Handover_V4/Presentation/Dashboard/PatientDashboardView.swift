@@ -4,6 +4,7 @@ internal import UniformTypeIdentifiers
 
 /// Owns a masonry SBAR board, with a pinned introduction and separate systems reader.
 struct PatientDashboardView: View {
+    @Environment(AppModel.self) private var appModel
     let patient: Patient
     @State private var presentation = DashboardPresentationState()
     @State private var navigationRequest: ISBARSectionID?
@@ -85,6 +86,9 @@ struct PatientDashboardView: View {
                     navigationRequest = nil
                 }
             }
+        }
+        .onChange(of: appModel.presentationMode) { _, mode in
+            if mode == .dashboard { presentation = DashboardPresentationState() }
         }
         .environment(\.isDashboardSurface, true)
         .foregroundStyle(DashboardTheme.foreground)

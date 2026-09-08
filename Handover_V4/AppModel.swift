@@ -1,3 +1,4 @@
+// Flow: LauncherView + SharePlay -> AppModel -> dashboard disclosure + OrbitController + immersive cards.
 //
 //  AppModel.swift
 //  Handover_V4
@@ -22,8 +23,7 @@ class AppModel {
     var immersiveSpaceState = ImmersiveSpaceState.closed
 
     /// One of three mutually exclusive ways to present a handover in the immersive space.
-    /// Spatial and Orbit are not implemented yet; only Dashboard mode currently hides/shows
-    /// spatial cards. See docs/presentation-modes.md.
+    /// Each entry applies its local disclosure policy; new SharePlay synchronization is deferred.
     enum PresentationMode: String, CaseIterable, Identifiable {
         case dashboard
         case spatial
@@ -42,7 +42,29 @@ class AppModel {
     // TODO: After the user's explicit SharePlay implementation go-ahead, synchronize
     // mode changes with disclosure resets and Orbit navigation; late joining must not reset peers.
     // See docs/orbit-source-outlines.md for the deferred scope.
-    var presentationMode = PresentationMode.dashboard
+    var presentationMode = PresentationMode.dashboard {
+        didSet {
+            guard oldValue != presentationMode else { return }
+            if presentationMode == .orbit {
+                orbit.enter()
+            } else {
+                orbit.leave()
+                if presentationMode == .spatial {
+                    for card in OrbitCard.allCases { cardStates[card.rawValue] = true }
+                }
+            }
+        }
+    }
+    let orbit = OrbitController()
+
+    /// Orbit disclosure is local and exclusive; Spatial retains its existing shared card messages.
+    func isCardExpanded(_ name: String) -> Bool {
+        if name == "Basic_Information" { return true }
+        if presentationMode == .orbit {
+            return orbit.state.expandedCard?.rawValue == name
+        }
+        return cardStates[name] ?? cardStates[name.lowercased()] ?? true
+    }
 
     let handoverViewModel: HandoverViewModel
     let patients = PatientDataLoader.loadOrEmpty()
@@ -51,11 +73,6 @@ class AppModel {
 
     init(initialBedNumber: String = "BED-02") {
         handoverViewModel = HandoverViewModel(initialBedNumber: initialBedNumber)
-//        // Temporary debug code to test decoding
-//        print("Loaded \(patients.count) patients")
-//        for p in patients {
-//            print("• \(p.bedNumber): \(p.name) — \(p.initials)")
-//        }
         Task(name: "group session observation") {
             await observeGroupSessions()
         }
