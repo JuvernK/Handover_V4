@@ -25,9 +25,12 @@ struct SpatialCardView: View {
 
     let patient: Patient
 
-    /// Width the card renders at in 3D space. Most cards stay compact; Systems
-    /// gets extra width so its adaptive internal grid can split into columns.
+    /// Width the card renders at in 3D space. Attachments don't reflow content the
+    /// way a window would when resized, so a card with a lot of content needs a
+    /// wider fixed width chosen up front rather than growing on demand.
     private let defaultCardWidth: CGFloat = 360
+    private let mediumCardWidth: CGFloat = 480
+    private let wideCardWidth: CGFloat = 620
     private let basicInformationCardWidth: CGFloat = 720
     private let systemsCardWidth: CGFloat = 760
     private let immersiveCardScale: CGFloat = 1.5
@@ -47,7 +50,7 @@ struct SpatialCardView: View {
         } else if isSituationPOI {
             if isExpanded(cardName: poiName) {
                 SituationCard(patient: patient)
-                    .frame(width: defaultCardWidth)
+                    .frame(width: width(forItemCount: patient.escalation.mainConcerns.count))
             } else {
                 CompactSpatialCard(title: "Situation", badge: .s)
                     .frame(width: defaultCardWidth)
@@ -90,8 +93,37 @@ struct SpatialCardView: View {
         appModel.cardStates[poiName] ?? appModel.cardStates[sectionID.rawValue] ?? true
     }
 
+    /// Systems keeps its own extra-wide tier since its internal grid needs the
+    /// room to split into columns; every other section scales with how many
+    /// items it actually has to show.
     private func expandedWidth(for sectionID: SectionID) -> CGFloat {
-        sectionID == .systems ? systemsCardWidth : defaultCardWidth
+        if sectionID == .systems { return systemsCardWidth }
+        return width(forItemCount: itemCount(for: sectionID))
+    }
+
+    private func itemCount(for sectionID: SectionID) -> Int {
+        switch sectionID {
+        case .vitals: return patient.vitals.count
+        case .relatedBackground:
+            return patient.relatedBackground.pastMedicalHistory.count
+                + patient.relatedBackground.socialHistory.count
+                + patient.relatedBackground.relevantContext.count
+        case .infusions: return patient.infusions.count
+        case .lines: return patient.lines.count
+        case .labs: return patient.labs.count
+        case .systems: return patient.systems.count
+        case .plan: return patient.plan.count
+        case .escalation:
+            return patient.escalation.mainConcerns.count + patient.escalation.triggers.count
+        }
+    }
+
+    private func width(forItemCount count: Int) -> CGFloat {
+        switch count {
+        case ..<5: return defaultCardWidth
+        case 5..<8: return mediumCardWidth
+        default: return wideCardWidth
+        }
     }
 }
 
