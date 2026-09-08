@@ -6,26 +6,32 @@ Current implementation contract. Repository-wide rules live in [AGENTS.md](../AG
 
 - Patient identity, diagnosis, demographics, acuity, trajectory, code status, and
   allergies form a permanent introduction with no disclosure control.
-- At least 1280 pt wide and 650 pt high: a separate patient introduction stays
-  pinned above a masonry SBAR board — Situation, Background, Assessment, and
-  Recommendation drop into whichever column currently has the least height,
-  the way a Pinterest-style grid fills space, rather than fixed lanes. Assessment
-  always spans two columns (it carries vitals/labs/infusion grids that need the
-  width); Situation, Background, and Recommendation are always one column wide.
-  The board uses 2 columns normally and up to 3 once there is enough room. Column
-  assignment is recomputed on every expand/collapse, so a card can move to a
-  different column as its siblings free or claim space — this reshuffling is a
-  deliberate choice, not a bug, made after seeing it live in a prototype
-  (`docs/mockups/dashboard-flowboard.html`). Each card also has a grip handle
-  (next to its chevron) that can be dragged onto another card to swap the two
-  cards' positions in the board order; the masonry layout then repositions
-  everything around the new order, same as an expand/collapse. This order is
-  in-memory only (`PatientDashboardView.sectionOrder`), not persisted or shared.
-  The SBAR rail aligns with the top of the introduction, 8 pt to its left. The
-  systems pane is 400 pt wide, top-aligned, and scrolls independently up to
-  min(720, window height − 120) pt, with a 46 pt top inset. Its 26 pt overlap is
-  reserved as empty space beside the board, with the existing 12 pt forward depth
-  offset. All panes share one window. New windows default to 1440 × 860 pt.
+- When the window is at least 650 pt high and leaves 280 pt for the board, the
+  patient introduction stays pinned above the SBAR board. The board uses one
+  column when narrow, two normally, and three above 1400 pt available width.
+  Each expanded section is measured at one and two columns. It spans two when
+  its one-column height exceeds 560 pt and widening reduces height by at least
+  15%. Collapsed sections use one column. This applies to all four sections.
+- Cards pack in local section order. Reordering reuses `main`'s
+  `DraggableDashboardCard` / `HandoverViewModel.moveSection` structure: a typed
+  drag payload lands on a card, whose destination identity updates the order.
+  Dragging a section to another section moves it to that section's original
+  index and shifts intervening sections. This is insertion, not a pairwise
+  exchange of screen coordinates. Both responsive layouts use this transition.
+- The 60 × 60 pt grip remains separate from disclosure. The destination card
+  shows an accent outline. Empty-space drops have no destination and do nothing;
+  no landing area is reserved. Introduction and systems remain fixed.
+  Disclosure, reordering, and resizing repack the board with content-driven spans.
+  Ordering stays local to the dashboard lifetime and is not sent through SharePlay.
+- Layout sizing follows `main`'s finite-width resolution pattern: unspecified or
+  nonfinite proposals use a finite 280 pt per-column measurement basis plus gaps.
+  Finite proposals use the available width. No measured screen positions are
+  persisted, and no floating-point coordinate is converted into a column index.
+- The SBAR rail sits beside the board. The systems pane is 400 pt wide, top-aligned,
+  and scrolls independently up to min(720, window height − 120) pt, with a 46 pt
+  top inset. Its 26 pt overlap is reserved as empty space beside the board, with
+  the existing 12 pt forward depth offset. All panes share one window. New windows
+  default to 1440 × 860 pt.
 - The introduction puts status and allergy information beside identity when it
   fits, and below it otherwise. Native section buttons provide rounded hover
   feedback; the focused section has an accent outline. Authored summaries stay
@@ -33,7 +39,8 @@ Current implementation contract. Repository-wide rules live in [AGENTS.md](../AG
 - Narrower or shorter: one scroll region, scrolling header, horizontal shortcuts,
   and a separate systems panel between Assessment and Recommendation. The shortcut row scrolls
   horizontally when its enlarged controls exceed the available width. This mode keeps
-  the plain single-column stack (no masonry) since there isn't room for multiple columns.
+  the plain single-column stack and supports card-to-card swaps in reading order;
+  free-space positioning is available in the board composition.
 - Situation, Background, Assessment, Recommendation each show a full authored
   summary. Details start **expanded** so a fresh handover shows full context
   immediately, and collapse independently by tapping the header.
@@ -55,18 +62,14 @@ Current implementation contract. Repository-wide rules live in [AGENTS.md](../AG
   applies locally to dashboard views. Switching must preserve disclosure and
   scroll position. Shared cards retain standalone glass outside the dashboard.
 
-### Why masonry, not the two-lane board
+### Layout history
 
-The two-lane 40/60 split (a prior iteration of this doc) was built from an HTML
-reference and shipped without checking it against what was actually wanted. A
-`/grilling` session on 2026-09-08 established that the two-lane split was the
-wrong structure entirely: the four SBAR cards should each take up only the space
-their own content needs, not a lane sized for the other cards sharing it. The
-options considered and rejected: equal-height row layout (cards forced to match
-neighbours' height — rejected, wastes space); fixed-slot masonry where a card's
-column never changes (rejected — the user explicitly chose full reshuffling
-after being warned it could make cards move mid-handover); equal-width columns
-only (rejected — Assessment needed to span wider for its data grids).
+The earlier two-lane split was replaced by content-sized masonry on 8 September.
+An intermediate drag implementation stored displayed positions and supported
+empty-space moves; empty-space moves were then removed at the user's request.
+A reported nonfinite-coordinate crash led to reusing `main`'s identity/order-based
+card drop structure and finite-width resolution. The current layout retains
+content-driven spans and masonry packing rather than copying `main`'s row layout.
 
 ## Data and ownership
 
@@ -86,7 +89,8 @@ below is copied from that comment so this table and the code can't drift apart s
 | `Models/Patient.swift`, `Data/PatientData.json` | — | Clinical records and authored summaries |
 | `Models/DashboardPresentationState.swift` | `PatientDashboardView -> DashboardPresentationState -> section detail disclosure` | Local ISBAR focus and disclosure rules; sections start expanded, and focusing an already-expanded section collapses it |
 | `View/Dashboard/PatientDashboardView.swift` | `DashboardView -> PatientDashboardView -> ISBAR navigation + patient summaries + systems assessment` | Responsive layout, state ownership, private navigation and section views, summary fallback and card grouping |
-| `View/Dashboard/FlowBoardLayout.swift` | `PatientDashboardView -> FlowBoardLayout -> masonry placement of SBAR cards` | Masonry column placement (2-3 cols, or 1 when narrow) for the SBAR board; lets a card span multiple columns via `flowSpan(_:)` |
+| `Models/DashboardBoardState.swift` | `PatientDashboardView -> DashboardBoardState -> local section order; FlowBoardLayout -> DashboardBoardGeometry -> measured frames` | Main-style order transitions, finite-width resolution, content-driven spans, and collision-free packing |
+| `View/Dashboard/FlowBoardLayout.swift` | `PatientDashboardView -> FlowBoardLayout -> DashboardBoardGeometry -> measured SBAR frames` | SwiftUI measurement at one and two columns and placement through the shared geometry solver |
 | `View/Dashboard/PatientHeaderView.swift` | `Patient records -> PatientHeaderView -> DashboardTheme + SwiftUI presentation` | Shared patient introduction with a dashboard-only side-by-side safety layout when space permits |
 | `View/Cards/SystemAssessmentCard.swift` | `Patient records -> SystemAssessmentCard -> DashboardTheme + SwiftUI presentation` | Dashboard and spatial systems presentations |
 | `View/Dashboard/DashboardView.swift` | `AppModel -> DashboardView -> PatientDashboardView + DashboardControls` | Window controls, appearance preference, SharePlay alert, empty state |
@@ -107,9 +111,9 @@ Handover_V4App
 ├─ DashboardView (window)
 │  ├─ DashboardControls → ToggleImmersiveSpaceButton
 │  └─ PatientDashboardView
-│     ├─ DashboardPresentationState + pending scroll request
+│     ├─ DashboardPresentationState + DashboardBoardState + pending scroll request
 │     ├─ ISBARNavColumn (private shortcuts) — S/B/A/R toggle their section; ALL toggles all four
-│     ├─ FlowBoardLayout (wide mode only) → ISBARSectionView × 4 (private summaries/disclosure) → clinical cards
+│     ├─ FlowBoardLayout (board mode) → ISBARSectionView × 4 (private summaries/disclosure) → clinical cards
 │     ├─ PatientHeaderView
 │     └─ SystemsAssessmentCard (floating, overlapping panel)
 └─ ImmersiveView (RealityKit scene, attachments, gestures)
@@ -137,6 +141,13 @@ avoid a second executable entry point. Use separate output paths per worktree;
 never compile precondition-based checks with `-Ounchecked`.
 
 ```sh
+swiftc -module-cache-path /private/tmp/handover-drag-module-cache \
+  Handover_V4/Models/DashboardPresentationState.swift \
+  Handover_V4/Models/DashboardBoardState.swift \
+  Tests/DashboardBoardChecks.swift \
+  -o /private/tmp/handover-board-checks
+/private/tmp/handover-board-checks
+
 swiftc -module-cache-path /private/tmp/handover-summary-module-cache \
   Handover_V4/Models/DashboardPresentationState.swift \
   Tests/DashboardPresentationStateChecks.swift \
@@ -153,7 +164,7 @@ swiftc -module-cache-path /private/tmp/handover-summary-module-cache \
 
 xcodebuild -project Handover_V4.xcodeproj -scheme Handover_V4 \
   -destination 'generic/platform=visionOS Simulator' \
-  -derivedDataPath /private/tmp/handover-v2-derived-data \
+  -derivedDataPath /private/tmp/handover-drag-derived \
   CODE_SIGNING_ALLOWED=NO build
 ```
 
@@ -184,15 +195,35 @@ persistence during interaction; device gaze/pinch. The HTML prototype exercised
 click-to-collapse and reflow, and 2-vs-3-column switching, but that is a stand-in
 for the interaction, not a substitute for verifying the native gesture path.
 
-Drag-to-swap validation (8 September 2026): after the two rail bug fixes above
-(rail toggling closed, and narrow windows keeping the same composition), a grip
-handle (`line.3.horizontal`, next to each card's chevron) and `.draggable`/
-`.dropDestination` swap handling were added to `ISBARSectionView`. The build
-succeeded and a fresh install was screenshotted, confirming the grip handle
-renders correctly next to the chevron on every card. The actual drag gesture —
-picking up a handle, dropping it on another card, and watching the swap +
-reflow — was **not** exercised, for the same simulator tap/drag limitation as
-everything else in this file; only the static rendering was confirmed.
+Drag revision (8 September 2026): the pre-change simulator was captured. After
+correcting multi-display pointer coordinates and confirming ALL accepted taps,
+attempting to drag the small Situation grip into empty space expanded Situation
+instead of moving it. This exposed an end-user targeting failure; it did not prove
+that the original drop callback ran. Code inspection also found that only card
+drops were handled, swaps changed array order rather than displayed positions,
+and widths were hard-coded by section identity.
+
+Current regression checks cover forward/backward insertion, adjacent moves,
+self/invalid identities, content-driven spans, and 240 repeated reorder/content
+changes at one to three columns. Nonfinite sizing regressions run after a reorder:
+unspecified, positive/negative infinity, NaN, zero, and negative proposals must
+produce finite frames, and subsequent finite placement must remain valid.
+
+The main-style revision removes the coordinate-to-Int conversion shown in the
+user's crash screenshot. The root cause is consistent with an infinite SwiftUI
+sizing probe reaching the stored-position calculation; exact device proposal
+values were not captured. Both order and disclosure checks passed, and the generic visionOS Simulator
+build passed for this revision. Native headset drag completion remains unverified;
+the prior simulator pointer attempts did not complete a move. No claim of native
+end-to-end gesture success is made by the standalone geometry checks.
+
+Manual acceptance checks:
+1. Collapse ALL and drag Situation onto Recommendation. Order should become
+   Background, Assessment, Recommendation, Situation without changing disclosure.
+2. Move Situation back onto Background. Original SBAR order should return.
+3. Drop onto the source card or empty space. Order should remain unchanged.
+4. Expand sections, resize the window, and repeat while immersive space is open.
+   Cards must repack without a nonfinite-coordinate crash or clipped content.
 
 ## Deferred work
 
@@ -200,13 +231,10 @@ everything else in this file; only the static rendering was confirmed.
 
 #### Header dragging and sorting
 
-**Partially implemented (2026-09-08):** the core idea — drag a card's header onto
-another card to move it — now exists in Swift, but as a plain two-card position
-swap (see "Behavior to preserve" above and `ISBARSectionView.onSwap` in
-`PatientDashboardView.swift`), not the fuller insert-before-with-region-reflow
-behavior this HTML draft explored. Treatment plan sorting, the demo due-date
-defaults, and eight-card region dragging below are still just this HTML proposal,
-not implemented.
+**Implemented for SBAR sections (2026-09-08):** dedicated grips support visible
+main-style order moves with automatic content-driven width. Empty-board placement
+was removed at the user’s request.
+The eight-card region layout and treatment-plan sorting below remain proposals.
 
 [Interactive HTML draft](mockups/dashboard-draggable.html) keeps the user-selected
 integrated arrangement, infusion tiles and two nested Escalation blocks. This is

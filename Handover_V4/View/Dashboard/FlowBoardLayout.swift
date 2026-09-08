@@ -1,77 +1,58 @@
-// Flow: PatientDashboardView -> FlowBoardLayout -> masonry placement of SBAR cards.
+// Flow: PatientDashboardView -> FlowBoardLayout -> DashboardBoardGeometry -> measured SBAR frames.
 import SwiftUI
 
-/// Number of columns a card occupies in `FlowBoardLayout`. Defaults to 1.
-private struct FlowSpanKey: LayoutValueKey {
-    static let defaultValue = 1
+private struct FlowSectionKey: LayoutValueKey {
+    static let defaultValue = ISBARSectionID.situation
+}
+
+private struct FlowExpandedKey: LayoutValueKey {
+    static let defaultValue = false
 }
 
 extension View {
-    /// Marks a card as occupying `span` adjacent columns in the enclosing `FlowBoardLayout`.
-    func flowSpan(_ span: Int) -> some View {
-        layoutValue(key: FlowSpanKey.self, value: span)
+    /// Identifies a board card and whether its details may benefit from two-column measurement.
+    func flowSection(_ section: ISBARSectionID, expanded: Bool) -> some View {
+        layoutValue(key: FlowSectionKey.self, value: section)
+            .layoutValue(key: FlowExpandedKey.self, value: expanded)
     }
 }
 
-/// Places cards into whichever column currently has the least height, like Pinterest's
-/// masonry grid. A card may span multiple adjacent columns via `flowSpan(_:)`; its top is
-/// then the tallest of the columns it spans. Column assignments are recomputed on every
-/// layout pass, so a sibling's expand/collapse can move a card to a different column.
+/// Measures every card at one and two columns, then packs cards in the user-selected order.
+/// Sizing and placement share the same geometry so card sizes agree across layout passes.
 struct FlowBoardLayout: Layout {
     var columns: Int
+    var state: DashboardBoardState
     var gap: CGFloat = 12
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        guard let width = proposal.width, width > 0, columns > 0 else { return .zero }
-        let heights = columnHeights(width: width, subviews: subviews) { _, _ in }
-        let height = (heights.max() ?? 0) - gap
-        return CGSize(width: width, height: max(0, height))
+        let width = DashboardBoardGeometry.resolvedWidth(proposal.width, columns: columns, gap: gap)
+        return CGSize(width: width, height: frames(width: width, subviews: subviews).values.map(\.maxY).max() ?? 0)
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        guard columns > 0, bounds.width > 0 else { return }
-        let colWidth = (bounds.width - gap * CGFloat(columns - 1)) / CGFloat(columns)
-        _ = columnHeights(width: bounds.width, subviews: subviews) { index, placement in
-            let x = bounds.minX + CGFloat(placement.start) * (colWidth + gap)
-            let y = bounds.minY + placement.top
-            subviews[index].place(at: CGPoint(x: x, y: y),
-                                   proposal: ProposedViewSize(width: placement.width, height: placement.height))
+        guard bounds.minX.isFinite, bounds.minY.isFinite else { return }
+        let width = DashboardBoardGeometry.resolvedWidth(bounds.width, columns: columns, gap: gap)
+        let placements = frames(width: width, subviews: subviews)
+        for subview in subviews {
+            guard let frame = placements[subview[FlowSectionKey.self]] else { continue }
+            subview.place(at: CGPoint(x: bounds.minX + frame.minX, y: bounds.minY + frame.minY),
+                          anchor: .topLeading,
+                          proposal: ProposedViewSize(width: frame.width, height: frame.height))
         }
     }
 
-    private struct Placement {
-        let start: Int
-        let top: CGFloat
-        let width: CGFloat
-        let height: CGFloat
-    }
-
-    /// Shared pass for both sizing and placement so column assignment never disagrees between them.
-    private func columnHeights(width: CGFloat, subviews: Subviews,
-                                onPlace: (Int, Placement) -> Void) -> [CGFloat] {
-        let colWidth = (width - gap * CGFloat(columns - 1)) / CGFloat(columns)
-        var colHeights = [CGFloat](repeating: 0, count: columns)
-
-        for index in subviews.indices {
-            let span = min(max(subviews[index][FlowSpanKey.self], 1), columns)
-            let subviewWidth = colWidth * CGFloat(span) + gap * CGFloat(span - 1)
-            let size = subviews[index].sizeThatFits(ProposedViewSize(width: subviewWidth, height: nil))
-
-            var bestStart = 0
-            var bestTop = CGFloat.infinity
-            for start in 0...(columns - span) {
-                let top = colHeights[start..<(start + span)].max() ?? 0
-                if top < bestTop {
-                    bestTop = top
-                    bestStart = start
-                }
-            }
-
-            onPlace(index, Placement(start: bestStart, top: bestTop, width: subviewWidth, height: size.height))
-            let bottom = bestTop + size.height + gap
-            for i in bestStart..<(bestStart + span) { colHeights[i] = bottom }
+    private func frames(width: CGFloat, subviews: Subviews) -> [ISBARSectionID: CGRect] {
+        guard columns > 0, width > gap * CGFloat(columns - 1) else { return [:] }
+        let narrowWidth = (width - gap * CGFloat(columns - 1)) / CGFloat(columns)
+        let wideWidth = columns > 1 ? narrowWidth * 2 + gap : narrowWidth
+        let items = subviews.map { subview in
+            DashboardBoardGeometry.Item(
+                section: subview[FlowSectionKey.self],
+                narrowHeight: subview.sizeThatFits(ProposedViewSize(width: narrowWidth, height: nil)).height,
+                wideHeight: subview.sizeThatFits(ProposedViewSize(width: wideWidth, height: nil)).height,
+                isExpanded: subview[FlowExpandedKey.self]
+            )
         }
-
-        return colHeights
+        return DashboardBoardGeometry.frames(items: items, width: width, columns: columns, gap: gap, state: state)
     }
 }
