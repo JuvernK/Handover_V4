@@ -1,0 +1,494 @@
+<title>Dashboard flowboard — masonry SBAR prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<style>
+  /* THROWAWAY PROTOTYPE — answers one question: does a masonry-flow SBAR
+     board (2-3 cols, true reflow on expand/collapse, Assessment spans 2 cols,
+     cards start expanded) feel right? Rail/header/systems-panel copied verbatim
+     from Dashboard_navigation.html (== latest-prototype styling) so only the
+     reader area is under test. Not wired to real Swift/data. */
+
+  :root {
+    --bg: #0a0a0d;
+    --panel: rgba(255,255,255,0.05);
+    --panel-strong: rgba(255,255,255,0.085);
+    --card: rgba(255,255,255,0.045);
+    --stroke: rgba(255,255,255,0.14);
+    --hairline: rgba(255,255,255,0.08);
+    --fg: rgba(255,255,255,0.95);
+    --fg-secondary: rgba(255,255,255,0.62);
+    --fg-tertiary: rgba(255,255,255,0.42);
+    --accent: #c3a5f9;
+    --accent-soft: rgba(195,165,249,0.16);
+    --accent-strong: #d9c6ff;
+    --critical: #ff7a73;
+    --critical-soft: rgba(255,122,115,0.14);
+    --warning: #fbc456;
+    --warning-soft: rgba(251,196,86,0.14);
+    --normal: #80e2b9;
+    --normal-soft: rgba(128,226,185,0.14);
+    --pool-a: rgba(150,112,205,0.16);
+    --pool-b: rgba(70,110,150,0.16);
+    --shadow: 0 20px 50px rgba(0,0,0,0.45);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: radial-gradient(ellipse 900px 500px at 8% -10%, var(--pool-a), transparent),
+                radial-gradient(ellipse 900px 600px at 100% 0%, var(--pool-b), transparent),
+                var(--bg);
+    color: var(--fg);
+    font-family: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace; font-variant-numeric: tabular-nums; }
+  button { font-family: inherit; -webkit-tap-highlight-color: transparent; }
+
+  .page { max-width: 1900px; margin: 0 auto; padding: 26px 26px 70px; }
+
+  .pitch { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: 18px; }
+  .pitch h1 { margin: 0; font-size: 21px; font-weight: 800; letter-spacing: -0.01em; }
+  .pitch p { margin: 4px 0 0; color: var(--fg-secondary); font-size: 13.5px; max-width: 74ch; }
+  .col-toggle { display: flex; gap: 6px; background: var(--panel); border: 1px solid var(--stroke); padding: 4px; border-radius: 999px; }
+  .col-toggle button { border: none; background: transparent; color: var(--fg-secondary); font-size: 12px; font-weight: 600; padding: 7px 14px; border-radius: 999px; cursor: pointer; }
+  .col-toggle button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent-strong); }
+
+  .stage {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+    height: 900px;
+    border-radius: 30px;
+    background: var(--panel);
+    border: 1px solid var(--hairline);
+    padding: 14px;
+    overflow: hidden;
+  }
+
+  .rail { width: 84px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; flex-shrink: 0; }
+  .rail-inner { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 26px; background: var(--panel-strong); border: 1px solid var(--stroke); box-shadow: var(--shadow); }
+  .rail-btn { width: 60px; height: 60px; border-radius: 18px; border: 1px solid var(--stroke); background: var(--panel); color: var(--fg-secondary); font-size: 24px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease; }
+  .rail-btn:hover { transform: translateY(-1px); }
+  .rail-btn.lit { background: var(--accent-soft); color: var(--accent-strong); border-color: color-mix(in srgb, var(--accent) 45%, var(--stroke)); }
+  .rail-divider { width: 24px; height: 1px; background: var(--hairline); margin: 2px 0; }
+  .rail-btn.all { font-size: 13px; font-weight: 700; }
+
+  .reader-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; border-radius: 28px; background: var(--panel-strong); border: 1px solid var(--stroke); box-shadow: var(--shadow); overflow: hidden; }
+  .header { padding: 20px; display: flex; gap: 16px; align-items: flex-start; padding-right: 46px; }
+  .avatar { width: 72px; height: 72px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-strong); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 24px; flex-shrink: 0; }
+  .header-main h2 { margin: 0 0 4px; font-size: 26px; font-weight: 800; }
+  .header-main .dx { font-size: 16.5px; font-weight: 600; margin-bottom: 4px; }
+  .header-main .demo { font-size: 12.5px; color: var(--fg-secondary); }
+  .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .badge { font-size: 11.5px; font-weight: 700; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--stroke); }
+  .badge.normal { color: var(--normal); background: var(--normal-soft); }
+  .badge.neutral { color: var(--fg-secondary); background: var(--panel); }
+  .badge.warn { color: var(--warning); background: var(--warning-soft); }
+  .badge.allergy { color: var(--critical); background: var(--critical-soft); }
+
+  .divider { height: 1px; background: var(--hairline); margin: 0 20px; }
+
+  /* Flowboard: relative container, cards positioned absolutely by JS masonry */
+  .flowboard { flex: 1; overflow-y: auto; padding: 12px; position: relative; }
+  .flow-card {
+    position: absolute;
+    border-radius: 24px;
+    background: var(--card);
+    border: 1px solid var(--hairline);
+    overflow: hidden;
+    transition: top 0.3s ease, left 0.3s ease, width 0.3s ease;
+  }
+  .flow-head { display: flex; align-items: flex-start; gap: 16px; padding: 20px; cursor: pointer; }
+  .flow-letter { width: 44px; height: 44px; border-radius: 14px; background: var(--accent-soft); color: var(--accent-strong); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; flex-shrink: 0; }
+  .flow-title { font-size: 21px; font-weight: 700; margin: 0 0 7px; }
+  .flow-summary { font-size: 16px; color: var(--fg); line-height: 1.5; }
+  .flow-chevron { margin-left: auto; margin-top: 12px; color: var(--fg-tertiary); transition: transform 0.2s ease; flex-shrink: 0; }
+  .flow-card.open .flow-chevron { transform: rotate(180deg); }
+  .flow-body { display: none; padding: 0 16px 16px; flex-direction: column; gap: 12px; }
+  .flow-card.open .flow-body { display: flex; }
+  .flow-card[data-span="2"] { border-color: color-mix(in srgb, var(--accent) 22%, var(--hairline)); }
+
+  .subcard { border-radius: 16px; background: var(--panel); border: 1px solid var(--hairline); padding: 16px; }
+  .subcard-title { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; color: var(--fg-secondary); margin: 0 0 12px; }
+
+  .pills { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+  .concern-line { display: flex; gap: 8px; align-items: flex-start; font-size: 13.5px; margin-top: 8px; color: var(--fg-secondary); }
+
+  .bg-block + .bg-block { margin-top: 14px; }
+  .bg-block h4 { margin: 0 0 6px; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--fg-tertiary); font-weight: 700; }
+  .bg-block ul { margin: 0; padding-left: 18px; font-size: 13.5px; color: var(--fg-secondary); display: flex; flex-direction: column; gap: 4px; }
+  .bg-block p { margin: 0; font-size: 13.5px; color: var(--fg); }
+
+  .vitals-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .vital-box { border-radius: 14px; background: var(--panel); border: 1px solid var(--hairline); padding: 12px 13px; }
+  .vital-box .lbl { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: var(--fg-tertiary); text-transform: uppercase; }
+  .vital-box .val { font-size: 22px; font-weight: 600; }
+  .vital-box .val .u { font-size: 11px; color: var(--fg-tertiary); font-weight: 500; }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .tile { border-radius: 14px; background: var(--panel); border: 1px solid var(--hairline); padding: 12px 13px; display: flex; flex-direction: column; gap: 6px; }
+  .lab-name { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: var(--fg-tertiary); text-transform: uppercase; }
+  .lab-value { font-size: 26px; font-weight: 600; }
+  .lab-status { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+  .status-normal { color: var(--normal); } .status-warning { color: var(--warning); } .status-critical { color: var(--critical); }
+  .inf-name { font-size: 14px; font-weight: 700; }
+  .inf-dose { font-size: 15px; font-weight: 600; color: var(--accent-strong); }
+  .inf-route { font-size: 11px; color: var(--fg-tertiary); }
+  .alert-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 700; color: var(--warning); }
+  .inf-purpose { font-size: 12px; color: var(--fg-secondary); }
+  .line-type { font-size: 13.5px; font-weight: 700; }
+  .line-loc { font-size: 12px; color: var(--fg-secondary); }
+
+  .plan-row { display: flex; flex-direction: column; gap: 8px; border-radius: 14px; background: var(--panel); border: 1px solid var(--hairline); padding: 12px 13px; }
+  .plan-top { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--fg-tertiary); }
+  .plan-top .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--fg-tertiary); }
+  .plan-top .dot.urgent { background: var(--critical); box-shadow: 0 0 0 3px var(--critical-soft); }
+  .plan-top .due { margin-left: auto; font-weight: 600; }
+  .plan-task { font-size: 13.5px; }
+
+  .esc-to { margin-top: 4px; padding: 10px 12px; border-radius: 12px; background: var(--critical-soft); border: 1px solid color-mix(in srgb, var(--critical) 30%, var(--hairline)); font-size: 13px; font-weight: 700; color: var(--critical); }
+
+  .family-contact { font-size: 14.5px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .presence { font-size: 10.5px; font-weight: 700; color: var(--normal); background: var(--normal-soft); padding: 3px 9px; border-radius: 999px; }
+  .family-note { font-size: 13px; color: var(--fg-secondary); margin-top: 8px; line-height: 1.5; }
+
+  .systems-panel { position: absolute; top: 46px; right: 14px; width: 400px; max-height: 800px; border-radius: 28px; background: var(--panel-strong); border: 1px solid var(--stroke); box-shadow: var(--shadow); overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+  .sys-card { border-radius: 16px; background: var(--card); border: 1px solid var(--hairline); padding: 14px; display: flex; gap: 12px; }
+  .sys-icon { width: 28px; height: 28px; border-radius: 9px; background: var(--accent-soft); color: var(--accent-strong); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .sys-icon svg { width: 15px; height: 15px; }
+  .sys-name { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+  .sys-summary { font-size: 12.5px; color: var(--fg-secondary); line-height: 1.45; }
+  .sys-concern-toggle { margin-top: 8px; display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: var(--warning); cursor: pointer; background: none; border: none; padding: 0; }
+  .sys-concern-toggle svg { width: 10px; height: 10px; transition: transform 0.2s ease; }
+  .sys-concern-toggle.open svg { transform: rotate(90deg); }
+  .sys-concern-body { display: none; margin-top: 6px; font-size: 12px; color: var(--fg-secondary); padding-left: 15px; }
+  .sys-concern-toggle.open + .sys-concern-body { display: block; }
+
+  .note { margin-top: 16px; font-size: 12px; color: var(--fg-tertiary); }
+</style>
+
+<div class="page">
+  <div class="pitch">
+    <div>
+      <h1>Flowboard prototype — masonry SBAR</h1>
+      <p>Question: does a masonry-flow board (2-3 cols, cards start expanded, Assessment fixed at 2-col span, true reflow when you collapse/expand) feel right for a live handover? Click any card header to collapse/expand it and watch the others resettle. Rail, header and systems panel are unchanged from <code class="mono">latest-prototype</code>.</p>
+    </div>
+    <div class="col-toggle" role="group" aria-label="Force column count">
+      <button type="button" data-cols="auto" aria-pressed="true">Auto</button>
+      <button type="button" data-cols="2" aria-pressed="false">2 cols</button>
+      <button type="button" data-cols="3" aria-pressed="false">3 cols</button>
+    </div>
+  </div>
+
+  <div class="stage">
+    <nav class="rail" aria-label="ISBAR navigation">
+      <div class="rail-inner">
+        <button class="rail-btn" data-jump="situation">S</button>
+        <button class="rail-btn" data-jump="background">B</button>
+        <button class="rail-btn" data-jump="assessment">A</button>
+        <button class="rail-btn" data-jump="recommendation">R</button>
+        <div class="rail-divider"></div>
+        <button class="rail-btn all" id="allBtn">ALL</button>
+      </div>
+    </nav>
+
+    <div class="reader-wrap">
+      <div class="header">
+        <div class="avatar">SC</div>
+        <div class="header-main">
+          <h2>Sarah Chen</h2>
+          <div class="dx">Septic shock — right lower lobe pneumonia</div>
+          <div class="demo mono">47F&nbsp;&nbsp;·&nbsp;&nbsp;BED-02&nbsp;&nbsp;·&nbsp;&nbsp;MRN-202401187&nbsp;&nbsp;·&nbsp;&nbsp;ICU Day 2</div>
+          <div class="badges">
+            <span class="badge warn">Critical acuity</span>
+            <span class="badge warn">Worsening</span>
+            <span class="badge neutral">Full code</span>
+            <span class="badge allergy">⚠ Sulphonamides — anaphylaxis</span>
+          </div>
+        </div>
+      </div>
+      <div class="divider"></div>
+
+      <div class="flowboard" id="flowboard">
+
+        <section class="flow-card open" id="situation" data-section data-span="1">
+          <div class="flow-head" data-toggle>
+            <span class="flow-letter">S</span>
+            <div style="flex:1;min-width:0;">
+              <h3 class="flow-title">Situation</h3>
+              <div class="flow-summary">Septic shock from pneumonia is worsening, with high vasopressor requirements and declining renal function.</div>
+            </div>
+            <svg class="flow-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="flow-body">
+            <div class="subcard">
+              <div class="subcard-title">Working diagnosis</div>
+              <div style="font-size:15px;font-weight:600;">Septic shock secondary to right lower lobe pneumonia</div>
+              <div class="pills"><span class="badge warn">Critical acuity</span><span class="badge warn">Worsening</span></div>
+              <div class="concern-line">Rising vasopressor requirement over past 4 hours</div>
+              <div class="concern-line">Declining urine output, watch for progression to AKI stage 3</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="flow-card open" id="background" data-section data-span="1">
+          <div class="flow-head" data-toggle>
+            <span class="flow-letter">B</span>
+            <div style="flex:1;min-width:0;">
+              <h3 class="flow-title">Background</h3>
+              <div class="flow-summary">Pneumonia followed fever and a productive cough, against a background of diabetes, obesity, asthma, and recurrent respiratory infections.</div>
+            </div>
+            <svg class="flow-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="flow-body">
+            <div class="subcard">
+              <div class="bg-block">
+                <h4>Presenting complaint</h4>
+                <p>3 days of fever, productive cough and progressive dyspnoea; admitted via ED with hypotension unresponsive to fluid bolus.</p>
+              </div>
+              <div class="bg-block">
+                <h4>Past medical history</h4>
+                <ul><li>Type 2 diabetes mellitus</li><li>Obesity (BMI 34)</li><li>Asthma</li><li>Recurrent community-acquired pneumonia ×3 in 2 years</li></ul>
+              </div>
+              <div class="bg-block">
+                <h4>Social history</h4>
+                <ul><li>Lives alone, independent with ADLs</li><li>Non-smoker</li></ul>
+              </div>
+              <div class="bg-block">
+                <h4>Relevant context</h4>
+                <ul><li>Sulphonamide allergy — anaphylaxis documented</li><li>High readmission risk, respiratory team aware</li></ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="flow-card open" id="assessment" data-section data-span="2">
+          <div class="flow-head" data-toggle>
+            <span class="flow-letter">A</span>
+            <div style="flex:1;min-width:0;">
+              <h3 class="flow-title">Assessment</h3>
+              <div class="flow-summary">Oxygenation is deteriorating, with rising lactate and creatinine.</div>
+            </div>
+            <svg class="flow-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="flow-body">
+            <div class="subcard">
+              <div class="subcard-title">Vitals (past 12 hrs)</div>
+              <div class="vitals-grid">
+                <div class="vital-box"><div class="lbl">HR</div><div class="val mono status-warning">118<span class="u"> bpm</span></div></div>
+                <div class="vital-box"><div class="lbl">SpO₂</div><div class="val mono status-critical">89<span class="u"> %</span></div></div>
+                <div class="vital-box"><div class="lbl">RR</div><div class="val mono status-warning">28<span class="u"> /min</span></div></div>
+                <div class="vital-box"><div class="lbl">Temp</div><div class="val mono status-warning">38.6<span class="u"> °C</span></div></div>
+                <div class="vital-box"><div class="lbl">MAP</div><div class="val mono status-critical">58<span class="u"> mmHg</span></div></div>
+                <div class="vital-box"><div class="lbl">FiO₂</div><div class="val mono status-warning">60<span class="u"> %</span></div></div>
+              </div>
+            </div>
+            <div class="subcard">
+              <div class="subcard-title">Labs</div>
+              <div class="tiles">
+                <div class="tile"><span class="lab-name">Lactate</span><span class="lab-value mono status-critical">4.2</span><span class="lab-status status-critical">Critical</span></div>
+                <div class="tile"><span class="lab-name">Creatinine</span><span class="lab-value mono status-warning">168</span><span class="lab-status status-warning">Warning</span></div>
+                <div class="tile"><span class="lab-name">WCC</span><span class="lab-value mono status-warning">18.4</span><span class="lab-status status-warning">Warning</span></div>
+                <div class="tile"><span class="lab-name">CRP</span><span class="lab-value mono status-warning">245</span><span class="lab-status status-warning">Warning</span></div>
+                <div class="tile"><span class="lab-name">Platelets</span><span class="lab-value mono status-warning">98</span><span class="lab-status status-warning">Warning</span></div>
+              </div>
+            </div>
+            <div class="subcard">
+              <div class="subcard-title">Infusions</div>
+              <div class="tiles">
+                <div class="tile"><div class="inf-name">Noradrenaline</div><div class="inf-dose mono">0.32 mcg/kg/min</div><div class="inf-route mono">IV (CVC)</div><span class="alert-tag">High-alert</span><div class="inf-purpose">Escalating — MAP support</div></div>
+                <div class="tile"><div class="inf-name">Vasopressin</div><div class="inf-dose mono">0.03 U/min</div><div class="inf-route mono">IV (CVC)</div><span class="alert-tag">High-alert</span><div class="inf-purpose">Added this shift</div></div>
+                <div class="tile"><div class="inf-name">Piperacillin-tazobactam</div><div class="inf-dose mono">4.5 g q6h</div><div class="inf-route mono">IV</div><div class="inf-purpose">Empirical, day 2</div></div>
+                <div class="tile"><div class="inf-name">Propofol</div><div class="inf-dose mono">20 mL/hr</div><div class="inf-route mono">IV</div><div class="inf-purpose">Sedation, RASS -2</div></div>
+              </div>
+            </div>
+            <div class="subcard">
+              <div class="subcard-title">Lines &amp; devices</div>
+              <div class="tiles">
+                <div class="tile"><div class="line-type">Triple-Lumen CVC</div><div class="line-loc">Right IJV</div></div>
+                <div class="tile"><div class="line-type">Arterial Line</div><div class="line-loc">Left radial</div></div>
+                <div class="tile"><div class="line-type">Endotracheal Tube</div><div class="line-loc">Size 7.5, 22cm at lip</div></div>
+                <div class="tile"><div class="line-type">Urinary Catheter</div><div class="line-loc">Urethral, hourly UO</div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="flow-card open" id="recommendation" data-section data-span="1">
+          <div class="flow-head" data-toggle>
+            <span class="flow-letter">R</span>
+            <div style="flex:1;min-width:0;">
+              <h3 class="flow-title">Recommendation</h3>
+              <div class="flow-summary">The plan prioritises repeat lactate, review of sputum cultures, and reassessment of organ support needs.</div>
+            </div>
+            <svg class="flow-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="flow-body">
+            <div class="subcard">
+              <div class="subcard-title">Plan</div>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <div class="plan-row"><div class="plan-top"><span class="dot urgent"></span>Urgent<span class="due mono">06:00</span></div><div class="plan-task">Repeat lactate and VBG</div></div>
+                <div class="plan-row"><div class="plan-top"><span class="dot urgent"></span>Urgent</div><div class="plan-task">Review sputum culture and sensitivities</div></div>
+                <div class="plan-row"><div class="plan-top"><span class="dot"></span>Routine<span class="due mono">08:00</span></div><div class="plan-task">ICU consultant review — escalation of organ support</div></div>
+                <div class="plan-row"><div class="plan-top"><span class="dot"></span>Routine</div><div class="plan-task">Renal team aware — consider CRRT if UO does not improve</div></div>
+                <div class="plan-row"><div class="plan-top"><span class="dot"></span>Routine</div><div class="plan-task">Continue lung-protective ventilation, reassess P/F ratio</div></div>
+              </div>
+            </div>
+            <div class="subcard">
+              <div class="subcard-title">Escalation</div>
+              <div class="bg-block">
+                <h4>Call if</h4>
+                <ul><li>MAP &lt;60 despite current vasopressor titration</li><li>Anuria &gt;2 hours</li></ul>
+              </div>
+              <div class="esc-to">Escalate to ICU Consultant</div>
+            </div>
+            <div class="subcard">
+              <div class="subcard-title">Family</div>
+              <div class="family-contact">Husband (David Chen) <span class="presence">Contacted, not at bedside</span></div>
+              <div class="family-note">Updated by phone overnight regarding deterioration; aware situation is critical.</div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <aside class="systems-panel" aria-label="Systems assessment">
+      <div class="subcard-title" style="padding:0 4px;">Systems assessment</div>
+      <div class="sys-card">
+        <div class="sys-icon">N</div>
+        <div><div class="sys-name">Neuro</div><div class="sys-summary">Sedated — Propofol 20 mL/hr + Fentanyl 25 mcg/hr. RASS -2. Daily wake-up trial planned at 0600.</div></div>
+      </div>
+      <div class="sys-card">
+        <div class="sys-icon">R</div>
+        <div>
+          <div class="sys-name">Respiratory</div>
+          <div class="sys-summary">Mechanically ventilated. Thick yellow-green secretions, q2h suction. CXR: right lower lobe consolidation. Prone considered if P/F &lt;150.</div>
+          <button class="sys-concern-toggle" data-concern>2 concerns</button>
+          <div class="sys-concern-body">Secretion load rising; P/F trending toward prone criteria</div>
+        </div>
+      </div>
+      <div class="sys-card">
+        <div class="sys-icon">C</div>
+        <div>
+          <div class="sys-name">Cardiovascular</div>
+          <div class="sys-summary">Tachycardic. On dual vasopressors. Echo yesterday: LVEF 50%, no effusion. Septic source = lungs.</div>
+          <button class="sys-concern-toggle" data-concern>1 concern</button>
+          <div class="sys-concern-body">Escalating vasopressor requirement</div>
+        </div>
+      </div>
+      <div class="sys-card">
+        <div class="sys-icon">R</div>
+        <div>
+          <div class="sys-name">Renal / GU</div>
+          <div class="sys-summary">UO 20 mL/hr (declining). Acute kidney injury stage 2. Cr trending up. Nephrology aware — may need CRRT.</div>
+          <button class="sys-concern-toggle" data-concern>2 concerns</button>
+          <div class="sys-concern-body">Anuria risk; CRRT discussion pending</div>
+        </div>
+      </div>
+      <div class="sys-card">
+        <div class="sys-icon">G</div>
+        <div><div class="sys-name">Gastrointestinal</div><div class="sys-summary">NGT in situ. EN at 20 mL/hr (target 60 mL/hr). Omeprazole 40 mg IV daily.</div></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="note">Resize the browser window, or use the Auto/2/3 toggle above, to see the column count change. Click any header to collapse it and watch the other cards resettle into freed space.</div>
+</div>
+
+<script>
+  const flowboard = document.getElementById('flowboard');
+  const cards = Array.from(flowboard.querySelectorAll('.flow-card'));
+  const railBtns = Array.from(document.querySelectorAll('.rail-btn[data-jump]'));
+  const allBtn = document.getElementById('allBtn');
+  const gap = 14;
+  let forcedCols = 'auto';
+
+  function columnCount() {
+    if (forcedCols !== 'auto') return parseInt(forcedCols, 10);
+    const w = flowboard.clientWidth - reservedRight;
+    if (w > 1300) return 3;
+    return 2;
+  }
+
+  // Absolutely-positioned children measure from the container's padding box, not its
+  // content box, so CSS padding can't reserve space for them — subtract it here instead.
+  // 374px keeps the board clear of the systems panel's 400px width minus its 26px overlap.
+  const reservedRight = 374;
+
+  function layout() {
+    const width = flowboard.clientWidth - reservedRight;
+    const cols = Math.max(1, columnCount());
+    const colWidth = (width - gap * (cols - 1)) / cols;
+    const colHeights = new Array(cols).fill(0);
+
+    cards.forEach(card => {
+      let span = parseInt(card.dataset.span || '1', 10);
+      span = Math.min(span, cols);
+
+      let bestStart = 0;
+      let bestTop = Infinity;
+      for (let start = 0; start <= cols - span; start++) {
+        const top = Math.max(...colHeights.slice(start, start + span));
+        if (top < bestTop) { bestTop = top; bestStart = start; }
+      }
+
+      const left = bestStart * (colWidth + gap);
+      const cardWidth = span * colWidth + (span - 1) * gap;
+      card.style.width = cardWidth + 'px';
+      card.style.left = left + 'px';
+      card.style.top = bestTop + 'px';
+
+      // measure natural height at this width, then commit new column heights
+      const newHeight = card.offsetHeight;
+      const newBottom = bestTop + newHeight + gap;
+      for (let i = bestStart; i < bestStart + span; i++) colHeights[i] = newBottom;
+    });
+
+    flowboard.style.minHeight = Math.max(...colHeights) + 'px';
+  }
+
+  cards.forEach(card => {
+    card.querySelector('[data-toggle]').addEventListener('click', () => {
+      card.classList.toggle('open');
+      layout();
+    });
+  });
+
+  railBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      railBtns.forEach(b => b.classList.remove('lit'));
+      btn.classList.add('lit');
+      const target = document.getElementById(btn.dataset.jump);
+      target.classList.add('open');
+      layout();
+      target.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    });
+  });
+
+  allBtn.addEventListener('click', () => {
+    const open = !cards.every(c => c.classList.contains('open'));
+    cards.forEach(c => c.classList.toggle('open', open));
+    if (!open) railBtns.forEach(b => b.classList.remove('lit'));
+    layout();
+  });
+
+  document.querySelectorAll('[data-concern]').forEach(btn => {
+    btn.addEventListener('click', () => btn.classList.toggle('open'));
+  });
+
+  document.querySelectorAll('[data-cols]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      forcedCols = btn.dataset.cols;
+      document.querySelectorAll('[data-cols]').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+      layout();
+    });
+  });
+
+  window.addEventListener('resize', layout);
+  window.addEventListener('load', layout);
+  layout();
+</script>

@@ -16,19 +16,28 @@ enum ISBARSectionID: String, CaseIterable, Identifiable {
 }
 
 /// Local disclosure state; summaries remain visible regardless of detail state.
-/// Starts with an overview so participants can read all four main points first.
+/// Starts with every detail section expanded so a fresh handover shows full context immediately.
 struct DashboardPresentationState {
-    private(set) var expandedSections: Set<ISBARSectionID> = []
+    private(set) var expandedSections: Set<ISBARSectionID> = Set(ISBARSectionID.detailSections)
     private(set) var focusedSection: ISBARSectionID? = .introduction
 
     var allExpanded: Bool {
         expandedSections == Set(ISBARSectionID.detailSections)
     }
 
-    /// Navigation opens supporting details; Introduction only returns to the header.
+    /// Navigation toggles its section open/closed, the same as tapping its header directly;
+    /// Introduction only returns to the header, since it has no disclosure of its own.
     mutating func focus(_ section: ISBARSectionID) {
-        focusedSection = section
-        if section != .introduction { expandedSections.insert(section) }
+        guard section != .introduction else {
+            focusedSection = section
+            return
+        }
+        if isExpanded(section) {
+            setExpanded(false, for: section)
+        } else {
+            setExpanded(true, for: section)
+            focusedSection = section
+        }
     }
 
     /// ALL affects the four detail groups, never the permanent patient header.

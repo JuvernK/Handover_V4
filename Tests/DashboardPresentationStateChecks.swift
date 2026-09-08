@@ -7,6 +7,8 @@ struct DashboardPresentationStateChecks {
     static func main() {
         precondition(ISBARSectionID.detailSections == [.situation, .background, .assessment, .recommendation])
         var state = DashboardPresentationState()
+        precondition(state.expandedSections == Set(ISBARSectionID.detailSections))
+        state.toggleAll()
         precondition(state.expandedSections.isEmpty)
         state.setExpanded(true, for: .assessment)
         state.setExpanded(true, for: .recommendation)
@@ -38,9 +40,13 @@ struct DashboardPresentationStateChecks {
         state.toggleAll()
         precondition(state.expandedSections.isEmpty && state.focusedSection == nil)
         state.focus(.assessment)
-        state.focus(.assessment)
         precondition(state.expandedSections == [.assessment])
         precondition(state.focusedSection == .assessment)
+        // Focusing an already-expanded section collapses it, mirroring a second tap on its
+        // rail button — the rail must be able to close a section, not just open it.
+        state.focus(.assessment)
+        precondition(state.expandedSections.isEmpty)
+        precondition(state.focusedSection == nil)
         print("Dashboard presentation checks passed")
     }
 }
