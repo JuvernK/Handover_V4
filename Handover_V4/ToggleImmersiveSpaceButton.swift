@@ -24,8 +24,8 @@ struct ToggleImmersiveSpaceButton: View {
                     // Don't set immersiveSpaceState to .closed because there
                     // are multiple paths to ImmersiveView.onDisappear().
                     // Only set .closed in ImmersiveView.onDisappear().
-                    // The dashboard window stays open throughout — it isn't
-                    // dismissed on entering/exiting the immersive space.
+                    // ImmersiveView.onDisappear() also swaps the dashboard
+                    // window back out for the launcher window.
 
                 case .closed:
                     appModel.immersiveSpaceState = .inTransition

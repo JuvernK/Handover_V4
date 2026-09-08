@@ -15,6 +15,8 @@ struct DashboardView: View {
     @State var viewModel: HandoverViewModel
     @AppStorage("dashboardUsesDarkAppearance") private var usesDarkAppearance = true
     @Environment(AppModel.self) private var appModel
+    @Environment(\.openWindow) private var openWindow
+    @Environment(\.dismissWindow) private var dismissWindow
 
     var body: some View {
         Group {
@@ -31,24 +33,12 @@ struct DashboardView: View {
             DashboardControls(usesDarkAppearance: $usesDarkAppearance)
                 .environment(\.colorScheme, usesDarkAppearance ? .dark : .light)
         }
-        .alert(
-            "SharePlay",
-            isPresented: Binding(
-                get: { appModel.sharePlayErrorMessage != nil },
-                set: { isPresented in
-                    if !isPresented {
-                        appModel.sharePlayErrorMessage = nil
-                    }
-                }
-            )
-        ) {
-            Button("OK", role: .cancel) {
-                appModel.sharePlayErrorMessage = nil
-            }
-        } message: {
-            Text(appModel.sharePlayErrorMessage ?? "")
-        }
         .environment(\.colorScheme, usesDarkAppearance ? .dark : .light)
+        .onChange(of: appModel.immersiveSpaceState) { _, newState in
+            guard newState == .closed else { return }
+            openWindow(id: "launcher")
+            dismissWindow(id: "dashboard")
+        }
     }
 }
 
@@ -56,28 +46,9 @@ struct DashboardView: View {
 
 private struct DashboardControls: View {
     @Binding var usesDarkAppearance: Bool
-    @Environment(AppModel.self) private var appModel
 
     var body: some View {
         HStack(spacing: 12) {
-            Button {
-                Task { @MainActor in
-                    if appModel.isSharePlayActive {
-                        appModel.endSession()
-                    } else {
-                        await appModel.activateSharePlay()
-                    }
-                }
-            } label: {
-                Label(
-                    appModel.isSharePlayActive ? "End SharePlay" : "Start SharePlay",
-                    systemImage: appModel.isSharePlayActive ? "shareplay.slash" : "shareplay"
-                )
-            }
-            .disabled(appModel.isActivatingSharePlay)
-
-            ToggleImmersiveSpaceButton()
-
             Button {
                 usesDarkAppearance.toggle()
             } label: {

@@ -22,7 +22,18 @@ struct Handover_V4App: App {
     }
 
     var body: some SwiftUI.Scene {
-        WindowGroup(id: "dashboard") {
+        // Declared first so it's the window the system opens automatically at launch.
+        // The dashboard only opens once the immersive space is open (see ImmersiveView).
+        // `Window` (not WindowGroup) so re-opening it via openWindow(id:) brings the
+        // same single instance forward instead of stacking a new copy each time.
+        Window("Launcher", id: "launcher") {
+            LauncherView()
+                .environment(appModel)
+        }
+        .windowStyle(.plain)
+        .defaultSize(width: 480, height: 320)
+
+        Window("Dashboard", id: "dashboard") {
             DashboardView(viewModel: appModel.handoverViewModel)
                 .environment(appModel)
         }
