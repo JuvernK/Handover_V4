@@ -28,7 +28,7 @@ struct VitalsCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            CardHeader(title: "Vitals (Past 12 hrs)", systemImage: "waveform.path.ecg")
+            CardHeader(title: "Vitals (Past 12 hrs)", systemImage: "waveform.path.ecg", badge: .a)
 
             Divider()
                 .padding(.horizontal, 12)

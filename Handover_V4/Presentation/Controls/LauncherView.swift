@@ -42,6 +42,12 @@ struct LauncherView: View {
                 .pickerStyle(.segmented)
                 .padding(.top, 4)
                 .transition(.opacity)
+
+                if appModel.presentationMode == .spatial {
+                    SBARRail()
+                        .padding(.top, 4)
+                        .transition(.opacity)
+                }
             }
 
             VStack(spacing: 12) {
@@ -86,8 +92,62 @@ struct LauncherView: View {
         }
         .onChange(of: appModel.immersiveSpaceState) { _, newState in
             guard newState == .open else { return }
-            openWindow(id: "dashboard")
+            if appModel.presentationMode == .dashboard {
+                openWindow(id: "dashboard")
+            }
 //            dismissWindow(id: "launcher")
+        }
+        // Dashboard mode shows the dashboard window; Spatial and Orbit hide it,
+        // keeping the ICU room visible behind the launcher/control window.
+        .onChange(of: appModel.presentationMode) { _, newMode in
+            guard appModel.immersiveSpaceState == .open else { return }
+            if newMode == .dashboard {
+                openWindow(id: "dashboard")
+            } else {
+                dismissWindow(id: "dashboard")
+            }
+        }
+    }
+}
+
+/// Group-toggle rail for Spatial mode: each letter expands/collapses every card
+/// in that SBAR group at once; ALL does the same across every group. Basic
+/// Information isn't part of any group, so it's untouched by either.
+private struct SBARRail: View {
+    @Environment(AppModel.self) private var appModel
+
+    var body: some View {
+        HStack(spacing: 6) {
+            ForEach(SBARGroup.allCases) { group in
+                Button(group.letter) {
+                    appModel.toggleSBARGroup(group)
+                }
+                .buttonStyle(.plain)
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(group.color)
+                .frame(width: 34, height: 34)
+                .background(group.color.opacity(0.16), in: RoundedRectangle(cornerRadius: 10))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 10)
+                        .strokeBorder(DashboardTheme.stroke, lineWidth: 1)
+                }
+                .hoverEffect(.highlight)
+            }
+
+            Button("ALL") {
+                appModel.toggleAllSpatialCards()
+            }
+            .buttonStyle(.plain)
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(DashboardTheme.secondary)
+            .padding(.horizontal, 12)
+            .frame(height: 34)
+            .background(DashboardTheme.glassRaised, in: RoundedRectangle(cornerRadius: 10))
+            .overlay {
+                RoundedRectangle(cornerRadius: 10)
+                    .strokeBorder(DashboardTheme.stroke, lineWidth: 1)
+            }
+            .hoverEffect(.highlight)
         }
     }
 }

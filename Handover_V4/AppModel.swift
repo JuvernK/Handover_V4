@@ -165,6 +165,28 @@ class AppModel {
         }
     }
 
+    /// SBAR rail: expands every card in the group if any are collapsed, otherwise collapses them all.
+    func toggleSBARGroup(_ group: SBARGroup) {
+        setExpanded(!allExpanded(group.poiNames), for: group.poiNames)
+    }
+
+    /// SBAR rail's ALL button: same all-or-nothing rule across every Spatial card group.
+    /// Basic Information isn't part of any group, so it's untouched.
+    func toggleAllSpatialCards() {
+        let allPOINames = SBARGroup.allCases.flatMap(\.poiNames)
+        setExpanded(!allExpanded(allPOINames), for: allPOINames)
+    }
+
+    private func allExpanded(_ poiNames: [String]) -> Bool {
+        poiNames.allSatisfy { cardStates[$0] ?? true }
+    }
+
+    private func setExpanded(_ isExpanded: Bool, for poiNames: [String]) {
+        for name in poiNames {
+            setCardState(name: name, isExpanded: isExpanded, syncChanges: true)
+        }
+    }
+
     func setCardPosition(name: String, position: SIMD3<Float>, syncChanges: Bool) {
         cardPositions[name] = position
 

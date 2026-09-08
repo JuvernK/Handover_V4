@@ -15,7 +15,6 @@ struct ImmersiveView: View {
 
     @State private var attachmentsProvider = AttachmentsProvider()
     @State private var subscriptions = [EventSubscription]()
-    @State private var dragStartPosition: SIMD3<Float>?
     @State private var attachmentEntities: [Entity] = [] // Track attachment entities to update their collision shapes on resize
 
     // Query to find all entities that have been processed as a Point of Interest
@@ -156,30 +155,6 @@ struct ImmersiveView: View {
                         }
                     } else {
                         print("DEBUG ERROR: Tapped entity has no runtime component!")
-                    }
-                }
-        )
-        // Billboard to let card facing the user
-        .gesture(
-            DragGesture(minimumDistance: 10)
-                .targetedToAnyEntity()
-                .onChanged { value in
-                    if dragStartPosition == nil {
-                        dragStartPosition = value.entity.position
-                        // value.entity.components.remove(BillboardComponent.self).      // Notes: If we remove the billboard during drag, the card will stop facing the user and stay fixed in its original orientation. This can make it easier to drag in a straight line, but may feel less natural.
-                    }
-                    guard let startPos = dragStartPosition else { return }
-
-                    let translation = value.convert(value.translation3D, from: .local, to: .scene)
-                    value.entity.position = startPos + translation
-                }
-                .onEnded { value in
-                    dragStartPosition = nil
-                    // value.entity.components.set(BillboardComponent())
-
-                    // Broadcast the final position to other users
-                    if let runtimeComp = value.entity.components[PointOfInterestRuntimeComponent.self] {
-                        appModel.setCardPosition(name: runtimeComp.cardName, position: value.entity.position, syncChanges: true)
                     }
                 }
         )

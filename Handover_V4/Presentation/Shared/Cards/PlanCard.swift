@@ -22,7 +22,7 @@ struct PlanCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            CardHeader(title: "Treatment Plan", systemImage: "list.bullet.clipboard")
+            CardHeader(title: "Treatment Plan", systemImage: "list.bullet.clipboard", badge: .r)
 
             Divider().padding(.horizontal, 12)
 

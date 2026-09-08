@@ -21,7 +21,7 @@ struct InfusionsCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            CardHeader(title: "Active Infusions", systemImage: "drop.fill")
+            CardHeader(title: "Active Infusions", systemImage: "drop.fill", badge: .a)
 
             Divider().padding(.horizontal, 12)
 

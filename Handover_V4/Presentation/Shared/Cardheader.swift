@@ -16,15 +16,22 @@ import SwiftUI
 struct CardHeader: View {
     let title: String
     var systemImage: String?      // optional icon next to title (e.g. "heart.fill")
+    var badge: SBARGroup?         // Spatial-only S/B/A/R badge; hidden on the dashboard surface
+
+    @Environment(\.isDashboardSurface) private var isDashboardSurface
 
     var body: some View {
         HStack(spacing: 8) {
-            // Drag-handle grip icon (visual-only for now)
-            Image(systemName: "line.3.horizontal")
-                .hoverEffect(.lift)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.secondary.opacity(0.5))
-                .accessibilityHidden(true)
+            if let badge, !isDashboardSurface {
+                SBARBadgeView(group: badge)
+            } else {
+                // Drag-handle grip icon (visual-only for now)
+                Image(systemName: "line.3.horizontal")
+                    .hoverEffect(.lift)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(.secondary.opacity(0.5))
+                    .accessibilityHidden(true)
+            }
 
             // Optional leading icon
             if let systemImage {

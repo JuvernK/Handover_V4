@@ -69,7 +69,15 @@ private struct DashboardCardSurface: ViewModifier {
                         .allowsHitTesting(false)
                 }
         } else {
-            content.glassBackgroundEffect(in: .rect(cornerRadius: cornerRadius))
+            // Same stroke treatment as the dashboard surface, so Spatial cards read
+            // as the same visual system floating in the room rather than bare glass.
+            content
+                .glassBackgroundEffect(in: .rect(cornerRadius: cornerRadius))
+                .overlay {
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .strokeBorder(DashboardTheme.stroke, lineWidth: 1)
+                        .allowsHitTesting(false)
+                }
         }
     }
 }

@@ -49,7 +49,7 @@ struct SystemsAssessmentCard: View {
                 .padding(.top, 8)
                 .padding(.bottom, 16)
             } else {
-                CardHeader(title: "Systems Assessment", systemImage: "stethoscope")
+                CardHeader(title: "Systems Assessment", systemImage: "stethoscope", badge: .a)
             }
 
             if !isHandoverSidebar { Divider().padding(.horizontal, 12) }

@@ -26,7 +26,7 @@ struct EscalationCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            CardHeader(title: "Escalation", systemImage: "phone.arrow.up.right.fill")
+            CardHeader(title: "Escalation", systemImage: "phone.arrow.up.right.fill", badge: .r)
 
             Divider().padding(.horizontal, 12)
 

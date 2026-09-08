@@ -40,12 +40,16 @@ struct SpatialCardView: View {
     @ViewBuilder
     private var cardContent: some View {
         if isBasicInformationPOI {
+            // Permanent patient introduction: always fully visible, no disclosure, no badge.
+            PatientHeaderView(patient: patient)
+                .dashboardCardSurface(cornerRadius: 16)
+                .frame(width: basicInformationCardWidth)
+        } else if isSituationPOI {
             if isExpanded(cardName: poiName) {
-                PatientHeaderView(patient: patient)
-                    .glassBackgroundEffect(in: .rect(cornerRadius: 16))
-                    .frame(width: basicInformationCardWidth)
+                SituationCard(patient: patient)
+                    .frame(width: defaultCardWidth)
             } else {
-                CompactBasicInformationCard(patient: patient)
+                CompactSpatialCard(title: "Situation", badge: .s)
                     .frame(width: defaultCardWidth)
             }
         } else if let sectionID = SectionID(rawValue: normalizedPOIName) {
@@ -53,7 +57,7 @@ struct SpatialCardView: View {
                 sectionID.view(for: patient)
                     .frame(width: expandedWidth(for: sectionID))
             } else {
-                CompactSpatialCard(sectionID: sectionID)
+                CompactSpatialCard(title: sectionID.displayName, badge: sectionID.sbarGroup)
                     .frame(width: defaultCardWidth)
             }
         } else {
@@ -74,6 +78,10 @@ struct SpatialCardView: View {
         normalizedPOIName == "basic_information"
     }
 
+    private var isSituationPOI: Bool {
+        normalizedPOIName == "situation"
+    }
+
     private func isExpanded(cardName: String) -> Bool {
         appModel.cardStates[cardName] ?? true
     }
@@ -87,51 +95,19 @@ struct SpatialCardView: View {
     }
 }
 
-private struct CompactBasicInformationCard: View {
-    let patient: Patient
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "person.text.rectangle")
-                .font(.system(size: 18, weight: .semibold))
-                .frame(width: 28, height: 28)
-                .foregroundStyle(.tint)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Basic Information")
-                    .font(.system(size: 17, weight: .semibold))
-                Text("\(patient.name) · \(patient.bedNumber)")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.78)
-            }
-
-            Spacer(minLength: 8)
-
-            Image(systemName: "chevron.up.circle.fill")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(.secondary)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
-        .hoverEffect()
-    }
-}
-
+/// Collapsed form of any Spatial card except Basic Information: badge and title only,
+/// with the full content hidden until tapped again.
 private struct CompactSpatialCard: View {
-    let sectionID: SectionID
+    let title: String
+    let badge: SBARGroup
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: sectionID.spatialSystemImage)
-                .font(.system(size: 18, weight: .semibold))
-                .frame(width: 28, height: 28)
-                .foregroundStyle(.tint)
+            SBARBadgeView(group: badge)
 
-            Text(sectionID.displayName)
+            Text(title)
                 .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(DashboardTheme.foreground)
                 .lineLimit(1)
                 .minimumScaleFactor(0.78)
 
@@ -139,27 +115,12 @@ private struct CompactSpatialCard: View {
 
             Image(systemName: "chevron.up.circle.fill")
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DashboardTheme.secondary)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .glassBackgroundEffect(in: .rect(cornerRadius: 16))
+        .dashboardCardSurface(cornerRadius: 16)
         .hoverEffect()
-    }
-}
-
-private extension SectionID {
-    var spatialSystemImage: String {
-        switch self {
-        case .vitals: return "waveform.path.ecg"
-        case .relatedBackground: return "person.text.rectangle"
-        case .infusions: return "ivfluid.bag"
-        case .lines: return "point.3.connected.trianglepath.dotted"
-        case .labs: return "testtube.2"
-        case .systems: return "person.text.rectangle"
-        case .plan: return "list.bullet.clipboard"
-        case .escalation: return "phone.arrow.up.right.fill"
-        }
     }
 }
 

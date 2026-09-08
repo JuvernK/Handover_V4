@@ -1,8 +1,15 @@
 # Spatial cards
 
-Agreed behavior, not implemented. Updated 8 September 2026.
-Visual styling is pending Claude's proposal and user review. The supplied
-screenshot is a reference, not an approved specification to copy in full.
+Agreed behavior. Updated 8 September 2026.
+
+Implemented on `feature/presentation-mode-switch`: SBAR badges, collapsed
+badge+title cards, permanent Basic Information, the Situation POI/card, the
+SBAR/ALL rail, and removal of free dragging. Visual styling (colors, spacing,
+badge shape) is a first pass based on `docs/mockups/spatial-cards-design.html`,
+not a final approved design — treat it as still open to change. None of this
+has been verified on-device/simulator yet; visionOS debug builds need Xcode's
+own debugger to launch, which wasn't available when this was implemented. See
+"Current status and pending work" below.
 
 For mode switching, shared controls, disclosure resets, future SharePlay, source
 organization, and implementation prerequisites, read
@@ -52,8 +59,18 @@ exact entity name and component settings expected by the implementation.
 
 ## Current status and pending work
 
-Current Spatial code still permits dragging, supports compact Basic Information,
-and lacks a Situation entry in its card mapping. The behavior above is planned.
-No spatial redesign or scene changes have been made or validated in this design
-session. Keep the agreed behavior as constraints for Claude's visual proposal;
-wait for user review before implementing that visual redesign.
+Implemented: `SBARGroup` model (`Handover_V4/Models/SBARGroup.swift`) with the
+S/B/A/R → SectionID mapping and per-POI-name group lookup; `CardHeader` badge
+parameter, wired into all nine relevant cards (Vitals, Infusions, Lines & Access,
+Labs, Systems Assessment, Plan, Escalation, Related Background, Situation);
+`SpatialCardView` always renders Basic Information fully, adds a Situation
+branch, and shows badge+title on collapse; `ImmersiveView`'s drag gesture is
+removed; `AppModel.toggleSBARGroup`/`toggleAllSpatialCards` and the SBAR rail
+in `LauncherView`, shown only in Spatial mode.
+
+The Situation POI now exists in `Immersive.usda` (authored by the user).
+
+Still pending: on-device/simulator visual verification (see note above), and
+this doc's own "not implemented" framing throughout `presentation-modes.md`'s
+prerequisites — Orbit still hasn't landed, so this went in ahead of that
+prerequisite at the user's explicit request, same as the mode switch itself.

@@ -29,7 +29,7 @@ struct RelatedBackgroundCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            CardHeader(title: "Related Background", systemImage: "person.text.rectangle")
+            CardHeader(title: "Related Background", systemImage: "person.text.rectangle", badge: .b)
 
             Divider().padding(.horizontal, 12)
 

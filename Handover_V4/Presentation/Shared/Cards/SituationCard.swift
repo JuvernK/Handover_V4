@@ -14,7 +14,7 @@ struct SituationCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            CardHeader(title: "Working Diagnosis", systemImage: "waveform.path.ecg.rectangle")
+            CardHeader(title: "Working Diagnosis", systemImage: "waveform.path.ecg.rectangle", badge: .s)
 
             Divider().padding(.horizontal, 12)
 

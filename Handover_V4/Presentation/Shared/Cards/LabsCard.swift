@@ -27,7 +27,7 @@ struct LabsCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            CardHeader(title: "Abnormal Labs", systemImage: "testtube.2")
+            CardHeader(title: "Abnormal Labs", systemImage: "testtube.2", badge: .a)
 
             Divider().padding(.horizontal, 12)
 

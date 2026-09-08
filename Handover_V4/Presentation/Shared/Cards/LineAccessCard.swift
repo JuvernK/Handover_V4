@@ -17,7 +17,7 @@ struct LinesAccessCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            CardHeader(title: "Lines & Access", systemImage: "cable.connector")
+            CardHeader(title: "Lines & Access", systemImage: "cable.connector", badge: .a)
 
             Divider().padding(.horizontal, 12)
 

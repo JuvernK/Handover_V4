@@ -69,5 +69,15 @@ Handover_V4/Presentation/
 ```
 
 Clinical models, data loading, and SharePlay remain outside individual modes.
-No source files have been moved. All modes use the same patient cases.
+All modes use the same patient cases.
+
+Implemented on `feature/presentation-mode-switch`: `Dashboard/` (dashboard
+view, tile grid, board/presentation state), `Spatial/` (`SpatialCard.swift`,
+`SBARGroup.swift`), `Shared/` (`CardHeader`, `DashboardTheme`,
+`PatientHeaderView`, `SectionID`, and `Cards/` — reused by both Dashboard and
+Spatial), `Immersive/` (`ImmersiveView`, attachment/POI plumbing), `Controls/`
+(`LauncherView`, `ToggleImmersiveSpaceButton`). `Orbit/` doesn't exist yet —
+no Orbit code exists to put there. `AppModel.swift`, `Handover_V4App.swift`,
+`Models/Patient.swift`, `Models/Enums.swift`, `Data/`, `SharePlay/`, and
+`ViewModels/` stayed put, per "remain outside individual modes" above.
 Canonical terms live in [CONTEXT.md](../CONTEXT.md).
