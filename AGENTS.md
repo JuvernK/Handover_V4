@@ -25,6 +25,19 @@ When a design decision or bug looks visionOS-specific, check the HIG page above 
 - Keep clinical records in `Patient`; keep ISBAR focus and disclosure in dashboard presentation state.
 - Preserve existing SharePlay messages and authored spatial point-of-interest names.
 
+## Pending design: spatial/orbit/dashboard mode switch
+
+A design for a 3-way presentation mode switch (`Spatial | Orbit | Dashboard`,
+mutually exclusive, SharePlay-synced) has been agreed with the user but is
+**not implemented**. Full writeup: `docs/dashboard-immersive-mode-design.md`.
+
+- Blocked on: this branch not yet having Orbit functionality (see `main` for
+  the reference implementation). Do not start this work until Orbit has
+  landed on `latest-prototype` and the user explicitly asks for it.
+- When picking this up, check whether `docs/dashboard-immersive-mode-design.md`
+  is still accurate before implementing — it may need updating once Orbit's
+  actual shape on this branch is known.
+
 ## Branch strategy
 
 - `latest-prototype` is the active development and integration baseline for the new dashboard UI, rather than `main`.
@@ -60,4 +73,3 @@ When a design decision or bug looks visionOS-specific, check the HIG page above 
 - Update `docs/dashboard-design.md` when presentation behavior, file responsibilities, or validation commands change.
 - Keep implementation status separate from future plans, and identify checks that have not been performed.
 - Documentation-only changes do not require rebuilding the app; check links, commands, and consistency against the code.
-
