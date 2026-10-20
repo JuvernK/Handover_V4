@@ -40,3 +40,10 @@ xcdebugger/
 
 *.log
 *.tmp
+
+# =========================
+# Claude Code (local tooling)
+# =========================
+
+# Personal agent config, the Jev router, and its churning state files.
+.claude/
