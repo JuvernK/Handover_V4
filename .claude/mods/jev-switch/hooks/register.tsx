@@ -27,12 +27,34 @@ async function stateFile($: EngineInterface): Promise<string> {
   return `${await $.session.root()}/${STATE_PATH}`
 }
 
+/**
+ * The last state read successfully, kept because the engine caches a draw per
+ * distinct props value: idle props are the same at session start as they are
+ * after a turn, so a single failed read at load would otherwise cache "no
+ * band" and the switch would only reappear while props churn during a turn.
+ * Serving the remembered value keeps the band through a transient failure.
+ */
+let lastKnown: boolean | null = null
+
+// Only a project that never had the file should settle on no band. Bounded so
+// a project without Jev stops asking instead of redrawing forever.
+const MAX_RETRIES = 3
+let retries = 0
+
 /** `true` on, `false` off, `null` where this project has no Jev router. */
 async function readSwitch($: EngineInterface): Promise<boolean | null> {
   try {
-    return (await $.fs.read(await stateFile($))).trim() === 'on'
+    const value = (await $.fs.read(await stateFile($))).trim() === 'on'
+    lastKnown = value
+    retries = 0
+    return value
   } catch {
-    return null
+    if (lastKnown === null && retries < MAX_RETRIES) {
+      // The read may simply be early. Ask for one more draw before giving up.
+      retries += 1
+      $.ui.invalidate('ui.render')
+    }
+    return lastKnown
   }
 }
 

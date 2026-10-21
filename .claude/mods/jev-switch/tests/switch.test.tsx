@@ -93,6 +93,38 @@ test('a press while on turns it off again', async ($, on) => {
   await ui.unmount()
 })
 
+test('a read that fails after a good one keeps the band', async ($, on) => {
+  // The engine caches one draw per distinct props value, and idle props are
+  // identical at session start and after a turn. A failed read that returned
+  // no band would therefore be cached, and the switch would only reappear
+  // while a turn churned the props. The last known state is served instead.
+  let readable = true
+  const ROOT = '/project'
+
+  on('session.root', () => ({ value: ROOT }))
+  on('ui.toast', () => ({ value: undefined }))
+  on('fs.read', (_, e) => {
+    if (!readable) {
+      throw new Error(`unreadable: ${e.path}`)
+    }
+
+    return { value: 'on\n' }
+  })
+
+  const good = await $.ui.mount({ ...BAND, surface: 'terminal' })
+
+  expect((await good.find({ key: 'jev-switch' }))?.text).toContain('Jev on')
+
+  await good.unmount()
+
+  readable = false
+  const degraded = await $.ui.mount({ ...BAND, surface: 'terminal' })
+
+  expect((await degraded.find({ key: 'jev-switch' }))?.text).toContain('Jev on')
+
+  await degraded.unmount()
+})
+
 test('no state file means no band at all', async ($, on) => {
   fakeStateFile(on, null)
   engineDraws(on)
