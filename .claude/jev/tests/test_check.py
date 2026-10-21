@@ -20,7 +20,8 @@ class CheckerTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory(prefix="jev checker ")
         self.addCleanup(self.temporary.cleanup)
-        self.repo = Path(self.temporary.name)
+        # macOS keeps temp folders under /var, a symlink, which the path guard refuses.
+        self.repo = Path(self.temporary.name).resolve()
         self.home = self.repo / ".claude" / "jev"
         self.home.mkdir(parents=True)
         self.config = {
