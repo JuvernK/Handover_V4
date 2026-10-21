@@ -198,17 +198,34 @@ regardless, because four yes/no answers are all that comes back.
 
 # The switch button
 
-`/Users/juvern/.claude/dev-mods/52e1dc2f-c53d-4db8-91ee-7f33decae54f/jev-switch/`
-is a Claude Code mod that draws the router switch as a pressable control just
-above the prompt. It does not hold the switch state itself: it reads and writes
-this folder's `state` file, because the router runs as its own process and that
-file is the only thing both sides can see.
+The `jev-switch` mod draws the router switch as a pressable control just above
+the prompt: `○ Jev off` or `● Jev on`, with a line of dim text saying
+which way prompts are currently going. The dot carries the state as shape as well as
+color, so the band still reads in a terminal with no color.
+
+It does not hold the switch state itself. That lives in this folder's `state`
+file, because the router runs as its own process and that file is the only
+thing both sides can see. So the button and `/jev on` always agree.
 
 The band appears only where `.claude/jev/state` exists, so the mod stays
 invisible in other projects. Its path is built from the session's project root,
 so it still works when Claude Code was started in a subdirectory.
 
-`claude plugin test <mod folder>` presses the button and checks the file flipped.
+## Where it lives, and why it keeps disappearing
+
+The mod is written into a session's `~/.claude/dev-mods/<session-id>/` folder.
+Those folders are per-session: Claude Code hot-reloads one only for the session
+that owns it, and only after the person answers yes to the question that the
+first write raises. A mod left there is gone the next session.
+
+To keep it, install it as an ordinary plugin instead - a folder with a
+`.claude-plugin/marketplace.json`, added once with `/plugin marketplace add`.
+Until that is done, expect to rewrite the mod folder each session.
+
+`claude plugin validate <mod folder>` checks it loads; `claude plugin test <mod
+folder>` presses the button and checks the file flipped.
+
+---
 
 # Status line
 
