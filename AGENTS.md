@@ -65,8 +65,7 @@ Both are off until the project switch is on. See
   comments. Every score points the same way, so a higher number is always worse.
 
 The switch is `.claude/jev/state`, a file holding `on` or `off`. It is shared,
-so the `/jev` command, the `jev-switch` mod's button and both tools always agree
-on one value. It is machine-local and gitignored.
+so the `/jev` command and both tools always agree on one value. It is machine-local and gitignored.
 
 - `/jev on` | `off` | `status` | `last`
 - `/jev-check` previews a diff locally. It calls no API and costs nothing.
