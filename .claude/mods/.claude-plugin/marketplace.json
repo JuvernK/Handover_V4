@@ -1,0 +1,14 @@
+{
+  "name": "handover-mods",
+  "owner": {
+    "name": "Juvern Khor"
+  },
+  "description": "Claude Code mods that belong to the Handover V4 project.",
+  "plugins": [
+    {
+      "name": "jev-switch",
+      "source": "./jev-switch",
+      "description": "A pressable Jev switch above the prompt, backed by this project's .claude/jev/state file."
+    }
+  ]
+}
