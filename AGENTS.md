@@ -4,7 +4,7 @@
 
 Apple's official references for spatial UI work on this project:
 
-- **Human Interface Guidelines — Designing for visionOS**
+- **Human Interface Guidelines - Designing for visionOS**
   https://developer.apple.com/design/human-interface-guidelines/designing-for-visionos
   Read this before designing any new window, ornament, or immersive interaction.
 - **visionOS developer documentation (SwiftUI, RealityKit, ARKit for visionOS)**
@@ -14,7 +14,7 @@ Apple's official references for spatial UI work on this project:
 - **SwiftUI framework reference**
   https://developer.apple.com/documentation/swiftui
 
-When a design decision or bug looks visionOS-specific, check the HIG page above before guessing — spatial interaction rules (hover, gaze, ornaments, immersion styles) often behave differently from iOS/macOS assumptions.
+When a design decision or bug looks visionOS-specific, check the HIG page above before guessing - spatial interaction rules (hover, gaze, ornaments, immersion styles) often behave differently from iOS/macOS assumptions.
 
 ## Presentation modes
 
@@ -50,6 +50,40 @@ See `docs/orbit-source-outlines.md` for behavior and validation, and
 - Use `docs/dashboard-design.md` for the current implementation scope and validation notes.
 - Verify presentation-state transitions and build the visionOS application after relevant Swift changes.
 
+## Jev
+
+Jev is a small TypeSafe model wired into this repository as two separate tools.
+Both are off until the project switch is on. See
+[.claude/jev/README.md](.claude/jev/README.md) for the full reference.
+
+- **The router** runs by itself on every prompt once the switch is on. It
+  suggests a model tier and a skill. Its suggestions are advice, never an
+  instruction: an explicit model preference, an existing authorization, and the
+  repository's own permissions all outrank it.
+- **The checker** never runs by itself. It asks four problem-hunting questions
+  about a diff: weakened tests, swallowed errors, hidden side effects, stale
+  comments. Every score points the same way, so a higher number is always worse.
+
+The switch is `.claude/jev/state`, a file holding `on` or `off`. It is shared,
+so the `/jev` command, the `jev-switch` mod's button and both tools always agree
+on one value. It is machine-local and gitignored.
+
+- `/jev on` | `off` | `status` | `last`
+- `/jev-check` previews a diff locally. It calls no API and costs nothing.
+- `/jev-check --send` is the only thing that sends code off this machine, and it
+  needs the switch on.
+
+Two rules worth keeping:
+
+- **Check one commit or one file at a time.** A problem that scores 0.35 on its
+  own fades to 0.17 inside a large diff, so a wide check hides what it was meant
+  to find.
+- **A low score is not a passing test.** The checker runs nothing. Keep the
+  project's own tests and review regardless.
+
+Turn the switch off for work that must not leave this machine. Pattern matching
+catches known credential shapes, not unknown ones.
+
 ## Multiple agents and worktrees
 
 - There is other AI agent working on the other worktree
@@ -63,6 +97,7 @@ rule is needed. These entry points distinguish current behavior from plans:
 - [docs/presentation-modes.md](docs/presentation-modes.md): planned mode switching, controls, source organization, and SharePlay behavior.
 - [docs/spatial-cards.md](docs/spatial-cards.md): planned Spatial card behavior, SBAR mapping, Situation POI TODO, and pending visual design.
 - [CONTEXT.md](CONTEXT.md): short glossary of agreed product terms.
+- [.claude/jev/README.md](.claude/jev/README.md): the Jev router and checker, their switch, and what each sends.
 
 - At the top the swift file, briefly shows the flow in arrow about how it will interact with other file.
 - Document the purpose, ownership, and meaningful behavior of new modules and public-facing methods with concise Swift documentation comments.
