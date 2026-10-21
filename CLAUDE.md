@@ -1,18 +1,34 @@
-# CLAUDE.md
+# Handover V4 — Project Instructions
 
-Compatibility guidance for Claude Code.
+## visionOS development guidelines
 
-The canonical repository instructions live in `AGENTS.md`. Read that file
-before working in this repository.
+Apple's official references for spatial UI work on this project:
 
-- Never use em dash "--". Use plain dash instead. When writting commit message, NEVER auto add your agent name as co author. When making technical decisions, do not give much weight to development cost. Instead, prefer quality, simplicity, robustness, scalability and long term maintainability. When doing bug fixes, always start with reproducing the bug in an E2E setting as closely aligned with how an end user will use it. This make sure you find the real problem so your fix is actually solve it. When end-to-end testing a product, be picky about the UI you see and be obsessed with pixel perfection. If something clearly looks off, even if it is not directly related to what you are doing, try to get it fixed along.
+- **Human Interface Guidelines — Designing for visionOS**
+  https://developer.apple.com/design/human-interface-guidelines/designing-for-visionos
+  Read this before designing any new window, ornament, or immersive interaction.
+- **visionOS developer documentation (SwiftUI, RealityKit, ARKit for visionOS)**
+  https://developer.apple.com/documentation/visionos
+- **RealityKit framework reference**
+  https://developer.apple.com/documentation/realitykit
+- **SwiftUI framework reference**
+  https://developer.apple.com/documentation/swiftui
 
-## Documentation sources
+When a design decision or bug looks visionOS-specific, check the HIG page above before guessing — spatial interaction rules (hover, gaze, ornaments, immersion styles) often behave differently from iOS/macOS assumptions.
 
-- `AGENTS.md` — canonical working, build, and verification instructions.
-- `CONTEXT.md` — canonical project-specific domain language.
-- `PROJECT_OVERVIEW.md` — current implementation and folder map.
-- `docs/adr/` — durable architectural decisions and their rationale.
+### Gotchas found in this codebase (verified on-device/simulator, not just guessed)
 
-Do not duplicate these sources here. Follow the references in `AGENTS.md` for
-issue tracking, triage, and domain-documentation conventions.
+
+- **Adjacent glass panels can visually merge.** `glassBackgroundEffect` surfaces placed with very little spacing may blend into one shape. Keep at least ~12-16pt gap between separate cards.
+- **Windows do not auto-dismiss when entering an immersive space.** A `WindowGroup` stays open unless your code explicitly calls `dismissWindow`. Don't assume the dashboard disappears — check `Handover_V4App.swift` / `ToggleImmersiveSpaceButton.swift` for the actual behavior.
+- **RealityKit attachments need real, non-zero SwiftUI-measured size before they're interactive.** `ImmersiveView.swift` polls `visualBounds` for up to 2 seconds before building the collision shape used for tap/drag. Skipping this makes gestures silently not work.
+- **`.hoverEffect()` should sit on the outermost tappable container**, not on a child view inside another tappable parent — nesting it can create two overlapping hover regions.
+- **Always verify in the simulator or on-device, not just SwiftUI previews.** Previews do not reproduce hover-lift, focus, or immersive-space behavior. The `Button` overlap bug above was invisible in preview and only showed when actually running the app — screenshot the running app before calling spatial UI work done.
+
+## Dead code audit (latest-prototype, 2026-09-06)
+
+Checked in a separate worktree so it doesn't clash with other agents working on this branch.
+
+## Other project conventions
+
+See `AGENTS.md` in this repo for product direction, branch strategy, and documentation conventions.

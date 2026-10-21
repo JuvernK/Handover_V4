@@ -7,72 +7,105 @@
 
 import Foundation
 @preconcurrency import GroupActivities
+import Observation
 import Combine
 
-/// Adapts one SharePlay session to Shared Handover State replication.
+/// Controls the SharePlay session for real-time card state synchronization.
+@Observable
 @MainActor
-final class SessionController: ReplicationTransport {
-    /// The active SharePlay group session.
-    let session: GroupSession<SharePlayTogether>
+final class SessionController {
+    let session: GroupSession<SharePlayTogether> /// The active SharePlay group session for the `SharePlayTogether`.
+    private let messenger: GroupSessionMessenger /// synchronizing actions across participants
+    private let systemCoordinator: SystemCoordinator ////// Coordinates spatial aspects of the SharePlay session for immersive spaces.
 
-    /// Transports reliable synchronization messages between participants.
-    private let messenger: GroupSessionMessenger
+    /// The session controller updates the app model's color when receiving remote changes,
+    /// but the app model owns the session controller life cycle.
+    private weak var appModel: AppModel?
 
-    /// Configures spatial behavior for the group immersive space.
-    private let systemCoordinator: SystemCoordinator
-    
-    private weak var replicator: SharedHandoverReplicator?
-    
     /// Creates a session controller for the given group session.
-    init?(
-        _ groupSession: GroupSession<SharePlayTogether>,
-        replicator: SharedHandoverReplicator
-    ) async {
+    init?(_ groupSession: GroupSession<SharePlayTogether>, appModel: AppModel) async {
+        // We MUST get the system coordinator for immersive spaces
         guard let groupSystemCoordinator = await groupSession.systemCoordinator else {
             return nil
         }
-
+        // Keep track of the current session.
         session = groupSession
+        // .reliable means "make sure this message arrives, even if it takes a split second longer"
         messenger = GroupSessionMessenger(session: session, deliveryMode: .reliable)
-        systemCoordinator = groupSystemCoordinator
-        self.replicator = replicator
 
-        observeReplicationMessages()
-        observeActiveRemoteParticipants()
+        systemCoordinator = groupSystemCoordinator
+        self.appModel = appModel
+
+        // Start observation tasks
+        observeSyncMessages() // Listen for CardSyncMessage updates
+        observeDashboardMessages() // Listen for DashboardSyncMessage updates
+        observeCatchUpMessages() // Listen for CatchUpMessage
+        observeActiveRemoteParticipants() // Monitors participant changes and sends the current state when new participants join
+
+        // Configure the Immersive Space & Spatial Personas
+            // Ensure support for the group immersive space
 
         systemCoordinator.configuration.supportsGroupImmersiveSpace = true
-        systemCoordinator.configuration.spatialTemplatePreference = .conversational
+        systemCoordinator.configuration.spatialTemplatePreference = .sideBySide // Arrange the spatial persona in a converstation style
+
+        // Connect to the room!
         session.join()
+
     }
-    
+
     /// Ends the SharePlay session for all participants.
     func endSession() {
         session.end()
     }
 
-    // MARK: - Message observation
-
-    private func observeReplicationMessages() {
-        Task.immediate(name: "replication envelope observation") {
-            for await (message, _) in messenger.messages(
-                of: ReplicationEnvelope.self
-            ) {
-                guard let replicator else { return }
-                replicator.receive(message)
+    // MARK: - Observation Tasks
+    // Observes incoming sync messages for individual card changes
+    private func observeSyncMessages() {
+        Task.immediate(name: "sync message observation") {
+            for await (message, _) in messenger.messages(of: CardSyncMessage.self) {
+                guard let appModel else { return }
+                appModel.handleRemoteSyncMessage(message)
             }
         }
     }
 
+    private func observeDashboardMessages() {
+        Task.immediate(name: "dashboard message observation") {
+            for await (message, _) in messenger.messages(of: DashboardSyncMessage.self) {
+                guard let appModel else { return }
+                appModel.handleRemoteDashboardSyncMessage(message)
+            }
+        }
+    }
+
+    /// Observes incoming catch-up message from other participants
+    private func observeCatchUpMessages() {
+        Task.immediate(name: "catch-up message observation") {
+            for await (message, _) in messenger.messages(of: CatchUpMessage.self) {
+                guard let appModel else { return }
+                appModel.replaceAllSharedState(
+                    states: message.allCardStates,
+                    positions: message.allCardPositions,
+                    cardUpdateCounts: message.cardUpdateCounts,
+                    dashboardState: message.dashboardState,
+                    dashboardUpdateCount: message.dashboardUpdateCount
+                )
+            }
+        }
+    }
+
+    /// Observes when new participants join and sends them the current state
     private func observeActiveRemoteParticipants() {
         Task.immediate(name: "active participant observation") {
             var previousActiveParticipants = Set<Participant>()
             var hasSeenInitialParticipants = false
-            
-            for await activeParticipants in session.$activeParticipants.values {
-                let currentActiveParticipants = activeParticipants.filter {
-                    $0.id != session.localParticipant.id
-                }
 
+            // Iterate through active participants and remove inactive participants.
+            for await activeParticipants in session.$activeParticipants.values {
+                // 1. Filter out the local participant (we only care about remote joiners)
+                let currentActiveParticipants = activeParticipants.filter { $0.id != session.localParticipant.id }
+
+                // 2. Ensure previousActiveParticipants updates at the end of the loop, no matter what
                 defer {
                     previousActiveParticipants = currentActiveParticipants
                     hasSeenInitialParticipants = true
@@ -80,45 +113,36 @@ final class SessionController: ReplicationTransport {
 
                 guard hasSeenInitialParticipants else { continue }
 
-                let newActiveParticipants = currentActiveParticipants
-                    .subtracting(previousActiveParticipants)
+                // 3. Find participants who just joined
+                let newActiveParticipants = currentActiveParticipants.subtracting(previousActiveParticipants)
 
-                if !newActiveParticipants.isEmpty {
-                    replicator?.sendCurrentState(
-                        to: Set(newActiveParticipants.map(\.id))
-                    )
+                if !newActiveParticipants.isEmpty, let appModel {
+                    do {
+                        let catchUpMessage = appModel.makeCatchUpMessage()
+                        try await messenger.send(catchUpMessage, to: .only(newActiveParticipants))
+                    } catch {
+                        print("❌ Failed to send catch-up message: \(error)")
+                    }
                 }
             }
         }
     }
 
-    // MARK: - Message transport
-
-    func send(_ envelope: ReplicationEnvelope) {
-        sendEnvelope(envelope)
-    }
-
-    func send(
-        _ envelope: ReplicationEnvelope,
-        to participantIDs: Set<UUID>
-    ) {
-        let participants = session.activeParticipants.filter {
-            participantIDs.contains($0.id)
-        }
-        guard !participants.isEmpty else { return }
-        sendEnvelope(envelope, to: .only(participants))
-    }
-
-    private func sendEnvelope(
-        _ envelope: ReplicationEnvelope,
-        to participants: Participants = .all
-    ) {
-        Task {
-            do {
-                try await messenger.send(envelope, to: participants)
-            } catch {
-                print("Failed to send replication envelope: \(error)")
-            }
+    // MARK: - Send MESSAGE
+    func sendMessage(_ message: CardSyncMessage) async {
+        do {
+            try await messenger.send(message)
+        } catch {
+            print("❌ Failed to send sync message: \(error)")
         }
     }
+
+    func sendMessage(_ message: DashboardSyncMessage) async {
+        do {
+            try await messenger.send(message)
+        } catch {
+            print("❌ Failed to send dashboard sync message: \(error)")
+        }
+    }
+
 }

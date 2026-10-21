@@ -5,59 +5,72 @@
 //  Created by Juvern Khor on 29/4/2026.
 //
 
+// Flow: Handover_V4App -> LauncherView -> DashboardView -> PatientDashboardView; AppModel -> ImmersiveView.
 import SwiftUI
 import RealityKit
 import RealityKitContent
 
 @main
 struct Handover_V4App: App {
-    
+
     @State private var appModel = AppModel()
-    @State private var avPlayerViewModel = AVPlayerViewModel()
-    
+
+    // Controls dark/light appearance across all three presentation modes, toggled
+    // from the persistent launcher/control window (see LauncherView). @AppStorage
+    // shares this single value across every window/scene in the app.
+    @AppStorage("handoverUsesDarkAppearance") private var usesDarkAppearance = true
+
     // register so RealityKit can use it at runtime
     init() {
         PointOfInterestComponent.registerComponent()
         OrbitSlotComponent.registerComponent()
         PointOfInterestRuntimeComponent.registerComponent()
     }
-    
+
+    private var colorScheme: ColorScheme {
+        usesDarkAppearance ? .dark : .light
+    }
+
     var body: some SwiftUI.Scene {
-        WindowGroup(
-            id: AppWindow.dashboard.sceneID,
-            for: AppWindow.self
-        ) { _ in
+        // Declared first so it's the window the system opens automatically at launch.
+        // LauncherView opens the dashboard once the immersive space is open.
+        // `Window` (not WindowGroup) so re-opening it via openWindow(id:) brings the
+        // same single instance forward instead of stacking a new copy each time.
+        Window("Launcher", id: "launcher") {
+            LauncherView()
+                .environment(appModel)
+                .environment(\.colorScheme, colorScheme)
+        }
+        .windowStyle(.plain)
+        .windowResizability(.contentSize)
+        .defaultSize(width: 480, height: 320)
+
+        Window("Dashboard", id: "dashboard") {
             DashboardView(viewModel: appModel.handoverViewModel)
                 .environment(appModel)
-        } defaultValue: {
-            .dashboard
+                .environment(\.colorScheme, colorScheme)
         }
-        .defaultSize(width: 1700, height: 980)
+        // Individual dashboard panes supply glass, leaving clear space between them.
+        .windowStyle(.plain)
+        .defaultSize(width: 1440, height: 860)
+        .defaultWindowPlacement { _, context in
+            // Keep the launcher's immersive exit controls beside the new dashboard.
+            guard let launcher = context.windows.first(where: { $0.id == "launcher" }) else {
+                return WindowPlacement(size: CGSize(width: 1440, height: 860))
+            }
+            return WindowPlacement(.trailing(launcher), size: CGSize(width: 1440, height: 860))
+        }
 
-        // Controls window (used & visible during immersive space)
-        WindowGroup(
-            id: AppWindow.immersiveControls.sceneID,
-            for: AppWindow.self
-        ) { _ in
-            ImmersiveControlsView()
-                .environment(appModel)
-        } defaultValue: {
-            .immersiveControls
-        }
-        .defaultSize(width: 452, height: 256)
-        .windowResizability(.contentSize)
-        
         ImmersiveSpace(id: appModel.immersiveSpaceID) {
             ImmersiveView()
                 .environment(appModel)
                 .environment(appModel.handoverViewModel)
+                .environment(\.colorScheme, colorScheme)
                 .onAppear {
                     appModel.immersiveSpaceState = .open
-                    avPlayerViewModel.play()
                 }
                 .onDisappear {
                     appModel.immersiveSpaceState = .closed
-                    avPlayerViewModel.reset()
                 }
         }
         .immersionStyle(selection: .constant(.full), in: .full)

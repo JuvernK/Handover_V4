@@ -1,3 +1,4 @@
+// Flow: PatientData.json -> PatientDataLoader -> Patient -> dashboard and spatial cards.
 //
 //  Patient.swift
 //  Handover_V3
@@ -8,9 +9,7 @@
 //  - All structs are Identifiable + Codable so they work directly with SwiftUI ForEach
 //    and can be loaded from PatientData.json.
 //  - IDs are plain Strings (e.g. "p1", "p1-vital-1") for readability while prototyping.
-//  - The previous ISBARHandover struct has been removed — ISBAR is a communication
-//    framework, not a data structure. The nurse mentally constructs ISBAR sentences
-//    from the structured fields below.
+//  - Authored handover summaries belong to the case; disclosure belongs to the UI.
 //  - Length of stay is computed at runtime from icuAdmissionDate, so the LOS
 //    automatically updates each day without editing the JSON.
 //
@@ -28,23 +27,27 @@ struct Patient: Identifiable, Codable, Hashable {
     let gender: Gender
     let acuity: AcuityLevel
     let trajectory: Trajectory
-    
+
     let codeStatus: CodeStatus
     let allergies: [Allergy]
-    
+
     /// Short clinical label — what the patient is in for.
     /// e.g. "Post-CABG x3", "Severe ARDS — Influenza A".
     /// Shown prominently in the patient header.
     let diagnosis: String
     let relatedBackground: RelatedBackground
-    
+
+    /// Authored case summaries, not generated at runtime or represented as signed nursing notes.
+    /// Optional so older cases can load without inventing a clinical interpretation.
+    let handoverSummaries: HandoverSummaries?
+
     /// Optional name of an image asset in the app bundle to use as the
     /// patient's avatar. If nil or missing, the UI falls back to initials.
     let avatarImageName: String?
-    
+
     /// When the patient was admitted to ICU. Used to compute length of stay.
     let icuAdmissionDate: Date
-    
+
     let vitals: [VitalSign]
     let infusions: [Infusion]
     let lines: [LineAccess]
@@ -57,7 +60,7 @@ struct Patient: Identifiable, Codable, Hashable {
     static let demoReferenceDate: Date = {
             ISO8601DateFormatter().date(from: "2026-04-28T07:00:00Z")!
         }()
-    
+
     init(
         id: String,
         bedNumber: String,
@@ -71,6 +74,7 @@ struct Patient: Identifiable, Codable, Hashable {
         allergies: [Allergy],
         diagnosis: String,
         relatedBackground: RelatedBackground = .empty,
+        handoverSummaries: HandoverSummaries? = nil,
         avatarImageName: String?,
         icuAdmissionDate: Date,
         vitals: [VitalSign],
@@ -94,6 +98,7 @@ struct Patient: Identifiable, Codable, Hashable {
         self.allergies = allergies
         self.diagnosis = diagnosis
         self.relatedBackground = relatedBackground
+        self.handoverSummaries = handoverSummaries
         self.avatarImageName = avatarImageName
         self.icuAdmissionDate = icuAdmissionDate
         self.vitals = vitals
@@ -105,9 +110,9 @@ struct Patient: Identifiable, Codable, Hashable {
         self.family = family
         self.escalation = escalation
     }
-    
+
     // MARK: - Computed properties
-    
+
     /// Computed initials from name (e.g. "Ahmad bin Razali" → "AR").
     /// Used for the avatar circle when no image is provided.
     var initials: String {
@@ -120,7 +125,7 @@ struct Patient: Identifiable, Codable, Hashable {
         let last = words.last?.first.map(String.init) ?? ""
         return (first + last).uppercased()
     }
-    
+
     /// Number of full days the patient has been in ICU.
     /// Returns 0 if admitted today.
     var lengthOfStay: Int {
@@ -130,11 +135,19 @@ struct Patient: Identifiable, Codable, Hashable {
             return cal.dateComponents([.day], from: start, to: now).day ?? 0
         }
 
-    
     /// Human-readable LOS for display (e.g. "ICU Day 5").
     var lengthOfStayDisplay: String {
         "ICU Day \(lengthOfStay)"
     }
+}
+
+/// Case-authored main points with supporting evidence retained in the structured records.
+/// Each field is optional to support incremental authoring without fabricated fallbacks.
+struct HandoverSummaries: Codable, Hashable {
+    let situation: String?
+    let background: String?
+    let assessment: String?
+    let recommendation: String?
 }
 
 // MARK: - Allergy
@@ -169,25 +182,25 @@ struct VitalSign: Identifiable, Codable, Hashable {
     let unit: String            // "bpm"
     let status: VitalStatus
     let timestamp: Date
-    
+
     /// 12-point history covering the past 12 hours (1 point per hour).
     /// The last value in the array represents the most recent reading.
     let history: [Double]
-    
+
     /// Direction the vital is moving in (compared to earlier in the window).
     let trend: Trend
-    
+
     // MARK: - Computed helpers
-    
+
     var historyMin: Double? { history.min() }
     var historyMax: Double? { history.max() }
-    
+
     /// Formatted "low – high" string (e.g. "76 – 102") suitable for display.
     var rangeDisplay: String {
         guard let lo = historyMin, let hi = historyMax else { return "" }
         return "\(formatNumber(lo)) – \(formatNumber(hi))"
     }
-    
+
     private func formatNumber(_ n: Double) -> String {
         if n.truncatingRemainder(dividingBy: 1) == 0 {
             return String(Int(n))

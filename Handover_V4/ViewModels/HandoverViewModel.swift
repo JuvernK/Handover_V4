@@ -8,9 +8,9 @@
 //
 //  Responsibilities:
 //    - Load patients from PatientData.json
-//    - Select the study patient once from AppModel's initial bed number
+//    - Track which patient is currently displayed via appmodel.patient
 //    - Track the order of dashboard sections
-//    - Apply replicated dashboard order
+//    - Provide hooks for SharePlay to update state remotely
 //
 
 import Foundation
@@ -19,63 +19,57 @@ import Observation
 @Observable
 @MainActor
 final class HandoverViewModel {
-    private let patientLoader: any PatientLoading
 
     /// All patients loaded from the bundle.
     private(set) var patients: [Patient] = []
 
     /// The patient currently displayed on the dashboard.
-    private(set) var patient: Patient?
-
-    /// A user-facing description of the most recent loading failure.
-    private(set) var loadingErrorMessage: String?
+    var patient: Patient?
 
     /// The order in which dashboard sections appear in the grid.
     /// Drag-and-drop in DashboardView mutates this through moveSection().
     var sectionOrder: [SectionID] = SectionID.defaultOrder
-    
+
     /// Loads all patients from JSON and selects an initial patient by bed number.
     /// If the bed number is not found, falls back to the first patient.
-    convenience init(initialBedNumber: String = "BED-01") {
-        self.init(
-            initialBedNumber: initialBedNumber,
-            patientLoader: PatientDataLoader()
-        )
-    }
-
-    init(initialBedNumber: String, patientLoader: any PatientLoading) {
-        self.patientLoader = patientLoader
-        reloadPatients()
+    init(initialBedNumber: String = "BED-01") {
+        loadPatients()
         selectPatient(byBed: initialBedNumber)
     }
 
     // MARK: - Patient management
 
-    /// Reloads patient data using the injected loader.
-    func reloadPatients() {
+    /// Loads patients from PatientData.json.
+    func loadPatients() {
         do {
-            patients = try patientLoader.loadPatients()
-            loadingErrorMessage = nil
+            self.patients = try PatientDataLoader.load()
         } catch {
-            patients = []
-            patient = nil
-            loadingErrorMessage = error.localizedDescription
+            print("⚠️ Failed to load patients: \(error)")
+            self.patients = []
         }
     }
-    
+
     /// Sets the displayed patient by selected bed number.
     /// Falls back to the first patient if the bed number isn't found.
-    private func selectPatient(byBed bedNumber: String) {
+    func selectPatient(byBed bedNumber: String) {
         if let match = patients.first(where: { $0.bedNumber == bedNumber }) {
-            patient = match
+            self.patient = match
         } else {
-            patient = patients.first
+            self.patient = patients.first
+        }
+    }
+
+    /// Note: Removable
+    /// Sets the displayed patient by ID. Used internally by tests/previews.
+    func selectPatient(byID id: String) {
+        if let match = patients.first(where: { $0.id == id }) {
+            self.patient = match
         }
     }
 
     // MARK: - Section ordering
 
-    /// Moves the dragged section into the destination section's current position.
+    /// Moves the dragged section into the destination section's current position. (ID based)
     /// Used by .dropDestination handlers in DashboardView.
     ///
     /// Example: if Vitals is in position 1 and Infusions is in position 2,
@@ -86,15 +80,15 @@ final class HandoverViewModel {
         guard dragged != destination else { return false }
         guard let fromIndex = sectionOrder.firstIndex(of: dragged) else { return false }
         guard let destinationIndex = sectionOrder.firstIndex(of: destination) else { return false }
-        
+
         // Remove the dragged item first; this may shift the destination index.
         sectionOrder.remove(at: fromIndex)
-        
+
         let insertionIndex = min(destinationIndex, sectionOrder.count)
         sectionOrder.insert(dragged, at: insertionIndex)
         return true
     }
-    
+
     /// Resets the section order to the default. Useful for a "reset layout" button.
     func resetSectionOrder() {
         sectionOrder = SectionID.defaultOrder
@@ -114,5 +108,13 @@ final class HandoverViewModel {
         }
 
         sectionOrder = resolvedOrder
+    }
+
+    func applyDashboardState(_ dashboardState: DashboardState) {
+        if let selectedPatientID = dashboardState.selectedPatientID {
+            selectPatient(byID: selectedPatientID)
+        }
+
+        applySectionOrder(dashboardState.sectionOrder)
     }
 }

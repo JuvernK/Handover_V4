@@ -1,0 +1,22 @@
+excluded:
+  - .build
+  - Packages
+  - Handover_V4.xcodeproj
+
+# Start lenient: nothing fails the build, just warnings while we refactor.
+disabled_rules:
+  - todo
+  - line_length
+  - file_length
+  - type_body_length
+  - function_body_length
+  - cyclomatic_complexity
+  - identifier_name
+  - type_name
+
+opt_in_rules:
+  - empty_count
+  - redundant_type_annotation
+  - unused_import
+
+analyzer_rules: []
