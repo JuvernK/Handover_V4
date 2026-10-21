@@ -56,8 +56,8 @@ Jev is a small TypeSafe model wired into this repository as two separate tools.
 Both are off until the project switch is on. See
 [.claude/jev/README.md](.claude/jev/README.md) for the full reference.
 
-- **The router** runs by itself on every prompt once the switch is on. It
-  suggests a model tier and a skill. Its suggestions are advice, never an
+- **The router** suggests a model tier and a skill. Its hook is not installed
+  in this checkout, so it does not run on prompts; Jev is used by hand. Its suggestions are advice, never an
   instruction: an explicit model preference, an existing authorization, and the
   repository's own permissions all outrank it.
 - **The checker** never runs by itself. It asks four problem-hunting questions
