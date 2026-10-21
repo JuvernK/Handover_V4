@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Swift Testing — Quick Reference</title>
+  <link rel="stylesheet" href="../assets/course.css">
+</head>
+<body>
+<main>
+  <header>
+    <p class="eyebrow">Handover V4 · Quick reference</p>
+    <h1>Swift Testing basics</h1>
+    <p class="lead">The smallest useful syntax and workflow for a focused unit test.</p>
+  </header>
+
+  <h2>Minimal test</h2>
+  <pre><code>import Testing
+@testable import Handover_V4
+
+@Test
+func behaviourBeingChecked() {
+    // Arrange
+    let input = ...
+    let expected = ...
+
+    // Act
+    let actual = codeUnderTest(input)
+
+    // Assert
+    #expect(actual == expected)
+}</code></pre>
+
+  <h2>What each piece means</h2>
+  <ul>
+    <li><code>import Testing</code> makes Swift Testing APIs available.</li>
+    <li><code>@testable import Handover_V4</code> exposes the app module’s
+      internal declarations to its test target.</li>
+    <li><code>@Test</code> tells the test runner to discover the function.</li>
+    <li><code>#expect(condition)</code> records a failure when the condition is false,
+      then allows the test to continue.</li>
+    <li><code>#require(condition)</code> stops the current test when a value is
+      required for the remaining checks.</li>
+  </ul>
+
+  <h2>Behaviour-first naming</h2>
+  <p>Prefer <code>selectedAbbreviationExpandsInline()</code> over
+    <code>testGlossary()</code>. The name should tell you the rule that broke.</p>
+
+  <h2>Run tests</h2>
+  <ul>
+    <li>Xcode: open the Test navigator with <code>⌘6</code>, then use the play
+      button beside one test.</li>
+    <li>Xcode: use <code>Product → Test</code> or <code>⌘U</code> for the scheme.</li>
+    <li>Terminal: run the project’s documented <code>xcodebuild … test</code>
+      command with a concrete visionOS simulator destination.</li>
+  </ul>
+
+  <footer>
+    <a href="../lessons/0001-writing-first-swift-test.html">Return to lesson 1</a>
+    ·
+    <a href="https://developer.apple.com/documentation/Testing/DefiningTests">Apple: Defining test functions</a>
+  </footer>
+</main>
+</body>
+</html>

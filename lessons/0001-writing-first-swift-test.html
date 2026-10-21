@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 1 — Write one focused Swift test</title>
+  <link rel="stylesheet" href="../assets/course.css">
+  <script src="../assets/quiz.js" defer></script>
+</head>
+<body>
+<main>
+  <header>
+    <p class="eyebrow">Lesson 1 · About 10 minutes</p>
+    <h1>Turn one behaviour into a test</h1>
+    <p class="lead">Use the abbreviation feature to learn the smallest complete
+      Swift Testing loop: arrange the situation, act on the code, and assert the result.</p>
+  </header>
+
+  <section class="goal">
+    <span class="label">Tangible win</span>
+    By the end, you will be able to explain and write a focused test that proves:
+    <strong>selecting CRRT appends its full term inline while preserving CRRT.</strong>
+  </section>
+
+  <h2>First: what is a test case?</h2>
+  <p>A test case is a small executable example of one required behaviour. It supplies
+    known input, calls your production code, and checks the observed result against
+    an expected result.</p>
+
+  <p>The <code>Handover_V4Tests</code> target is a separate test product. That is why
+    adding the first tests changed <code>project.pbxproj</code>: Xcode had to record
+    the target, its dependency on the app, and how the test bundle is built.</p>
+
+  <div class="aaa" aria-label="Arrange Act Assert">
+    <div><strong>1 · Arrange</strong>Create the source text, stable identity, selection,
+      and expected output.</div>
+    <div><strong>2 · Act</strong>Call the public behaviour boundary you want to verify.</div>
+    <div><strong>3 · Assert</strong>Compare the actual result with the requirement.</div>
+  </div>
+
+  <h2>Read the real Handover test</h2>
+  <pre><code>import SwiftUI
+import Testing
+@testable import Handover_V4
+
+@Test
+func selectedApprovedAbbreviationExpandsInline() {
+    // Arrange
+    let textID = "plan.item.p5-plan-1.task"
+    let text = "Continue CRRT overnight"
+    let selection = AbbreviationSelection(
+        textID: textID,
+        glossaryEntryID: "crrt",
+        occurrenceIndex: 0
+    )
+    let expected =
+        "Continue CRRT (Continuous renal replacement therapy) overnight"
+
+    // Act
+    let rendered = ClinicalAbbreviationGlossary.attributedString(
+        for: text,
+        textID: textID,
+        selection: selection,
+        baseColor: .primary,
+        abbreviationColor: .accentColor
+    )
+
+    // Assert
+    #expect(String(rendered.characters) == expected)
+}</code></pre>
+
+  <section class="note">
+    <span class="label">The key design choice</span>
+    This test checks observable text output. It does not know how the glossary scans
+    the string internally. That lets the implementation be refactored without
+    rewriting the test, as long as the clinical behaviour remains correct.
+  </section>
+
+  <h2>Retrieval check</h2>
+  <section class="exercise"
+    data-retrieval-check
+    data-answers="#expect|expect">
+    <p>Without looking back, type the Swift Testing macro that checks whether a
+      Boolean expression is true.</p>
+    <label for="macro-answer" class="label">Your answer</label>
+    <input id="macro-answer" autocomplete="off" spellcheck="false"
+      placeholder="Type the macro">
+    <div>
+      <button type="button" data-check>Check answer</button>
+      <button type="button" class="secondary" data-reveal>Reveal answer</button>
+    </div>
+    <p class="feedback" aria-live="polite"></p>
+    <p class="solution" hidden><code>#expect</code></p>
+  </section>
+
+  <h2>Your first writing exercise</h2>
+  <p>Now write—not copy—a test for this rule:</p>
+  <blockquote>
+    An unknown term such as XYZ remains unchanged.
+  </blockquote>
+
+  <p>Use this scaffold. Fill only the four blanks:</p>
+  <pre><code>@Test
+func unknownTermRemainsPlain() {
+    // Arrange
+    let text = __________
+    let textID = "plan.item.exercise.task"
+
+    // Act
+    let rendered = ClinicalAbbreviationGlossary.attributedString(
+        for: text,
+        textID: textID,
+        selection: __________,
+        baseColor: .primary,
+        abbreviationColor: .accentColor
+    )
+
+    // Assert
+    #expect(String(rendered.characters) __________ __________)
+}</code></pre>
+
+  <details>
+    <summary>Check the solution after attempting it</summary>
+    <pre><code>let text = "Continue XYZ overnight"
+selection: nil
+#expect(String(rendered.characters) == text)</code></pre>
+  </details>
+
+  <h2>Run it in Xcode</h2>
+  <ol>
+    <li>Open <code>ClinicalAbbreviationExpansionTests.swift</code>.</li>
+    <li>Add the test inside <code>ClinicalAbbreviationExpansionTests</code>.</li>
+    <li>Click the diamond/play control beside the test, or open the Test navigator
+      with <code>⌘6</code>.</li>
+    <li>A green result means the behaviour matched. A red result is useful evidence:
+      read the values shown by <code>#expect</code>.</li>
+  </ol>
+
+  <p>Primary source:
+    <a href="https://developer.apple.com/documentation/xcode/adding-tests-to-your-xcode-project">
+      Apple — Adding tests to your Xcode project</a>. Apple describes the same
+      Arrange–Act–Assert workflow and explains test targets and
+      <code>@testable import</code>.</p>
+
+  <footer>
+    Keep the
+    <a href="../reference/swift-testing-basics.html">Swift Testing quick reference</a>
+    nearby. Then send your four filled blanks to your agent for feedback—or ask
+    any follow-up question if a line is unclear.
+  </footer>
+</main>
+</body>
+</html>
