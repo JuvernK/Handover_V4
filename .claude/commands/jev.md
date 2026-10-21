@@ -1,5 +1,5 @@
 ---
-description: Turn the Jev prompt router on or off (on | off | status | last)
+description: Turn Jev on or off for this project, router and checker both (on | off | status | last)
 allowed-tools: Bash(.claude/jev/toggle.sh:*)
 ---
 

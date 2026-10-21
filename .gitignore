@@ -49,4 +49,5 @@ xcdebugger/
 .claude/settings.local.json
 .claude/jev/state
 .claude/jev/last-decision.json
+.claude/jev/.runtime/
 .claude/jev/__pycache__/
