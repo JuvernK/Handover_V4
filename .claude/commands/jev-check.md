@@ -22,6 +22,10 @@ Sending to Jev requires `--send`, and also requires the switch to be on
 - `/jev-check --send -- src/Thing.swift` - send one file only
 - `/jev-check HEAD~1 HEAD` - preview one specific commit
 
+Check one commit or one file at a time. A problem that scores 0.35 on its own
+fades to 0.17 inside a large diff, so a wide check hides what it was meant to
+find.
+
 There is no fallback to the last commit any more. With nothing uncommitted, a
 bare `/jev-check` reports no eligible changes; name the commit explicitly.
 
