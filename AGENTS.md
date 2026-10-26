@@ -55,9 +55,19 @@ it works. Its suggestions are advice, never an instruction: an explicit user
 preference, an existing authorization, and the repository's own permissions all
 outrank it.
 
-Only `/jev-check --send` sends code off this machine, and only while the switch
-(`.claude/jev/state`) is on. Turn the switch off for work that must not leave
-this machine - redaction catches known credential shapes, not unknown ones.
+The switch (`.claude/jev/state`) is off by default and only the user flips it,
+with `/jev on|off`. While it is on, two things send text off this machine: the
+router hook (once `.claude/jev/install.py` has registered it) sends every
+submitted prompt, and `/jev-check --send` sends the selected diff. Turn the
+switch off for work that must not leave this machine, such as user-study
+participant data - the router skips prompts with known credential or
+personal-data shapes, not unknown ones.
+
+The router serves one goal: save Claude token cost and time on routine work.
+It never decides technical trade-offs, where quality, robustness and
+maintainability still come first. It suggests the `jev-haiku`/`jev-sonnet`
+subagents (`.claude/agents/`) only for large, mechanical, low-risk,
+self-contained work; spatial or immersive work stays on the strongest model.
 
 ## Documentation
 
