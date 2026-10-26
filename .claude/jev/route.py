@@ -15,7 +15,10 @@ from jev_common import (
 MODEL_OPTIONS = ("opus", "sonnet", "haiku", "defer_to_main")
 WORK_OPTIONS = ("yes", "no")
 HISTORY_OPTIONS = ("self_contained", "needs_history")
+WORKLOAD_OPTIONS = ("large", "small")
 RISK_OPTIONS = ("low", "elevated", "unknown")
+# Project subagents in .claude/agents/ for downgraded work; opus upgrades use a general-purpose Agent.
+WORKER_AGENTS = {"haiku": "jev-haiku", "sonnet": "jev-sonnet"}
 NO_SKILL = {"type": "choice", "choice": "none", "confidence": 1.0, "probabilities": {"none": 1.0}}
 _SENSITIVE_SKILL = re.compile(r"(?:config|permission|schedule|loop|browser|chrome|computer-use|google-workspace|import-memory|morning|plugin-authoring|writing-for-agents|skill-creator|mcp-builder|keybindings)", re.I)
 
@@ -69,12 +72,22 @@ def build_questions(skills):
         },
         "model": {
             "type": "choice",
-            "instructions": scope + "Which Claude model tier fits the work? This estimates capability; it does not measure correctness or authorize any action. Respect an explicit model preference in the prompt.",
+            "instructions": scope + "The project is a visionOS (Apple Vision Pro) SwiftUI and RealityKit research prototype. Which Claude model tier fits the work? Pick the cheapest tier that would still do it well. This estimates capability; it does not measure correctness or authorize any action. Respect an explicit model preference in the prompt.",
+            # Project-specific examples: spatial bugs in this codebase are subtle
+            # (see AGENTS.md gotchas), so anything spatial stays on opus.
             "criteria": {
-                "opus": "Strongest reasoning tier, for complex design, subtle debugging, architecture, security-sensitive analysis, or costly mistakes.",
-                "sonnet": "Balanced tier for well-specified implementation, ordinary debugging, tests, and code review.",
-                "haiku": "Small tier for simple mechanical transformations, bounded lookups, formatting, or straightforward extraction with easy verification.",
+                "opus": "Anything touching the immersive space, RealityKit entities, attachments or collision shapes, gestures, hover effects, glass panel layout, presentation-mode or Orbit state, OrbitAnchor transforms, or SharePlay; a bug with an unknown cause; changes across several files or a shared layer; work that must be verified in the simulator; design, architecture or user-study decisions.",
+                "sonnet": "One clearly specified change in one SwiftUI view, model or helper file that involves no immersive space, RealityKit, gesture, hover or glass layout; a bug whose cause is already known; unit tests for existing logic; a refactor inside one file.",
+                "haiku": "Mechanical work with no change to app behaviour: rename symbols or files, fix typos or documentation wording, update links in docs, run the documented xcodebuild command and report errors, summarise a build log, find where something is defined, list or reformat files.",
                 "defer_to_main": "None of these choices can be justified from the supplied prompt, the request is ambiguous/contradictory, or the main conversation must interpret earlier context or a different explicit model preference.",
+            },
+        },
+        "workload": {
+            "type": "choice",
+            "instructions": scope + "How much work would carrying out user_prompt take for a coding agent?",
+            "criteria": {
+                "large": "Substantial work: reading many files, many repetitive edits, digesting long command or build output, or many separate steps.",
+                "small": "One or two lookups, edits or commands that an agent could finish in a few actions.",
             },
         },
         "risk": {
@@ -104,6 +117,7 @@ def validate_answers(result, skills):
         "needs_work": validate_choice(answers.get("needs_work"), WORK_OPTIONS),
         "needs_history": validate_choice(answers.get("needs_history"), HISTORY_OPTIONS),
         "model": validate_choice(answers.get("model"), MODEL_OPTIONS),
+        "workload": validate_choice(answers.get("workload"), WORKLOAD_OPTIONS),
         "risk": validate_choice(answers.get("risk"), RISK_OPTIONS),
     }
     parsed["skill"] = validate_choice(answers.get("skill"), skills) if len(skills) > 1 else dict(NO_SKILL)
@@ -136,8 +150,17 @@ def decide_route(answers, main_tier, config):
         result.update(action="delegate", reason="upgrade", selected_model=chosen)
     elif risk != "low" or _SENSITIVE_SKILL.search(skill):
         result.update(reason="risk_blocks_downgrade")
+    elif answers["workload"]["probabilities"]["large"] < config["downgrade_min_probability"]:
+        # Briefing a cold worker costs more than a few direct actions on the
+        # main model, so a downgrade only saves tokens on large work.
+        result.update(reason="small_workload")
+    elif (
+        answers["model"]["confidence"] < config["downgrade_min_confidence"]
+        or answers["needs_history"]["probabilities"]["self_contained"] < config["downgrade_min_probability"]
+    ):
+        # A wrong downgrade means rework, so it needs a clear answer; upgrades above do not.
+        result.update(reason="uncertain_downgrade")
     else:
-        # For recoverable work, use the winning option without a blanket .6 gate.
         result.update(action="delegate", reason="low_risk_downgrade", selected_model=chosen)
     if (
         result["action"] != "defer" and result["reason"] != "history_required"
@@ -156,6 +179,8 @@ def build_context(decision, answers):
         "history_required": "Keep interpretation and planning in the main conversation because the turn depends on history. If a stronger worker is useful, first construct a complete briefing with the established requirements.",
         "same_tier": "The suggested tier matches the tracked main tier, so this router suggests keeping the work in the main conversation.",
         "risk_blocks_downgrade": "Do not reduce model capability solely to save cost for this turn: consequences are elevated or unknown, or the suggested skill can affect settings/external systems.",
+        "small_workload": "Jev suggests a smaller tier, but the work looks small: doing it directly in the main conversation costs less than briefing a worker.",
+        "uncertain_downgrade": "Jev leans toward a smaller tier but not clearly enough, or the task may depend on earlier messages. Keep the work in the main conversation.",
         "upgrade": "Consider a stronger worker for this self-contained task.",
         "low_risk_downgrade": "Consider a smaller worker for this task only after checking against the full context that mistakes are reversible and easy to detect. Jev's low-risk label is an estimate.",
     }
@@ -167,7 +192,11 @@ def build_context(decision, answers):
         ),
         reasons[decision["reason"]],
     ]
-    if decision["action"] == "delegate":
+    if decision["action"] == "delegate" and decision["selected_model"] in WORKER_AGENTS:
+        lines.append(
+            'If consistent with the full task and user preferences, use the Agent tool with subagent_type="%s". Brief it with the complete objective, scope, acceptance criteria, relevant files and prior decisions, and the same authorization limits. It stops and reports if the work needs design decisions or touches shared code; escalate then. Verify its result. This hook has not created or switched any agent.' % WORKER_AGENTS[decision["selected_model"]]
+        )
+    elif decision["action"] == "delegate":
         lines.append(
             'If consistent with the full task and user preferences, use an available general-purpose Agent with model="%s". Brief it with the complete objective, scope, acceptance criteria, relevant files and prior decisions, and the same authorization limits. Ask it to report missing context or increased complexity. Verify its result and escalate if needed. This hook has not created or switched any agent.' % decision["selected_model"]
         )

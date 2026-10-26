@@ -10,6 +10,8 @@
   "git_timeout_seconds": 15,
   "model_tracking_max_age_seconds": 86400,
   "log_retention_days": 7,
+  "downgrade_min_confidence": 0.6,
+  "downgrade_min_probability": 0.7,
   "exclude_globs": [
     ".env",
     ".env.*",

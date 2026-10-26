@@ -34,6 +34,10 @@ DEFAULT_CONFIG = {
     "git_timeout_seconds": 15,
     "model_tracking_max_age_seconds": 86400,
     "log_retention_days": 7,
+    # Router downgrade gates: tier-choice confidence, and the probability of
+    # "self_contained" and "large" workload. Starting points to tune with real use.
+    "downgrade_min_confidence": 0.6,
+    "downgrade_min_probability": 0.7,
     "exclude_globs": [
         ".env", ".env.*", "*.pem", "*.key", "*.p12", "*.pfx", "*.keystore",
         "id_rsa*", "id_ed25519*", "credentials*", "*secret*", ".npmrc", ".pypirc",
@@ -130,6 +134,10 @@ def load_config(home=HERE):
             value = result[key]
             if type(value) is not int or not minimum <= value <= maximum:
                 raise ValueError("Invalid bound")
+        for key in ("downgrade_min_confidence", "downgrade_min_probability"):
+            value = result[key]
+            if type(value) not in (int, float) or not 0 <= value <= 1:
+                raise ValueError("Invalid gate")
         for key in ("auto_load_skills", "exclude_globs"):
             values = result[key]
             if not isinstance(values, list) or len(values) > 255 or any(not isinstance(v, str) or not v or len(v) > 300 or any(ord(c) < 32 for c in v) for v in values):
