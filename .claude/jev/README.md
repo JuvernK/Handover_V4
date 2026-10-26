@@ -140,7 +140,7 @@ checker 仍一次問四題：測試是否變弱、錯誤是否被不當忽略、
 
 router 送出目前這一輪經檢查的 prompt、題目及 `skills.json` 中的技能名稱／說明；不主動讀取完整聊天紀錄或專案檔案。checker 只在明確使用 `--send` 時送出選定的差異和四個題目。
 
-`TYPESAFE_API_KEY` 從環境變數讀取，沒有時沿用 `.claude/settings.local.json` 裡的 `env.TYPESAFE_API_KEY`。不會把 key 印出、放入分流紀錄或打包進此套件。HTTPS 重新導向會被拒絕，不會把 Authorization 標頭跟著導向其他網址。API 回應大小有上限，錯誤訊息不輸出伺服器原始 body，也不自動重試。
+`TYPESAFE_API_KEY` 先從環境變數讀取，沒有時從 macOS Keychain 的 `typesafe-jev-api-key` 項目讀取（`security find-generic-password -s typesafe-jev-api-key -w`）。不再讀取 `.claude/settings.local.json` 的 `env`：那裡的值會注入 Claude Code 啟動的每個子程序，容易被印進對話紀錄。存入或更換 key 時，在自己的 Terminal 執行 `security add-generic-password -a "$USER" -s typesafe-jev-api-key -U -w`，依提示貼上兩次。不會把 key 印出、放入分流紀錄或打包進此套件。HTTPS 重新導向會被拒絕，不會把 Authorization 標頭跟著導向其他網址。API 回應大小有上限，錯誤訊息不輸出伺服器原始 body，也不自動重試。
 
 ### 敏感資料的預設行為
 

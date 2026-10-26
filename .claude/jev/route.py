@@ -215,7 +215,7 @@ def route_payload(payload, home=HERE):
         if redactions and config["sensitive_handling"] == "skip":
             event["reason"] = "sensitive_content"
             return None
-        key = read_api_key(home)
+        key = read_api_key()
         if not key:
             event["reason"] = "missing_api_key"
             return None

@@ -432,9 +432,9 @@ def main(argv=None, home=None, stream=None):
             _emit(dict(metadata, status="skipped", reason="sensitive_data_detected", api_called=False,
                        message="Detected sensitive content. Review the local preview; sending is blocked by the skip policy."), stream)
             return 2
-        api_key = read_api_key(home)
+        api_key = read_api_key()
         if not api_key:
-            raise JevError("missing_api_key", "Set TYPESAFE_API_KEY locally before sending.")
+            raise JevError("missing_api_key", "Store the TypeSafe key in the macOS Keychain item typesafe-jev-api-key, or set TYPESAFE_API_KEY, before sending.")
         # Collection may take time. Respect a switch turned off during that work.
         if not is_enabled(home):
             _emit(dict(metadata, status="skipped", reason="disabled", api_called=False), stream)
@@ -460,7 +460,7 @@ def main(argv=None, home=None, stream=None):
             "git_error": "Git could not read the requested repository or revisions. Check the installation location and arguments.",
             "git_timeout": "Git exceeded the configured timeout. Narrow the selected scope or inspect the repository locally.",
             "invalid_response": "The response did not contain four valid answers. This check is incomplete.",
-            "missing_api_key": "Set TYPESAFE_API_KEY locally before requesting --send.",
+            "missing_api_key": "Store the TypeSafe key in the macOS Keychain item typesafe-jev-api-key, or set TYPESAFE_API_KEY, before requesting --send.",
             "invalid_arguments": "Use zero, one or two revisions, supported checker flags, and literal project-relative paths after --.",
         }
         message = getattr(error, "detail", "") or messages.get(error.code, "The check did not complete. Review the reported reason and local configuration.")
