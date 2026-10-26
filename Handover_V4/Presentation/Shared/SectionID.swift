@@ -27,11 +27,6 @@ enum SectionID: String, CaseIterable, Identifiable, Codable, Hashable {
 
     var id: String { rawValue }
 
-    /// Default order in which cards appear when the dashboard first loads.
-    static var defaultOrder: [SectionID] {
-        [.vitals, .relatedBackground, .infusions, .lines, .labs, .systems, .plan, .escalation]
-    }
-
     /// Builds the SwiftUI view for this section, given a patient.
     @ViewBuilder
     func view(for patient: Patient) -> some View {

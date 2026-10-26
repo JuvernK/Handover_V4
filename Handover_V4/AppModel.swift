@@ -1,4 +1,4 @@
-// Flow: LauncherView + SharePlay -> AppModel -> dashboard disclosure + OrbitController + immersive cards.
+// Flow: LauncherView + ImmersiveView + PatientDashboardView -> AppModel -> OrbitController + SharedHandoverReplica -> SessionController.
 //
 //  AppModel.swift
 //  Handover_V4
@@ -6,11 +6,16 @@
 //  Created by Juvern Khor on 29/4/2026.
 //
 
-import SwiftUI
+import Foundation
 import GroupActivities
+import Observation
 import Combine
 
-/// Maintains app-wide state
+/// Owns what the handover shows and keeps it identical for every SharePlay participant.
+///
+/// Views change state here directly. Any change to `currentSnapshot` is noticed through
+/// observation and sent to peers, so call sites need no SharePlay code; snapshots from
+/// peers are applied through the same properties.
 @MainActor
 @Observable
 class AppModel {
@@ -22,305 +27,205 @@ class AppModel {
     }
     var immersiveSpaceState = ImmersiveSpaceState.closed
 
-    /// One of three mutually exclusive ways to present a handover in the immersive space.
-    /// Each entry applies its local disclosure policy; new SharePlay synchronization is deferred.
-    enum PresentationMode: String, CaseIterable, Identifiable {
-        case dashboard
-        case spatial
-        case orbit
+    /// Whether the ICU should be open. ToggleImmersiveSpaceButton opens or dismisses
+    /// the space to match, so a peer entering or leaving brings everyone along.
+    var wantsImmersion = false
 
-        var id: String { rawValue }
-
-        var displayName: String {
-            switch self {
-            case .dashboard: return "Dashboard"
-            case .spatial: return "Spatial"
-            case .orbit: return "Orbit"
-            }
-        }
-    }
-    // TODO: After the user's explicit SharePlay implementation go-ahead, synchronize
-    // mode changes with disclosure resets and Orbit navigation; late joining must not reset peers.
-    // See docs/orbit-source-outlines.md for the deferred scope.
     var presentationMode = PresentationMode.dashboard {
         didSet {
             guard oldValue != presentationMode else { return }
-            if presentationMode == .orbit {
-                orbit.enter()
-            } else {
-                orbit.leave()
-                if presentationMode == .spatial {
-                    for card in OrbitCard.allCases { cardStates[card.rawValue] = true }
-                }
-            }
+            enter(presentationMode)
         }
     }
     let orbit = OrbitController()
-
-    /// Orbit disclosure is local and exclusive; Spatial retains its existing shared card messages.
-    func isCardExpanded(_ name: String) -> Bool {
-        if name == "Basic_Information" { return true }
-        if presentationMode == .orbit {
-            return orbit.state.expandedCard?.rawValue == name
-        }
-        return cardStates[name] ?? cardStates[name.lowercased()] ?? true
-    }
+    /// Spatial cards default to expanded; only collapsed ones are recorded.
+    var collapsedSpatialCards: Set<String> = []
+    var dashboard = DashboardPresentationState()
+    var dashboardOrder = DashboardBoardState()
 
     let handoverViewModel: HandoverViewModel
     let patients = PatientDataLoader.loadOrEmpty()
-    var isActivatingSharePlay = false
-    var sharePlayErrorMessage: String?
 
     init(initialBedNumber: String = "BED-02") {
         handoverViewModel = HandoverViewModel(initialBedNumber: initialBedNumber)
         Task(name: "group session observation") {
             await observeGroupSessions()
         }
+        observeLocalChanges()
     }
 
-    // MARK: - Set up SharePlay
-    private var sessionController: SessionController?
+    // MARK: - Presentation
 
-    /// Returns whether a SharePlay session is currently active.
-    var isSharePlayActive: Bool {
-        sessionController != nil
-    }
-
-    /// Ends the current SharePlay session if one is active.
-    func endSession() {
-        sessionController?.endSession()
-    }
-
-    /// Starts the SharePlay group activity. In FaceTime this joins the active call;
-    /// outside FaceTime the system may ask the user how they want to share.
-    func activateSharePlay() async {
-        guard !isSharePlayActive, !isActivatingSharePlay else { return }
-
-        isActivatingSharePlay = true
-        sharePlayErrorMessage = nil
-        defer { isActivatingSharePlay = false }
-
-        let activity = SharePlayTogether()
-        switch await activity.prepareForActivation() {
-        case .activationPreferred:
-            do {
-                _ = try await activity.activate()
-            } catch {
-                sharePlayErrorMessage = "SharePlay could not be started: \(error.localizedDescription)"
-            }
-
-        case .activationDisabled:
-            sharePlayErrorMessage = "Start or join a FaceTime call before starting SharePlay."
-
-        case .cancelled:
-            break
-
-        @unknown default:
-            sharePlayErrorMessage = "SharePlay is not available right now."
+    /// Every entry into a mode starts from its own disclosure: Spatial and Dashboard fully
+    /// expanded, Orbit on Situation. The person switching shares the result, so peers
+    /// receive the reset rather than each resetting on join.
+    private func enter(_ mode: PresentationMode) {
+        if mode == .orbit {
+            orbit.enter()
+        } else {
+            orbit.leave()
+        }
+        switch mode {
+        case .spatial: collapsedSpatialCards = []
+        case .dashboard: dashboard = DashboardPresentationState()
+        case .orbit: break
         }
     }
 
-    /// Observes the life cycle of SharePlay group sessions.
-    /// This method listens for new `SharePlayTogether` sessions and manages their life cycles.
-    /// The method runs continuously in a background task and the system calls it only once during initialization.
-    private func observeGroupSessions() async {
-        for await session in SharePlayTogether.sessions() {
-            let sessionController = await SessionController(session, appModel: self)
-            guard let sessionController else { // Safely store session
-                continue
-            }
-            self.sessionController = sessionController
-
-            // Create a task to observe the group session state and clear the
-            // session controller when the group session invalidates.
-            Task.immediate(name: "session state observation") {
-                for await state in session.$state.values {
-                    // Safety check for active session before new one created
-                    guard self.sessionController?.session.id == session.id else {
-                        return
-                    }
-                    if case .invalidated = state {
-                        self.sessionController = nil
-                        return
-                    }
-                }
-            }
+    /// Basic Information is always open; Orbit shows only its front card.
+    func isCardExpanded(_ name: String) -> Bool {
+        if name == "Basic_Information" { return true }
+        if presentationMode == .orbit {
+            return orbit.state.expandedCard?.rawValue == name
         }
+        return !collapsedSpatialCards.contains(name)
     }
 
-    // MARK: - Card State Management
-
-    // State Dictionaries
-    // TODO: After the user's explicit SharePlay implementation go-ahead, reconcile
-    // individual/group disclosure with shared mode resets and late-join state.
-    // Preserve existing card messages; derive source outlines locally from active cards.
-    // See docs/orbit-source-outlines.md for the deferred scope.
-    var cardStates: [String: Bool] = [:]
-    var cardPositions: [String: SIMD3<Float>] = [:]
-
-    // update counts to prevent race conditions
-    private var cardUpdateCounts: [String: MessageUpdateCount] = [:]
-    private var dashboardUpdateCount: MessageUpdateCount?
-
-    var currentDashboardState: DashboardState {
-        DashboardState(
-            selectedPatientID: handoverViewModel.patient?.id,
-            sectionOrder: handoverViewModel.sectionOrder
-        )
-    }
-
-    func makeCatchUpMessage() -> CatchUpMessage {
-        CatchUpMessage(
-            allCardStates: cardStates,
-            allCardPositions: cardPositions,
-            cardUpdateCounts: cardUpdateCounts,
-            dashboardState: currentDashboardState,
-            dashboardUpdateCount: dashboardUpdateCount
-        )
-    }
-
-    // MARK: - Local Updates  (SELF)
-    func setCardState(name: String, isExpanded: Bool, syncChanges: Bool) {
-        cardStates[name] = isExpanded
-
-        if syncChanges {
-            incrementAndBroadcast(name: name, action: .toggle(isExpanded: isExpanded))
+    func setSpatialCard(_ name: String, isExpanded: Bool) {
+        if isExpanded {
+            collapsedSpatialCards.remove(name)
+        } else {
+            collapsedSpatialCards.insert(name)
         }
     }
 
     /// SBAR rail: expands every card in the group if any are collapsed, otherwise collapses them all.
     func toggleSBARGroup(_ group: SBARGroup) {
-        setExpanded(!allExpanded(group.poiNames), for: group.poiNames)
+        toggleSpatialCards(group.poiNames)
     }
 
     /// SBAR rail's ALL button: same all-or-nothing rule across every Spatial card group.
     /// Basic Information isn't part of any group, so it's untouched.
     func toggleAllSpatialCards() {
-        let allPOINames = SBARGroup.allCases.flatMap(\.poiNames)
-        setExpanded(!allExpanded(allPOINames), for: allPOINames)
+        toggleSpatialCards(SBARGroup.allCases.flatMap(\.poiNames))
     }
 
-    private func allExpanded(_ poiNames: [String]) -> Bool {
-        poiNames.allSatisfy { cardStates[$0] ?? true }
-    }
-
-    private func setExpanded(_ isExpanded: Bool, for poiNames: [String]) {
-        for name in poiNames {
-            setCardState(name: name, isExpanded: isExpanded, syncChanges: true)
+    private func toggleSpatialCards(_ names: [String]) {
+        let allExpanded = collapsedSpatialCards.isDisjoint(with: names)
+        for name in names {
+            setSpatialCard(name, isExpanded: !allExpanded)
         }
     }
 
-    func setCardPosition(name: String, position: SIMD3<Float>, syncChanges: Bool) {
-        cardPositions[name] = position
-
-        if syncChanges {
-            incrementAndBroadcast(name: name, action: .move(position: position))
+    /// Called once the ICU geometry exists. Orbit starts on Situation, or joins the
+    /// card the group is already on so opening the space never moves anyone else.
+    func immersiveSceneDidLoad() {
+        guard presentationMode == .orbit else { return }
+        orbit.enter()
+        if replica.isActive, let target = replica.shared.orbit {
+            orbit.adopt(target)
         }
     }
 
-    // Helper to handle the counter logic and send the message
-    /// Seal message and counter into CardSyncMessage type and send via SessionController
-    private func incrementAndBroadcast(name: String, action: CardAction) {
-
-        guard let newUpdateCount = nextUpdateCount(after: cardUpdateCounts[name]) else { return }
-        cardUpdateCounts[name] = newUpdateCount // Save our new count locally
-
-        let message = CardSyncMessage(cardName: name, action: action, updateCount: newUpdateCount)
-
-        Task {
-            await sessionController?.sendMessage(message)
+    /// Records the space closing. Closing it from outside the app counts as everyone leaving,
+    /// while a close this app requested has already updated `wantsImmersion`.
+    func immersiveSpaceDidClose() {
+        if immersiveSpaceState == .open {
+            wantsImmersion = false
         }
+        immersiveSpaceState = .closed
     }
 
-    @discardableResult
-    func moveDashboardSection(_ dragged: SectionID, toPositionOf destination: SectionID, syncChanges: Bool) -> Bool {
-        guard handoverViewModel.moveSection(dragged, toPositionOf: destination) else { return false }
+    // MARK: - SharePlay
 
-        if syncChanges {
-            incrementAndBroadcastDashboard(action: .sectionOrder(handoverViewModel.sectionOrder))
-        }
+    private var sessionController: SessionController?
+    private var replica = SharedHandoverReplica()
+    var isActivatingSharePlay = false
+    var sharePlayErrorMessage: String?
 
-        return true
+    var isSharePlayActive: Bool {
+        sessionController != nil
     }
 
-    func selectPatient(id: String, syncChanges: Bool) {
-        handoverViewModel.selectPatient(byID: id)
-
-        if syncChanges {
-            incrementAndBroadcastDashboard(action: .selectedPatient(id: id))
-        }
-    }
-
-    private func incrementAndBroadcastDashboard(action: DashboardAction) {
-        guard let newUpdateCount = nextUpdateCount(after: dashboardUpdateCount) else { return }
-        dashboardUpdateCount = newUpdateCount
-
-        let message = DashboardSyncMessage(action: action, updateCount: newUpdateCount)
-
-        Task {
-            await sessionController?.sendMessage(message)
-        }
-    }
-
-    private func nextUpdateCount(after existingCount: MessageUpdateCount?) -> MessageUpdateCount? {
-        guard let participantId = sessionController?.session.localParticipant.id else { return nil }
-
-        return MessageUpdateCount(
-            count: (existingCount?.count ?? 0) + 1,
-            participant: participantId
+    /// The facts peers share, read from live state. An Orbit drag that has not been released
+    /// keeps the last shared card, so peers move only once a card is chosen.
+    var currentSnapshot: SharedHandoverSnapshot {
+        SharedHandoverSnapshot(
+            isImmersed: wantsImmersion,
+            mode: presentationMode,
+            orbit: presentationMode == .orbit ? (orbit.state.target ?? replica.shared.orbit) : nil,
+            collapsedSpatialCards: collapsedSpatialCards,
+            dashboard: dashboard,
+            dashboardOrder: dashboardOrder
         )
     }
 
-    // MARK: - Remote Updates (Changes Other Participant)
-    func handleRemoteSyncMessage(_ message: CardSyncMessage) {
-        // 1. Check for race conditions. Ignore if our local record is newer than the incoming message.
-        if let existingCount = cardUpdateCounts[message.cardName], message.updateCount <= existingCount {
-            return
-        }
+    var catchUpMessage: SharedHandoverMessage? {
+        replica.catchUp
+    }
 
-        // 2. It's a valid new update. Save the new high score.
-        cardUpdateCounts[message.cardName] = message.updateCount
+    /// Leaves SharePlay on this device; the others carry on together.
+    func leaveSharePlay() {
+        sessionController?.leave()
+    }
 
-        // 3. Apply the state change
-        switch message.action {
-        case .toggle(let isExpanded):
-            cardStates[message.cardName] = isExpanded
-        case .move(let position):
-            cardPositions[message.cardName] = position
+    /// Starts the group activity. Outside a FaceTime call, visionOS offers the Share menu,
+    /// including nearby sharing with people in the same room.
+    func activateSharePlay() async {
+        guard !isSharePlayActive, !isActivatingSharePlay else { return }
+        isActivatingSharePlay = true
+        sharePlayErrorMessage = nil
+        defer { isActivatingSharePlay = false }
+
+        do {
+            _ = try await SharePlayTogether().activate()
+        } catch {
+            sharePlayErrorMessage = "SharePlay could not be started: \(error.localizedDescription)"
         }
     }
 
-    func handleRemoteDashboardSyncMessage(_ message: DashboardSyncMessage) {
-        if let existingCount = dashboardUpdateCount, message.updateCount <= existingCount {
-            return
-        }
-
-        dashboardUpdateCount = message.updateCount
-
-        switch message.action {
-        case .state(let dashboardState):
-            handoverViewModel.applyDashboardState(dashboardState)
-
-        case .selectedPatient(let id):
-            handoverViewModel.selectPatient(byID: id)
-
-        case .sectionOrder(let sectionOrder):
-            handoverViewModel.applySectionOrder(sectionOrder)
+    /// Applies a peer's snapshot when it is newer than this device's.
+    func receive(_ message: SharedHandoverMessage) {
+        guard let snapshot = replica.receive(message) else { return }
+        wantsImmersion = snapshot.isImmersed
+        // Set the mode first: entering it resets disclosure, which the snapshot then overrides.
+        presentationMode = snapshot.mode
+        collapsedSpatialCards = snapshot.collapsedSpatialCards
+        dashboard = snapshot.dashboard
+        dashboardOrder = snapshot.dashboardOrder
+        if let target = snapshot.orbit {
+            orbit.adopt(target)
         }
     }
 
-    /// Replaces all card states (used for catch-up when joining late)
-    func replaceAllSharedState(
-        states: [String: Bool],
-        positions: [String: SIMD3<Float>],
-        cardUpdateCounts: [String: MessageUpdateCount],
-        dashboardState: DashboardState,
-        dashboardUpdateCount: MessageUpdateCount?
-    ) {
-        cardStates = states
-        cardPositions = positions
-        self.cardUpdateCounts = cardUpdateCounts
-        self.dashboardUpdateCount = dashboardUpdateCount
-        handoverViewModel.applyDashboardState(dashboardState)
+    /// Sends local changes whenever the snapshot's inputs change. `Observations` delivers one
+    /// value per main-actor transaction, so a mode switch and its resets go out as one snapshot.
+    private func observeLocalChanges() {
+        let snapshots = Observations { [weak self] in self?.currentSnapshot }
+        Task { [weak self] in
+            for await snapshot in snapshots {
+                guard let self, let snapshot else { return }
+                if let message = replica.localChange(snapshot) {
+                    sessionController?.send(message)
+                }
+            }
+        }
+    }
+
+    /// Listens for `SharePlayTogether` sessions for the app's lifetime, whether started here,
+    /// from the Share menu, or by a nearby participant.
+    private func observeGroupSessions() async {
+        for await session in SharePlayTogether.sessions() {
+            // Begin before the controller joins, so a catch-up that arrives right away is applied.
+            replica.begin(participant: session.localParticipant.id, joinedAt: .now, snapshot: currentSnapshot)
+            guard let sessionController = await SessionController(session, appModel: self) else {
+                replica.end()
+                continue
+            }
+            self.sessionController = sessionController
+
+            Task.immediate(name: "session state observation") {
+                for await state in session.$state.values {
+                    guard self.sessionController?.session.id == session.id else {
+                        return
+                    }
+                    if case .invalidated = state {
+                        self.sessionController = nil
+                        self.replica.end()
+                        return
+                    }
+                }
+            }
+        }
     }
 }

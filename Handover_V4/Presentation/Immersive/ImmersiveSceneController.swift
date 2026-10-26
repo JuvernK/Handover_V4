@@ -3,7 +3,7 @@ import RealityKit
 import RealityKitContent
 import Observation
 
-/// Owns one immersive scene's transient entities; authored POIs and SharePlay positions stay intact.
+/// Owns one immersive scene's transient entities; authored POIs stay intact.
 @MainActor @Observable
 final class ImmersiveSceneController {
     private(set) var pointsOfInterest: [Entity] = []
@@ -83,7 +83,7 @@ final class ImmersiveSceneController {
                 card.scale = SIMD3<Float>(repeating: focused ? 1 : 0.72)
                 card.components.set(OpacityComponent(opacity: state.expandedCard == nil || focused ? 1 : 0.3))
             } else {
-                card.position = isOrbit ? geometry.patientPosition : (appModel.cardPositions[name] ?? homes[name] ?? .zero)
+                card.position = isOrbit ? geometry.patientPosition : (homes[name] ?? .zero)
                 card.scale = .one
                 card.components.set(OpacityComponent(opacity: 1))
             }

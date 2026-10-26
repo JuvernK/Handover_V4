@@ -1,5 +1,12 @@
 # Handover V4 Project Overview
 
+> **Out of date.** This overview describes the architecture before PR #36
+> (`SharedState/`, `DashboardControls`, `SharedHandoverReplicator`), most of which
+> no longer exists. For current behavior and files, use
+> [docs/presentation-modes.md](docs/presentation-modes.md),
+> [docs/orbit-source-outlines.md](docs/orbit-source-outlines.md) and
+> [docs/shareplay.md](docs/shareplay.md).
+
 This document maps the current implementation and its file responsibilities. It
 does not define domain language: `CONTEXT.md` is the canonical glossary for
 project-specific terms, and `docs/adr/` records durable architectural decisions.

@@ -1,6 +1,7 @@
 # State-oriented Shared Handover State replication
 
-Status: accepted
+Status: superseded by [ADR 0006](0006-shareplay-snapshot-sync.md). The replicator
+described here was removed in PR #36 and is not in the current code.
 
 Shared Handover State converges through a deep `SharedHandoverReplicator`
 module. `SharePlayCoordinator` is restricted to SharePlay lifecycle; it does

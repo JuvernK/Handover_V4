@@ -31,3 +31,7 @@ A clinical card eligible to highlight its Source: the expanded front card after 
 
 **Source Highlight**:
 The outline applied to an Active Card's equipment Source to identify its relationship to that card.
+
+**Shared Handover Snapshot**:
+Everything SharePlay participants see in common: whether the ICU is open, the presentation mode, the Orbit card, card and section disclosure, SBAR focus and section order. Any participant can change it, and the newest snapshot wins on every device.
+_Avoid_: Shared Handover State (the earlier per-fact replication design).

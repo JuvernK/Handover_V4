@@ -23,9 +23,9 @@ outlines are implemented under `Handover_V4/Presentation/`.
 See `docs/orbit-source-outlines.md` for behavior and validation, and
 `docs/presentation-modes.md` for the remaining synchronization plan.
 
-- Keep SharePlay synchronization of these behaviors (mode, disclosure, Orbit
-  position, late-joiner catch-up) deferred until the user explicitly authorizes
-  that follow-up.
+- SharePlay shares these behaviors through one versioned snapshot; see
+  `docs/shareplay.md` and ADR 0006. A new shared fact goes into
+  `SharedHandoverSnapshot`, not a new message type.
 - Preserve user-authored transforms (the `OrbitAnchor` markers and slots in the
   RealityKit scene) when changing carousel behavior.
 
@@ -46,6 +46,7 @@ See `docs/orbit-source-outlines.md` for behavior and validation, and
 - Use `docs/presentation-modes.md` and `docs/orbit-source-outlines.md` for the current implementation scope and validation notes.
 - After relevant Swift changes, build the visionOS application and verify presentation-state transitions. Build with:
   `xcodebuild -project Handover_V4.xcodeproj -scheme Handover_V4 -destination 'generic/platform=visionOS Simulator' -configuration Debug CODE_SIGNING_ALLOWED=NO build`
+- Run the standalone logic checks with `sh Tests/run-checks.sh`. Add a check's sources there when it needs more files.
 
 ## Jev
 
@@ -74,8 +75,9 @@ self-contained work; spatial or immersive work stays on the strongest model.
 Read only the documents relevant to the task; follow their links when a shared
 rule is needed. These entry points distinguish current behavior from plans:
 
-- [docs/orbit-source-outlines.md](docs/orbit-source-outlines.md): implemented Orbit and source-outline behavior, its validation, and the deferred SharePlay scope.
-- [docs/presentation-modes.md](docs/presentation-modes.md): mode switching, controls, source organization, and planned SharePlay behavior.
+- [docs/orbit-source-outlines.md](docs/orbit-source-outlines.md): implemented Orbit and source-outline behavior and its validation.
+- [docs/presentation-modes.md](docs/presentation-modes.md): mode switching, controls, and source organization.
+- [docs/shareplay.md](docs/shareplay.md): what SharePlay shares, how, its validation, and the two-device test.
 - [docs/adr/](docs/adr/): architecture decision records.
 - [docs/agents/](docs/agents/): domain-doc layout, the GitHub issue tracker, and triage labels used by the engineering skills.
 - [CONTEXT.md](CONTEXT.md): short glossary of agreed product terms.

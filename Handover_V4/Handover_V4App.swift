@@ -5,10 +5,11 @@
 //  Created by Juvern Khor on 29/4/2026.
 //
 
-// Flow: Handover_V4App -> LauncherView -> DashboardView -> PatientDashboardView; AppModel -> ImmersiveView.
+// Flow: Handover_V4App -> LauncherView -> DashboardView -> PatientDashboardView; AppModel -> ImmersiveView; SharePlay shares the dashboard window.
 import SwiftUI
 import RealityKit
 import RealityKitContent
+import GroupActivities
 
 @main
 struct Handover_V4App: App {
@@ -49,6 +50,8 @@ struct Handover_V4App: App {
             DashboardView(viewModel: appModel.handoverViewModel)
                 .environment(appModel)
                 .environment(\.colorScheme, colorScheme)
+                // The dashboard is the content being presented, so SharePlay shares this window.
+                .groupActivityAssociation(.primary("dashboard"))
         }
         // Individual dashboard panes supply glass, leaving clear space between them.
         .windowStyle(.plain)
@@ -70,7 +73,7 @@ struct Handover_V4App: App {
                     appModel.immersiveSpaceState = .open
                 }
                 .onDisappear {
-                    appModel.immersiveSpaceState = .closed
+                    appModel.immersiveSpaceDidClose()
                 }
         }
         .immersionStyle(selection: .constant(.full), in: .full)
