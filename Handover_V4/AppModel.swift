@@ -129,7 +129,11 @@ class AppModel {
     // MARK: - SharePlay
 
     private var sessionController: SessionController?
-    private var replica = SharedHandoverReplica()
+    /// Bookkeeping, not view state. It must stay unobserved: `currentSnapshot` reads it in
+    /// Orbit, and `observeLocalChanges` calls a mutating method on it for every snapshot, which
+    /// counts as a change even when nothing differs. Observed, that re-fires `Observations`
+    /// forever, starving the main actor until the watchdog kills the app (0x8BADF00D).
+    @ObservationIgnored private var replica = SharedHandoverReplica()
     var isActivatingSharePlay = false
     var sharePlayErrorMessage: String?
 
