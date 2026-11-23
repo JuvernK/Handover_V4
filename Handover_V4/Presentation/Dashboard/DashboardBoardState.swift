@@ -1,10 +1,9 @@
-// Flow: PatientDashboardView -> DashboardBoardState -> local section order; FlowBoardLayout -> DashboardBoardGeometry -> measured frames.
+// Flow: PatientDashboardView -> AppModel -> DashboardBoardState -> shared section order; FlowBoardLayout -> DashboardBoardGeometry -> measured frames.
 import Foundation
 import CoreGraphics
 
-/// Dashboard-local ordering, using main's HandoverViewModel.moveSection transition.
-/// Geometry and SharePlay records are not stored in the presentation order.
-struct DashboardBoardState {
+/// Dashboard section order, shared through SharePlay; measured geometry stays local.
+struct DashboardBoardState: Codable, Equatable, Sendable {
     private(set) var order = ISBARSectionID.detailSections
 
     /// Moves a section to the destination's original index, shifting intervening sections.

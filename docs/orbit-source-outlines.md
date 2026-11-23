@@ -1,8 +1,8 @@
 # Orbit and source outlines
 
-This document records the behavior and the separately deferred SharePlay work.
-Related plans: [presentation modes](presentation-modes.md) and
-[Spatial cards](spatial-cards.md). Domain terms live in [CONTEXT.md](../CONTEXT.md).
+This document records Orbit and source-outline behavior. Orbit's SharePlay
+synchronization is described in [SharePlay](shareplay.md).
+Related plan: [presentation modes](presentation-modes.md). Domain terms live in [CONTEXT.md](../CONTEXT.md).
 
 ## Requested scope
 Equipment highlighting must use outlines only.

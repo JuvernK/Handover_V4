@@ -2,7 +2,7 @@
 import Foundation
 
 /// Stable clinical reading order, independent of dashboard rearrangement and wire messages.
-enum OrbitCard: String, CaseIterable, Identifiable {
+enum OrbitCard: String, CaseIterable, Identifiable, Codable, Sendable {
     case situation = "Situation"
     case background = "Related_Background"
     case vitals = "Vitals"
@@ -40,6 +40,12 @@ enum OrbitCard: String, CaseIterable, Identifiable {
     }
 }
 
+/// The card Orbit is settling or settled on, and whether it is disclosed.
+struct OrbitTarget: Codable, Equatable, Sendable {
+    let card: OrbitCard
+    let isExpanded: Bool
+}
+
 /// Pure navigation rules. A revision prevents an old snap completion from expanding a new card.
 struct OrbitPresentationState: Equatable {
     enum Phase { case inactive, scrubbing, settling, settled }
@@ -48,6 +54,8 @@ struct OrbitPresentationState: Equatable {
     private(set) var position: Double = 0
     private(set) var expandedCard: OrbitCard?
     private(set) var revision = 0
+    /// Settling normally discloses its card; a SharePlay peer may have collapsed it instead.
+    private var expandsOnFinish = true
 
     var frontIndex: Int {
         let count = OrbitCard.allCases.count
@@ -57,6 +65,16 @@ struct OrbitPresentationState: Equatable {
     var isMoving: Bool { phase == .scrubbing || phase == .settling }
     var sourceNames: Set<String> {
         phase == .settled ? (expandedCard?.equipmentNames ?? []) : []
+    }
+
+    /// Where navigation is heading, which is what SharePlay peers share.
+    /// Nil while inactive or scrubbing, because a drag has not chosen a card yet.
+    var target: OrbitTarget? {
+        switch phase {
+        case .inactive, .scrubbing: nil
+        case .settling: OrbitTarget(card: frontCard, isExpanded: expandsOnFinish)
+        case .settled: OrbitTarget(card: frontCard, isExpanded: expandedCard != nil)
+        }
     }
 
     mutating func enter() {
@@ -96,7 +114,7 @@ struct OrbitPresentationState: Equatable {
     mutating func finish(revision completedRevision: Int) {
         guard revision == completedRevision, phase == .settling else { return }
         phase = .settled
-        expandedCard = frontCard
+        expandedCard = expandsOnFinish ? frontCard : nil
     }
 
     mutating func toggleFront() {
@@ -104,9 +122,23 @@ struct OrbitPresentationState: Equatable {
         expandedCard = expandedCard == nil ? frontCard : nil
     }
 
+    /// Heads for a peer's target, animating from wherever this carousel is.
+    /// Returns whether a new settle began, so the caller can schedule its completion.
+    mutating func adopt(_ target: OrbitTarget) -> Bool {
+        guard phase != .inactive, self.target != target else { return false }
+        if phase == .settled && frontCard == target.card {
+            expandedCard = target.isExpanded ? frontCard : nil
+            return false
+        }
+        focus(target.card)
+        expandsOnFinish = target.isExpanded
+        return true
+    }
+
     private mutating func begin(_ phase: Phase) {
         revision += 1
         self.phase = phase
         expandedCard = nil
+        expandsOnFinish = true
     }
 }

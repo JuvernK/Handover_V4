@@ -1,6 +1,8 @@
 ---
 description: Turn Jev on or off for this project, router and checker both (on | off | status | last)
 allowed-tools: Bash(.claude/jev/toggle.sh:*)
+# Only the user flips the switch: turning it on sends every prompt to Jev.
+disable-model-invocation: true
 ---
 
 Run exactly this command and nothing else:

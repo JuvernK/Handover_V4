@@ -19,7 +19,7 @@ struct ImmersiveView: View {
                 content.add(room)
                 content.add(runtime.prepare(room))
                 // Reopening an Orbit scene starts its entry only once the authored geometry exists.
-                if appModel.presentationMode == .orbit { appModel.orbit.enter() }
+                appModel.immersiveSceneDidLoad()
                 frameSubscription = content.subscribe(to: SceneEvents.Update.self) { event in
                     MainActor.assumeIsolated {
                         runtime.update(deltaTime: event.deltaTime, appModel: appModel)
@@ -67,8 +67,8 @@ struct ImmersiveView: View {
                 if appModel.presentationMode == .orbit, let card = OrbitCard(rawValue: component.cardName) {
                     appModel.orbit.select(card)
                 } else if appModel.presentationMode == .spatial {
-                    appModel.setCardState(name: component.cardName,
-                                          isExpanded: !appModel.isCardExpanded(component.cardName), syncChanges: true)
+                    appModel.setSpatialCard(component.cardName,
+                                            isExpanded: !appModel.isCardExpanded(component.cardName))
                 }
             }
         })

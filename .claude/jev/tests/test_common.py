@@ -58,6 +58,36 @@ class CommonBoundaryTests(unittest.TestCase):
     def model_path(self, session):
         return self.home / ".runtime" / "models" / (common.session_key(session) + ".json")
 
+    def test_api_key_prefers_environment_and_never_touches_keychain(self):
+        with mock.patch.dict(os.environ, {"TYPESAFE_API_KEY": " env-key "}), \
+                mock.patch.object(common.subprocess, "run") as run:
+            self.assertEqual(common.read_api_key(), "env-key")
+        run.assert_not_called()
+
+    def test_api_key_falls_back_to_the_keychain_item(self):
+        found = mock.Mock(returncode=0, stdout="keychain-key\n")
+        with mock.patch.dict(os.environ, {"TYPESAFE_API_KEY": ""}), \
+                mock.patch.object(common.subprocess, "run", return_value=found) as run:
+            self.assertEqual(common.read_api_key(), "keychain-key")
+        self.assertEqual(run.call_args.args[0], ["security", "find-generic-password", "-s", "typesafe-jev-api-key", "-w"])
+
+    def test_api_key_is_empty_when_keychain_is_missing_or_unavailable(self):
+        missing = mock.Mock(returncode=44, stdout="")
+        with mock.patch.dict(os.environ, {"TYPESAFE_API_KEY": ""}):
+            with mock.patch.object(common.subprocess, "run", return_value=missing):
+                self.assertEqual(common.read_api_key(), "")
+            with mock.patch.object(common.subprocess, "run", side_effect=FileNotFoundError):
+                self.assertEqual(common.read_api_key(), "")
+
+    def test_api_key_is_not_read_from_settings_files(self):
+        # Settings env is injected into every subprocess Claude Code starts, so a
+        # key left there must not keep the integration working silently.
+        (self.root / ".claude" / "settings.local.json").write_text('{"env": {"TYPESAFE_API_KEY": "settings-key"}}')
+        missing = mock.Mock(returncode=44, stdout="")
+        with mock.patch.dict(os.environ, {"TYPESAFE_API_KEY": ""}), \
+                mock.patch.object(common.subprocess, "run", return_value=missing):
+            self.assertEqual(common.read_api_key(), "")
+
     def test_quoted_credentials_are_redacted_in_full(self):
         examples = [
             ('password = "x"', 'password = "[REDACTED]"'),

@@ -24,11 +24,13 @@ def choice(names, selected, probability=0.85):
     }
 
 
-def answers(model="haiku", probability=0.85, risk="low", work="yes", history="self_contained", skill="none"):
+def answers(model="haiku", probability=0.85, risk="low", work="yes", history="self_contained", skill="none",
+            workload="large", workload_probability=0.85, history_probability=0.85):
     return {
         "needs_work": choice(route.WORK_OPTIONS, work),
-        "needs_history": choice(route.HISTORY_OPTIONS, history),
+        "needs_history": choice(route.HISTORY_OPTIONS, history, history_probability),
         "model": choice(route.MODEL_OPTIONS, model, probability),
+        "workload": choice(route.WORKLOAD_OPTIONS, workload, workload_probability),
         "risk": choice(route.RISK_OPTIONS, risk),
         "skill": choice(("none", "code-review", "update-config"), skill),
     }
@@ -42,9 +44,34 @@ class PolicyTests(unittest.TestCase):
         result = route.decide_route(answers(model="opus", probability=0.55, risk="elevated"), "sonnet", self.config)
         self.assertEqual((result["action"], result["selected_model"], result["reason"]), ("delegate", "opus", "upgrade"))
 
-    def test_recoverable_downgrade_uses_winner_without_blanket_threshold(self):
-        result = route.decide_route(answers(probability=0.45), "opus", self.config)
-        self.assertEqual((result["action"], result["selected_model"]), ("delegate", "haiku"))
+    def test_clear_large_low_risk_downgrade_delegates_to_project_worker(self):
+        data = answers()
+        result = route.decide_route(data, "opus", self.config)
+        self.assertEqual((result["action"], result["selected_model"], result["reason"]), ("delegate", "haiku", "low_risk_downgrade"))
+        self.assertIn('subagent_type="jev-haiku"', route.build_context(result, data))
+
+    def test_small_workload_keeps_downgrade_on_main(self):
+        # Briefing a worker for a one-step task costs more than doing it directly.
+        for data in (answers(workload="small"), answers(workload="large", workload_probability=0.6)):
+            with self.subTest(workload=data["workload"]["probabilities"]):
+                result = route.decide_route(data, "opus", self.config)
+                self.assertEqual((result["action"], result["reason"]), ("main", "small_workload"))
+
+    def test_unclear_downgrade_stays_on_main(self):
+        for data in (answers(probability=0.45), answers(history_probability=0.6)):
+            with self.subTest():
+                result = route.decide_route(data, "opus", self.config)
+                self.assertEqual((result["action"], result["reason"]), ("main", "uncertain_downgrade"))
+
+    def test_downgrade_gates_come_from_config(self):
+        config = dict(self.config, downgrade_min_confidence=0.2, downgrade_min_probability=0.55)
+        result = route.decide_route(answers(probability=0.45, workload_probability=0.6, history_probability=0.6), "opus", config)
+        self.assertEqual(result["action"], "delegate")
+
+    def test_upgrade_ignores_workload_and_downgrade_gates(self):
+        result = route.decide_route(answers(model="opus", probability=0.4, workload="small"), "haiku", self.config)
+        self.assertEqual((result["action"], result["selected_model"], result["reason"]), ("delegate", "opus", "upgrade"))
+        self.assertIn('model="opus"', route.build_context(result, answers(model="opus")))
 
     def test_high_model_confidence_cannot_override_elevated_or_unknown_risk(self):
         for risk in ("elevated", "unknown"):
@@ -110,9 +137,10 @@ class PayloadTests(unittest.TestCase):
         self.assertIsNotNone(context)
         self.assertEqual(call.call_count, 1)
         args = call.call_args.args
-        self.assertEqual(set(args[2]), {"needs_work", "needs_history", "model", "risk", "skill"})
+        self.assertEqual(set(args[2]), {"needs_work", "needs_history", "model", "workload", "risk", "skill"})
         self.assertEqual(args[1], {"user_prompt": self.payload["prompt"]})
         self.assertIn("defer_to_main", args[2]["model"]["criteria"])
+        self.assertIn("RealityKit", args[2]["model"]["criteria"]["opus"])
         self.assertIn("none", args[2]["skill"]["criteria"])
         raw = (self.home / "last-decision.json").read_text()
         self.assertNotIn(self.payload["prompt"], raw)
@@ -157,6 +185,14 @@ class PayloadTests(unittest.TestCase):
             self.assertIsNotNone(route.route_payload(self.payload, self.home))
         self.assertNotIn("skill", call.call_args.args[2])
         self.assertEqual(self.event()["skill"]["mode"], "none")
+
+    def test_invalid_downgrade_gates_are_rejected(self):
+        for value in (1.5, -0.1, "0.6", True):
+            with self.subTest(value=value), patch.object(route, "call_jev") as call:
+                (self.home / "config.json").write_text(json.dumps({"downgrade_min_confidence": value}))
+                self.assertIsNone(route.route_payload(self.payload, self.home))
+                call.assert_not_called()
+                self.assertEqual(self.event()["reason"], "invalid_config")
 
     def test_redacted_input_disables_autoload(self):
         (self.home / "config.json").write_text(json.dumps({"sensitive_handling": "redact", "auto_load_skills": ["code-review"]}))

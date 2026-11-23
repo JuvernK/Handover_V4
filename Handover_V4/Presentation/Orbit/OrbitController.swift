@@ -2,11 +2,9 @@
 import Foundation
 import Observation
 
-/// Owns local Orbit interaction and cancellable settling, shared by all three navigation controls.
+/// Owns Orbit interaction and cancellable settling for the navigation controls and SharePlay peers.
 @MainActor @Observable
 final class OrbitController {
-    // TODO: Synchronize navigation/disclosure and late-join state only after the explicit
-    // SharePlay follow-up go-ahead. See docs/orbit-source-outlines.md.
     private(set) var state = OrbitPresentationState()
     @ObservationIgnored private var completion: Task<Void, Never>?
     static let settleDuration: TimeInterval = 0.35
@@ -34,6 +32,11 @@ final class OrbitController {
             state.focus(card)
             scheduleCompletion()
         }
+    }
+
+    /// Follow a SharePlay peer's settled or settling card without echoing it back.
+    func adopt(_ target: OrbitTarget) {
+        if state.adopt(target) { scheduleCompletion() }
     }
 
     private func scheduleCompletion() {

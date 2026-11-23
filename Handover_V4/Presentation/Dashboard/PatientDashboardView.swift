@@ -1,4 +1,4 @@
-// Flow: DashboardView -> PatientDashboardView -> ISBAR navigation + patient summaries + systems assessment.
+// Flow: DashboardView -> PatientDashboardView -> AppModel (shared disclosure + order) -> ISBAR navigation + patient summaries + systems assessment.
 import SwiftUI
 internal import UniformTypeIdentifiers
 
@@ -6,13 +6,21 @@ internal import UniformTypeIdentifiers
 struct PatientDashboardView: View {
     @Environment(AppModel.self) private var appModel
     let patient: Patient
-    @State private var presentation = DashboardPresentationState()
     @State private var navigationRequest: ISBARSectionID?
     @State private var systemsContentHeight: CGFloat = 0
-    @State private var board = DashboardBoardState()
     @State private var boardID = UUID()
 
     private let systemsOverlap: CGFloat = 26
+
+    /// Disclosure, focus and order live in AppModel so SharePlay peers see the same board.
+    private var presentation: DashboardPresentationState {
+        get { appModel.dashboard }
+        nonmutating set { appModel.dashboard = newValue }
+    }
+    private var board: DashboardBoardState {
+        get { appModel.dashboardOrder }
+        nonmutating set { appModel.dashboardOrder = newValue }
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -87,8 +95,10 @@ struct PatientDashboardView: View {
                 }
             }
         }
-        .onChange(of: appModel.presentationMode) { _, mode in
-            if mode == .dashboard { presentation = DashboardPresentationState() }
+        // Follow a peer's SBAR navigation; local navigation already requested the same scroll.
+        // Free scrolling stays personal, since window sizes differ between wearers.
+        .onChange(of: presentation.focusedSection) { _, section in
+            if let section { navigationRequest = section }
         }
         .environment(\.isDashboardSurface, true)
         .foregroundStyle(DashboardTheme.foreground)
@@ -119,7 +129,7 @@ struct PatientDashboardView: View {
     }
 
     private func navigation(isHorizontal: Bool) -> some View {
-        ISBARNavColumn(presentation: $presentation, isHorizontal: isHorizontal) { destination in
+        ISBARNavColumn(presentation: Bindable(appModel).dashboard, isHorizontal: isHorizontal) { destination in
             navigationRequest = destination
         }
     }
@@ -385,7 +395,7 @@ private struct ISBARSectionView: View {
     }
 }
 
-/// Board-scoped identity keeps local dashboard ordering independent of spatial/SharePlay SectionID.
+/// Board-scoped identity keeps dashboard ordering independent of the Spatial SectionID.
 nonisolated private struct DashboardSectionDrag: Codable, Transferable {
     let boardID: UUID
     let section: String

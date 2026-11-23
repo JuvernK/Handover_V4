@@ -1,9 +1,9 @@
-// Flow: PatientDashboardView -> DashboardPresentationState -> section detail disclosure.
+// Flow: PatientDashboardView -> AppModel.dashboard -> DashboardPresentationState -> section detail disclosure + SharePlay snapshot.
 import Foundation
 
 /// Five navigation destinations; Introduction is a permanent header.
-/// Spatial `SectionID` and SharePlay card identities remain independent.
-enum ISBARSectionID: String, CaseIterable, Identifiable {
+/// Spatial `SectionID` and Spatial card names remain independent.
+enum ISBARSectionID: String, CaseIterable, Identifiable, Codable, Sendable {
     case introduction
     case situation
     case background
@@ -15,12 +15,9 @@ enum ISBARSectionID: String, CaseIterable, Identifiable {
     static let detailSections: [Self] = [.situation, .background, .assessment, .recommendation]
 }
 
-/// Local disclosure state; summaries remain visible regardless of detail state.
+/// Disclosure and focus state, shared through SharePlay; summaries remain visible regardless.
 /// Starts with every detail section expanded so a fresh handover shows full context immediately.
-struct DashboardPresentationState {
-    // TODO: After the user's explicit SharePlay implementation go-ahead, synchronize
-    // individual/ALL disclosure and inherit it on late join without a mode-entry reset.
-    // No restart persistence; scrolling sync is separate. See docs/orbit-source-outlines.md.
+struct DashboardPresentationState: Codable, Equatable, Sendable {
     private(set) var expandedSections: Set<ISBARSectionID> = Set(ISBARSectionID.detailSections)
     private(set) var focusedSection: ISBARSectionID? = .introduction
 

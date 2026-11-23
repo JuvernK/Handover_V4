@@ -4,7 +4,7 @@
 //
 //  Created by Juvern Khor on 8/9/2026.
 //
-// Flow: Handover_V4App -> LauncherView -> AppModel + ToggleImmersiveSpaceButton + DashboardView.
+// Flow: Handover_V4App -> LauncherView -> AppModel + ToggleImmersiveSpaceButton + DashboardView; SharePlayTogether -> Share menu.
 // Window transitions belong to the persistent windows because ImmersiveView
 // may be tearing down when the immersive space closes.
 
@@ -36,10 +36,12 @@ struct LauncherView: View {
                 .font(.subheadline)
                 .foregroundStyle(DashboardTheme.secondary)
                 .multilineTextAlignment(.center)
+                // The content-sized window would otherwise clip the hint to one truncated line.
+                .fixedSize(horizontal: false, vertical: true)
 
             if appModel.immersiveSpaceState == .open {
                 Picker("Presentation mode", selection: Bindable(appModel).presentationMode) {
-                    ForEach(AppModel.PresentationMode.allCases) { mode in
+                    ForEach(PresentationMode.allCases) { mode in
                         Text(mode.displayName).tag(mode)
                     }
                 }
@@ -60,17 +62,19 @@ struct LauncherView: View {
 
             VStack(spacing: 12) {
                 ToggleImmersiveSpaceButton()
+                // Leaving affects only this wearer, so one person can drop out without ending
+                // the handover for everyone else.
                 Button {
                     Task { @MainActor in
                         if appModel.isSharePlayActive {
-                            appModel.endSession()
+                            appModel.leaveSharePlay()
                         } else {
                             await appModel.activateSharePlay()
                         }
                     }
                 } label: {
                     Label(
-                        appModel.isSharePlayActive ? "End SharePlay" : "Start SharePlay",
+                        appModel.isSharePlayActive ? "Leave SharePlay" : "Start SharePlay",
                         systemImage: appModel.isSharePlayActive ? "shareplay.slash" : "shareplay"
                     )
                 }
@@ -89,6 +93,12 @@ struct LauncherView: View {
         .padding(40)
         .frame(width: 420)
         .dashboardPanel(cornerRadius: 32)
+        // The hidden link exposes the activity in this window's system Share menu,
+        // so people can also start SharePlay or nearby sharing from there.
+        .background {
+            ShareLink(item: SharePlayTogether(), preview: SharePreview("ICU Handover"))
+                .hidden()
+        }
         .alert(
             "SharePlay",
             isPresented: Binding(
