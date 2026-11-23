@@ -45,10 +45,5 @@ xcdebugger/
 # Claude Code (local tooling)
 # =========================
 
-# Personal agent config, plus the Jev router's machine-local state.
+# Personal agent config.
 .claude/settings.local.json
-.claude/jev/state
-.claude/jev/last-decision.json
-.claude/jev/.runtime/
-.claude/jev/__pycache__/
-.claude/jev/tests/__pycache__/

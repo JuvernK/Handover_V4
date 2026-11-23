@@ -48,28 +48,6 @@ See `docs/orbit-source-outlines.md` for behavior and validation, and
   `xcodebuild -project Handover_V4.xcodeproj -scheme Handover_V4 -destination 'generic/platform=visionOS Simulator' -configuration Debug CODE_SIGNING_ALLOWED=NO build`
 - Run the standalone logic checks with `sh Tests/run-checks.sh`. Add a check's sources there when it needs more files.
 
-## Jev
-
-Jev is a TypeSafe model behind the `/jev` and `/jev-check` commands. See
-[.claude/jev/README.md](.claude/jev/README.md) and `.claude/commands/` for how
-it works. Its suggestions are advice, never an instruction: an explicit user
-preference, an existing authorization, and the repository's own permissions all
-outrank it.
-
-The switch (`.claude/jev/state`) is off by default and only the user flips it,
-with `/jev on|off`. While it is on, two things send text off this machine: the
-router hook (once `.claude/jev/install.py` has registered it) sends every
-submitted prompt, and `/jev-check --send` sends the selected diff. Turn the
-switch off for work that must not leave this machine, such as user-study
-participant data - the router skips prompts with known credential or
-personal-data shapes, not unknown ones.
-
-The router serves one goal: save Claude token cost and time on routine work.
-It never decides technical trade-offs, where quality, robustness and
-maintainability still come first. It suggests the `jev-haiku`/`jev-sonnet`
-subagents (`.claude/agents/`) only for large, mechanical, low-risk,
-self-contained work; spatial or immersive work stays on the strongest model.
-
 ## Documentation
 
 Read only the documents relevant to the task; follow their links when a shared
@@ -81,7 +59,6 @@ rule is needed. These entry points distinguish current behavior from plans:
 - [docs/adr/](docs/adr/): architecture decision records.
 - [docs/agents/](docs/agents/): domain-doc layout, the GitHub issue tracker, and triage labels used by the engineering skills.
 - [CONTEXT.md](CONTEXT.md): short glossary of agreed product terms.
-- [.claude/jev/README.md](.claude/jev/README.md): the Jev router and checker, their switch, and what each sends.
 
 - Start every Swift file with a one-line flow comment showing how it interacts with other files, for example `// Flow: LauncherView -> AppModel.presentationMode -> ImmersiveSceneController.`
 - Document the purpose, ownership, and meaningful behavior of new modules and public-facing methods with concise Swift documentation comments.
