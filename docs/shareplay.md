@@ -1,7 +1,7 @@
 # SharePlay
 
-Implemented on `feature/shareplay-snapshot`, 26 October 2026. The design decision
-is [ADR 0006](adr/0006-shareplay-snapshot-sync.md). Product terms are in
+The snapshot implementation is on `main`. The design decision is
+[ADR 0006](adr/0006-shareplay-snapshot-sync.md). Product terms are in
 [CONTEXT.md](../CONTEXT.md).
 
 ## Behavior

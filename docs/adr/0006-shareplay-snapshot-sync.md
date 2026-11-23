@@ -1,6 +1,5 @@
 ---
 status: accepted
-supersedes: 0003-shared-handover-state-replication.md
 ---
 
 # SharePlay shares one versioned snapshot
@@ -27,11 +26,10 @@ drags before release.
 
 ## Considered options
 
-- **Per-fact versions (ADR 0003's `SharedHandoverReplicator`).** Simultaneous
-  edits to different facts both survive. Rejected because it needs much more code
-  and tests than this study needs. That replicator was removed when
-  `latest-prototype` merged (PR #36), and the code in use had gone back to
-  per-action messages.
+- **Per-fact versions (the former `SharedHandoverReplicator`).** Concurrent
+  edits to different facts survive, at the cost of more replication code and
+  tests. The replicator was removed in PR #36, which returned to per-action
+  messages.
 - **Per-action messages (the previous `CardSyncMessage` design).** Rejected
   because each action needs its own message, ordering and catch-up handling, and
   none of the presentation modes were covered.
