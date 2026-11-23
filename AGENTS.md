@@ -31,7 +31,7 @@ See `docs/orbit-source-outlines.md` for behavior and validation, and
 
 ## Branch strategy
 
-- `main` is the development and integration baseline. `latest-prototype` was merged into it (PR #36) and is no longer the baseline.
+- `main` is the development and integration baseline. `latest-prototype` was merged into it (PR #36) and the branch has since been deleted.
 - The earlier, more complete immersive-space implementation is preserved at the tag `pre-main-merge`. It is too buggy to build on, so use it only as a reference for intended immersive behavior and useful implementation details, bringing those features in gradually and reviewing and fixing them as needed.
 - Do not assume code at `pre-main-merge` is correct or restore it wholesale merely to recover features.
 - Always create a fresh task branch from `main` before starting a new task. For ongoing work already on a task branch, continue there until that task is finished.
@@ -39,7 +39,7 @@ See `docs/orbit-source-outlines.md` for behavior and validation, and
 - Integrate completed task branches into `main` when the user authorizes the merge. This policy does not by itself authorize merging or pushing.
 - After a successful merge, verify that the task branch's changes are included in `main`, then delete the merged local task branch.
 - Before deletion, confirm the branch has no outstanding work and is not checked out in another active worktree. Coordinate with its owner if it is still in use; never force-delete a branch to bypass these checks.
-- Do not delete `main`, `latest-prototype`, the `pre-main-merge` tag, remote branches, or another agent's worktree as routine task-branch cleanup.
+- Do not delete `main`, the `pre-main-merge` tag, remote branches, or another agent's worktree as routine task-branch cleanup.
 
 ## Working in this repository
 
